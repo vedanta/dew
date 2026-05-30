@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="logo/dew.png" alt="dew" width="200">
+  <img src="assets/dew.png" alt="dew" width="200">
 </p>
 
 <p align="center">
@@ -21,6 +21,10 @@ dew restore     # extract local files back into the working tree
 ```
 
 Git gives you the code. dew gives you the missing local context.
+
+<p align="center">
+  <img src="assets/flow.png" alt="git clone (dry) → dew restore → ready to code (hydrated)" width="640">
+</p>
 
 ## What dew is not
 
