@@ -1,8 +1,16 @@
-# dew
+<p align="center">
+  <img src="logo/dew.png" alt="dew logo" width="200">
+</p>
 
-[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+<h1 align="center">dew</h1>
 
-> dew — the local half of your repo, restored after every clone.
+<p align="center">
+  <em>the local half of your repo, restored after every clone.</em>
+</p>
+
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg" alt="License: Apache 2.0"></a>
+</p>
 
 **dew** is a local-first CLI that manages the *private* repository state Git intentionally ignores: `.env.local`, dev certificates, `docker-compose.override.yml`, private fixtures, local config — the per-developer files needed to actually run a clone.
 
