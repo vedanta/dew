@@ -1,0 +1,106 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+# Cancel superseded runs on the same ref to save minutes.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Fast feedback: formatting, vetting, linting. Ubuntu only.
+  lint:
+    name: Lint & vet
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: gofmt (no diffs allowed)
+        run: |
+          unformatted="$(gofmt -s -l .)"
+          if [ -n "$unformatted" ]; then
+            echo "::error::These files are not gofmt-clean:"
+            echo "$unformatted"
+            exit 1
+          fi
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v7
+        with:
+          version: latest
+
+  # Unit tests across all target OSes — the cross-platform binary must hold
+  # everywhere, especially path handling and permission preservation.
+  test:
+    name: Unit tests
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Build
+        run: go build ./...
+
+      - name: Test (race detector)
+        run: go test -race -shuffle=on ./...
+
+  # Acceptance scripts drive the built binary. Unix only — the harness is bash
+  # and pack/restore shells out to the `age` CLI. Windows acceptance is deferred
+  # (see docs/build-plan.md); Windows is still covered by the unit matrix above.
+  acceptance:
+    name: Acceptance (binary)
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Install age (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y age
+
+      - name: Install age (macOS)
+        if: runner.os == 'macOS'
+        run: brew install age
+
+      - name: Build dew binary
+        run: go build -o dew .
+
+      - name: Run acceptance suite
+        run: |
+          # The harness lands in Phase 0.3 (#3). Until then this is a no-op so
+          # the CI workflow itself can merge and start gating earlier work.
+          if [ -x test/acceptance/run.sh ]; then
+            PATH="$PWD:$PATH" ./test/acceptance/run.sh
+          else
+            echo "::notice::test/acceptance/run.sh not present yet — skipping (Phase 0.3)."
+          fi
