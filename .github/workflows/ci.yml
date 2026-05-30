@@ -66,9 +66,11 @@ jobs:
       - name: Test (race detector)
         run: go test -race -shuffle=on ./...
 
-  # Acceptance scripts drive the built binary. Unix only — the harness is bash
-  # and pack/restore shells out to the `age` CLI. Windows acceptance is deferred
-  # (see docs/build-plan.md); Windows is still covered by the unit matrix above.
+  # Acceptance scripts drive the built binary. Unix only — the harness is bash.
+  # Windows acceptance is deferred (see docs/build-plan.md); Windows is still
+  # covered by the unit matrix above. The `age` CLI is NOT installed here yet —
+  # pack/restore is the first feature that shells out to it (Phase 3), so the
+  # install step is added back then to avoid a needless flaky dependency now.
   acceptance:
     name: Acceptance (binary)
     strategy:
@@ -84,23 +86,15 @@ jobs:
           go-version-file: go.mod
           cache: true
 
-      - name: Install age (Linux)
-        if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y age
-
-      - name: Install age (macOS)
-        if: runner.os == 'macOS'
-        run: brew install age
-
       - name: Build dew binary
         run: go build -o dew .
 
       - name: Run acceptance suite
         run: |
-          # The harness lands in Phase 0.3 (#3). Until then this is a no-op so
-          # the CI workflow itself can merge and start gating earlier work.
+          # Existence guard kept as a safety net; the harness lives in
+          # test/acceptance/ as of Phase 0.3 (#3).
           if [ -x test/acceptance/run.sh ]; then
             PATH="$PWD:$PATH" ./test/acceptance/run.sh
           else
-            echo "::notice::test/acceptance/run.sh not present yet — skipping (Phase 0.3)."
+            echo "::notice::test/acceptance/run.sh not present — skipping."
           fi
