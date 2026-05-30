@@ -16,3 +16,6 @@ idea/*
 .DS_Store
 .idea/
 .vscode/
+
+# Local project instructions for Claude Code — kept local, not committed.
+CLAUDE.md
