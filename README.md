@@ -1,5 +1,7 @@
 # dew
 
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+
 > dew — the local half of your repo, restored after every clone.
 
 **dew** is a local-first CLI that manages the *private* repository state Git intentionally ignores: `.env.local`, dev certificates, `docker-compose.override.yml`, private fixtures, local config — the per-developer files needed to actually run a clone.
@@ -151,3 +153,7 @@ This repository currently contains the design spec only — implementation has n
 ## Tech
 
 Go single binary · [Cobra](https://github.com/spf13/cobra) · `gopkg.in/yaml.v3` · `archive/tar` · zstd · [age](https://github.com/FiloSottile/age) · scp/rsync.
+
+## License
+
+Licensed under the [Apache License 2.0](LICENSE).
