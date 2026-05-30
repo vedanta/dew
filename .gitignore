@@ -1,0 +1,18 @@
+# Raw idea / scratch design notes — kept local, not committed.
+# The polished MVP spec lives in docs/.
+idea/*
+
+# Compiled dew binary and release artifacts
+/dew
+/dist/
+*.exe
+
+# Go build/test output
+*.test
+*.out
+/vendor/
+
+# Editor / OS noise
+.DS_Store
+.idea/
+.vscode/
