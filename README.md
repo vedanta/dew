@@ -27,6 +27,33 @@ dew uses a **two-location model**:
 
 There is **one global identity** shared across all repos and **one encrypted image per repo**.
 
+### Architecture
+
+```mermaid
+flowchart TB
+    subgraph repo["Git repo (committed)"]
+        manifest[".dew/manifest.yaml<br/>allow-list + deny-list"]
+        working["working tree<br/>.env.local, certs/, overrides…"]
+    end
+
+    subgraph home["~/.dew/ (never committed)"]
+        config["config.yaml<br/>sync destination"]
+        key["identity.age.key (private)"]
+        pub["identity.age.pub (public)"]
+        image["images/&lt;project&gt;.dew.age<br/>encrypted shadow"]
+    end
+
+    remote[("Sync destination<br/>nas:/volume1/dew")]
+
+    manifest -->|"selects files"| working
+    working -->|"dew pack"| image
+    pub -->|"encrypts"| image
+    image -->|"dew restore"| working
+    key -->|"decrypts"| image
+    image <-->|"dew sync / sync pull"| remote
+    config -.->|"configures"| remote
+```
+
 ### Packaging pipeline
 
 ```
@@ -35,6 +62,37 @@ Restore: image → age decrypt → zstd decompress → tar extract → write int
 ```
 
 The allow-list is authoritative — `pack` only ever includes paths the manifest lists, never "everything ignored." A deny-list (built-in patterns + per-manifest `deny:`) keeps noise like `node_modules/`, `dist/`, and `*.log` out. `.gitignore` is only a hint for discovery.
+
+### Workflow
+
+```mermaid
+sequenceDiagram
+    actor Dev as Developer
+    participant Repo as Git repo
+    participant CLI as dew
+    participant Store as ~/.dew/
+    participant Remote as Sync destination
+
+    Note over Dev,Remote: First-time setup (author machine)
+    Dev->>CLI: dew keygen
+    CLI->>Store: create age identity
+    Dev->>CLI: dew init / scan / add
+    CLI->>Repo: write .dew/manifest.yaml
+    Dev->>CLI: dew pack
+    CLI->>Store: tar → zstd → age → image
+    Dev->>CLI: dew sync
+    CLI->>Remote: push encrypted image
+    Dev->>Repo: git commit manifest & push
+
+    Note over Dev,Remote: Hydrate a fresh clone (new machine)
+    Dev->>Repo: git clone && cd
+    Dev->>CLI: dew sync pull
+    Remote->>Store: fetch encrypted image
+    Dev->>CLI: dew restore
+    Store->>Repo: decrypt → decompress → extract
+    Dev->>CLI: dew doctor
+    CLI-->>Dev: Repository fully hydrated.
+```
 
 ## Command set (MVP)
 
