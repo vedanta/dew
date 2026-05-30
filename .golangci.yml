@@ -1,21 +1,19 @@
-# golangci-lint configuration for dew.
+# golangci-lint v2 configuration for dew.
 # Conservative, signal-over-noise set for a security-sensitive CLI.
+version: "2"
+
 run:
   timeout: 5m
 
 linters:
+  # Default set (errcheck, govet, ineffassign, staticcheck, unused) plus extras.
+  default: standard
   enable:
-    - errcheck      # unchecked errors — critical for a tool that writes files
-    - govet
-    - ineffassign
-    - staticcheck
-    - unused
     - misspell
-    - gosec         # security analysis (path handling, file perms, crypto)
+    - gosec     # security analysis: path handling, file perms, crypto
     - bodyclose
     - gocritic
 
 issues:
-  # Don't hide repeated findings of the same class.
   max-issues-per-linter: 0
   max-same-issues: 0
