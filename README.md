@@ -1,8 +1,6 @@
 <p align="center">
-  <img src="logo/dew.png" alt="dew logo" width="200">
+  <img src="logo/dew.png" alt="dew" width="200">
 </p>
-
-<h1 align="center">dew</h1>
 
 <p align="center">
   <em>the local half of your repo, restored after every clone.</em>
