@@ -29,11 +29,12 @@ func runScan(cmd *cobra.Command, _ []string) error {
 }
 
 func doScan(root string, out io.Writer) error {
-	res, err := scanner.Scan(root)
+	tracked, extraDeny := manifestHints(root)
+
+	res, err := scanner.Scan(root, extraDeny)
 	if err != nil {
 		return err
 	}
-	tracked := trackedSet(root)
 
 	var b strings.Builder
 	if len(res.Candidates) == 0 {
@@ -60,16 +61,17 @@ func doScan(root string, out io.Writer) error {
 	return err
 }
 
-// trackedSet returns the manifest's allow-list as a set, or empty if there is
-// no readable manifest (scan is informational and works without one).
-func trackedSet(root string) map[string]bool {
-	set := map[string]bool{}
+// manifestHints returns the manifest's allow-list (as a set) and deny patterns,
+// or empties if there is no readable manifest (scan works without one).
+func manifestHints(root string) (tracked map[string]bool, deny []string) {
+	tracked = map[string]bool{}
 	if m, err := manifest.Load(manifest.Path(root)); err == nil {
 		for _, p := range m.Allow {
-			set[p] = true
+			tracked[p] = true
 		}
+		deny = m.Deny
 	}
-	return set
+	return tracked, deny
 }
 
 func init() {

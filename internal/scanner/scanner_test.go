@@ -23,7 +23,7 @@ func TestScanClassifiesCandidatesAndNoise(t *testing.T) {
 	writeFile(t, root, "debug.log", "log")
 	writeFile(t, root, ".DS_Store", "")
 
-	res, err := Scan(root)
+	res, err := Scan(root, nil)
 	if err != nil {
 		t.Fatalf("Scan: %v", err)
 	}
@@ -54,11 +54,39 @@ func TestScanClassifiesCandidatesAndNoise(t *testing.T) {
 	}
 }
 
+func TestScanHonorsPerManifestDeny(t *testing.T) {
+	root := t.TempDir()
+	writeFile(t, root, ".gitignore", "*.local\n")
+	writeFile(t, root, "keep.local", "k")
+	writeFile(t, root, "scratch.local", "s")
+
+	// Without extra deny, both are candidates.
+	res, err := Scan(root, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(res.Candidates) != 2 {
+		t.Fatalf("candidates = %v, want 2 before deny", res.Candidates)
+	}
+
+	// A per-manifest deny pattern removes one.
+	res, err = Scan(root, []string{"scratch.local"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if slices.Contains(res.Candidates, "scratch.local") {
+		t.Errorf("scratch.local should be denied, candidates = %v", res.Candidates)
+	}
+	if !slices.Contains(res.Candidates, "keep.local") {
+		t.Errorf("keep.local should remain a candidate, candidates = %v", res.Candidates)
+	}
+}
+
 func TestScanNoGitignore(t *testing.T) {
 	root := t.TempDir()
 	writeFile(t, root, ".env.local", "x")
 
-	res, err := Scan(root)
+	res, err := Scan(root, nil)
 	if err != nil {
 		t.Fatalf("Scan: %v", err)
 	}
