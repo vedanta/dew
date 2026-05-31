@@ -3,6 +3,7 @@ package identity
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -25,11 +26,13 @@ func TestGenerateCreatesIdentity(t *testing.T) {
 		t.Errorf("images dir not created: %v", err)
 	}
 
-	// Private key must be 0600.
-	if fi, err := os.Stat(p.KeyFile); err != nil {
-		t.Fatal(err)
-	} else if perm := fi.Mode().Perm(); perm != 0o600 {
-		t.Errorf("key file perm = %o, want 600", perm)
+	// Private key must be 0600 (Unix only — Windows has no Unix permission bits).
+	if runtime.GOOS != "windows" {
+		if fi, err := os.Stat(p.KeyFile); err != nil {
+			t.Fatal(err)
+		} else if perm := fi.Mode().Perm(); perm != 0o600 {
+			t.Errorf("key file perm = %o, want 600", perm)
+		}
 	}
 
 	// Pub file content matches the returned public key.
