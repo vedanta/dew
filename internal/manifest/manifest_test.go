@@ -52,6 +52,21 @@ func TestSaveLoadRoundTrip(t *testing.T) {
 	}
 }
 
+func TestValidateProjectName(t *testing.T) {
+	valid := []string{"acme-api", "my_project", "a", "v1.2", "App.Name-2"}
+	for _, n := range valid {
+		if err := ValidateProjectName(n); err != nil {
+			t.Errorf("ValidateProjectName(%q) = %v, want nil", n, err)
+		}
+	}
+	invalid := []string{"", ".", "..", "...", "a/b", `a\b`, "my project", "a:b", "tab\tname", strings.Repeat("x", 65)}
+	for _, n := range invalid {
+		if err := ValidateProjectName(n); err == nil {
+			t.Errorf("ValidateProjectName(%q) = nil, want error", n)
+		}
+	}
+}
+
 func TestAddRemoveAllow(t *testing.T) {
 	m := New("p")
 

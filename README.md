@@ -114,7 +114,7 @@ dew keygen                      # create the global age identity
 dew key status                  # inspect identity
 
 # Repository setup
-dew init [--from-gitignore]     # create .dew/manifest.yaml
+dew init [--from-gitignore] [--project <name>]   # create .dew/manifest.yaml
 
 # Discovery
 dew scan                        # suggest candidate local files

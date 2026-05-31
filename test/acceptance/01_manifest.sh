@@ -69,9 +69,26 @@ run_dew init
 assert_failure
 assert_contains "already exists"
 
-# --from-gitignore is exposed (discovery itself lands in Phase 4).
+# --from-gitignore and --project are exposed.
 run_dew init --help
 assert_success
 assert_contains "from-gitignore"
+assert_contains "project"
+
+# --project sets a custom name (in a separate source dir).
+alt="$SANDBOX/other-src"
+mkdir -p "$alt"
+cd "$alt"
+run_dew init --project custom-name
+assert_success
+grep -q "^project: custom-name$" "$alt/.dew/manifest.yaml" || fail "project name not set by --project"
+grep -q "^image: custom-name.dew.age$" "$alt/.dew/manifest.yaml" || fail "image not derived from --project"
+# An invalid project name is rejected.
+mkdir -p "$SANDBOX/bad-src"
+cd "$SANDBOX/bad-src"
+run_dew init --project "../escape"
+assert_failure
+assert_contains "project name"
+cd "$REPO"
 
 echo "  manifest ok"
