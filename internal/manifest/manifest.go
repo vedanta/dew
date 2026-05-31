@@ -59,6 +59,18 @@ func (m *Manifest) Validate() error {
 	return nil
 }
 
+// AddAllow adds p to the allow-list if not already present, returning true if
+// the manifest changed.
+func (m *Manifest) AddAllow(p string) bool {
+	for _, e := range m.Allow {
+		if e == p {
+			return false
+		}
+	}
+	m.Allow = append(m.Allow, p)
+	return true
+}
+
 // Load reads and validates the manifest at path.
 func Load(path string) (*Manifest, error) {
 	// path is the repo's own .dew/manifest.yaml, not attacker-controlled input.

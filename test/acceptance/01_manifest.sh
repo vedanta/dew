@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Manifest lifecycle: init (and, as later phases land, add/remove/list).
+# Manifest lifecycle: init + add (remove/list land with #7/#8).
 here="$(cd "$(dirname "$0")" && pwd)"
 # shellcheck source=test/acceptance/lib.sh
 . "$here/lib.sh"
@@ -11,18 +11,40 @@ run_dew init
 assert_success
 assert_contains "Created"
 assert_file_exists "$REPO/.dew/manifest.yaml"
-
-# The created manifest is valid YAML naming this repo as the project.
 grep -q "^project:" "$REPO/.dew/manifest.yaml" || fail "manifest missing project field"
 grep -q "^version:" "$REPO/.dew/manifest.yaml" || fail "manifest missing version field"
+
+# add appends a real file to the allow-list.
+echo "TOKEN=abc" >"$REPO/.env.local"
+run_dew add .env.local
+assert_success
+assert_contains "added .env.local"
+grep -q ".env.local" "$REPO/.dew/manifest.yaml" || fail "allow-list missing .env.local"
+
+# add is idempotent.
+run_dew add .env.local
+assert_success
+assert_contains "already tracked"
+
+# add accepts a directory path too.
+mkdir -p "$REPO/certs"
+echo "pem" >"$REPO/certs/dev.pem"
+run_dew add certs/dev.pem
+assert_success
+assert_contains "added certs/dev.pem"
+
+# add rejects paths outside the repository.
+run_dew add ../escape
+assert_failure
+assert_contains "outside the repository"
 
 # init refuses to clobber an existing manifest.
 run_dew init
 assert_failure
 assert_contains "already exists"
 
-# --from-gitignore is accepted (discovery itself lands in Phase 4).
-run_dew init --from-gitignore --help
+# --from-gitignore is exposed (discovery itself lands in Phase 4).
+run_dew init --help
 assert_success
 assert_contains "from-gitignore"
 
