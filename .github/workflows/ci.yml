@@ -68,9 +68,9 @@ jobs:
 
   # Acceptance scripts drive the built binary. Unix only — the harness is bash.
   # Windows acceptance is deferred (see docs/build-plan.md); Windows is still
-  # covered by the unit matrix above. The `age` CLI is NOT installed here yet —
-  # pack/restore is the first feature that shells out to it (Phase 3), so the
-  # install step is added back then to avoid a needless flaky dependency now.
+  # covered by the unit matrix above. No external tools are installed: crypto
+  # uses the native filippo.io/age library, and sync's scp/rsync preflight is
+  # exercised via its absence rather than a real transfer.
   acceptance:
     name: Acceptance (binary)
     strategy:
