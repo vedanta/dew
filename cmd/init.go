@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/vedanta/dew/internal/manifest"
+	"github.com/vedanta/dew/internal/scanner"
 )
 
 var initFromGitignore bool
@@ -43,7 +44,22 @@ func doInit(root string, fromGitignore bool, out io.Writer) error {
 	}
 
 	project := filepath.Base(root)
-	if err := manifest.Save(path, manifest.New(project)); err != nil {
+	m := manifest.New(project)
+
+	seeded := 0
+	if fromGitignore {
+		res, scanErr := scanner.Scan(root)
+		if scanErr != nil {
+			return scanErr
+		}
+		for _, c := range res.Candidates {
+			if m.AddAllow(c) {
+				seeded++
+			}
+		}
+	}
+
+	if err := manifest.Save(path, m); err != nil {
 		return err
 	}
 
@@ -51,8 +67,13 @@ func doInit(root string, fromGitignore bool, out io.Writer) error {
 		return err
 	}
 	if fromGitignore {
-		if _, err := fmt.Fprintln(out, "Note: --from-gitignore candidate discovery arrives in Phase 4; created an empty manifest for now."); err != nil {
+		if _, err := fmt.Fprintf(out, "Seeded %d candidate(s) from .gitignore.\n", seeded); err != nil {
 			return err
+		}
+		for _, p := range m.Allow {
+			if _, err := fmt.Fprintf(out, "  %s\n", p); err != nil {
+				return err
+			}
 		}
 	}
 	return nil

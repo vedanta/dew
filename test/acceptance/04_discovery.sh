@@ -27,4 +27,16 @@ case "$candidates_section" in
 *debug.log*) fail "debug.log offered as a candidate" ;;
 esac
 
-echo "  scan ok"
+# init --from-gitignore seeds the allow-list from discovered candidates only.
+run_dew init --from-gitignore
+assert_success
+assert_contains "Seeded"
+run_dew list
+assert_success
+assert_contains ".env.local"
+case "$LAST_OUTPUT" in
+*node_modules*) fail "node_modules was seeded into the manifest" ;;
+*debug.log*) fail "debug.log was seeded into the manifest" ;;
+esac
+
+echo "  scan + init --from-gitignore ok"

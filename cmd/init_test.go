@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"bytes"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -48,13 +49,34 @@ func TestDoInitRefusesOverwrite(t *testing.T) {
 	}
 }
 
-func TestDoInitFromGitignoreNote(t *testing.T) {
+func TestDoInitFromGitignoreSeeds(t *testing.T) {
 	root := t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, ".gitignore"), []byte(".env.local\nnode_modules/\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	for _, rel := range []string{".env.local", "node_modules/dep.js"} {
+		full := filepath.Join(root, rel)
+		if err := os.MkdirAll(filepath.Dir(full), 0o750); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(full, []byte("x"), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+
 	var out bytes.Buffer
 	if err := doInit(root, true, &out); err != nil {
 		t.Fatalf("doInit: %v", err)
 	}
-	if !strings.Contains(out.String(), "from-gitignore") {
-		t.Errorf("output = %q, want a --from-gitignore note", out.String())
+
+	m, err := manifest.Load(manifest.Path(root))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(m.Allow) != 1 || m.Allow[0] != ".env.local" {
+		t.Errorf("allow = %v, want [.env.local] (node_modules is noise)", m.Allow)
+	}
+	if !strings.Contains(out.String(), "Seeded 1 candidate") {
+		t.Errorf("output = %q, want a seeded count", out.String())
 	}
 }
