@@ -7,6 +7,11 @@ here="$(cd "$(dirname "$0")" && pwd)"
 
 setup_sandbox
 
+# Before keygen, status reports no identity.
+run_dew key status
+assert_success
+assert_contains "Not found"
+
 # keygen creates the global identity.
 run_dew keygen
 assert_success
@@ -17,6 +22,12 @@ assert_file_exists "$HOME/.dew/identity.age.pub"
 
 # images/ directory is created alongside the identity.
 [ -d "$HOME/.dew/images" ] || fail "keygen did not create ~/.dew/images"
+
+# After keygen, status reports the identity and its public key.
+run_dew key status
+assert_success
+assert_contains "Present"
+assert_contains "age1"
 
 # keygen refuses to overwrite an existing identity.
 run_dew keygen
