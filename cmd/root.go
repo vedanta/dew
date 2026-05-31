@@ -1,10 +1,7 @@
-// Package cmd defines the dew command-line surface. Each command currently
-// registers a stub; the real behavior lands per the phased plan in
-// docs/build-plan.md.
+// Package cmd defines the dew command-line surface.
 package cmd
 
 import (
-	"errors"
 	"fmt"
 	"os"
 
@@ -13,9 +10,6 @@ import (
 
 // version is overridden at build time via -ldflags "-X .../cmd.version=...".
 var version = "dev"
-
-// errNotImplemented is returned by command stubs until their phase lands.
-var errNotImplemented = errors.New("not implemented yet — see docs/build-plan.md")
 
 var rootCmd = &cobra.Command{
 	Use:   "dew",

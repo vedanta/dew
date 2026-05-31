@@ -56,3 +56,40 @@ func TestDoSyncPushLocal(t *testing.T) {
 		t.Errorf("output = %q, want 'Pushed'", out.String())
 	}
 }
+
+func TestDoSyncPushPullLocalRoundTrip(t *testing.T) {
+	root, p := packedFixture(t, "TOKEN=abc")
+	dest := filepath.Join(t.TempDir(), "store")
+	m, err := manifest.Load(manifest.Path(root))
+	if err != nil {
+		t.Fatal(err)
+	}
+	localImage := filepath.Join(p.ImagesDir, m.Image)
+
+	// Push, then simulate a machine with no local image.
+	if err := doSyncPush(root, p, dest, &bytes.Buffer{}); err != nil {
+		t.Fatalf("push: %v", err)
+	}
+	if err := os.Remove(localImage); err != nil {
+		t.Fatal(err)
+	}
+
+	var out bytes.Buffer
+	if err := doSyncPull(root, p, dest, &out); err != nil {
+		t.Fatalf("pull: %v", err)
+	}
+	if _, err := os.Stat(localImage); err != nil {
+		t.Errorf("image not pulled back: %v", err)
+	}
+	if !strings.Contains(out.String(), "Pulled") {
+		t.Errorf("output = %q, want 'Pulled'", out.String())
+	}
+}
+
+func TestDoSyncPullNoDestination(t *testing.T) {
+	root := t.TempDir()
+	err := doSyncPull(root, mustIdentityPaths(t), "", &bytes.Buffer{})
+	if err == nil || !strings.Contains(err.Error(), "no destination") {
+		t.Fatalf("expected no-destination error, got %v", err)
+	}
+}

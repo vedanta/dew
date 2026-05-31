@@ -29,9 +29,7 @@ var syncPullCmd = &cobra.Command{
 	Use:   "pull",
 	Short: "Pull the encrypted image from the sync destination",
 	Args:  cobra.NoArgs,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		return errNotImplemented
-	},
+	RunE:  runSyncPull,
 }
 
 func runSyncPush(cmd *cobra.Command, _ []string) error {
@@ -55,6 +53,30 @@ func doSyncPush(root string, p identity.Paths, destination string, out io.Writer
 		return err
 	}
 	_, err = fmt.Fprintf(out, "Pushed %s → %s\n", m.Image, destination)
+	return err
+}
+
+func runSyncPull(cmd *cobra.Command, _ []string) error {
+	root, p, dest, err := syncContext()
+	if err != nil {
+		return err
+	}
+	return doSyncPull(root, p, dest, cmd.OutOrStdout())
+}
+
+func doSyncPull(root string, p identity.Paths, destination string, out io.Writer) error {
+	m, err := loadForSync(root, destination)
+	if err != nil {
+		return err
+	}
+	if err := os.MkdirAll(p.ImagesDir, 0o700); err != nil {
+		return fmt.Errorf("sync: %w", err)
+	}
+	localImage := filepath.Join(p.ImagesDir, m.Image)
+	if err := dewsync.Pull(localImage, destination); err != nil {
+		return err
+	}
+	_, err = fmt.Fprintf(out, "Pulled %s from %s\nRun 'dew restore' to hydrate the repo.\n", m.Image, destination)
 	return err
 }
 
