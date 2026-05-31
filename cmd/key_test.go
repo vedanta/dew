@@ -36,3 +36,30 @@ func TestDoKeygenRefusesOverwrite(t *testing.T) {
 		t.Fatalf("expected already-exists error, got %v", err)
 	}
 }
+
+func TestDoKeyStatusAbsent(t *testing.T) {
+	p := identity.NewPaths(filepath.Join(t.TempDir(), ".dew"))
+	var out bytes.Buffer
+	if err := doKeyStatus(p, &out); err != nil {
+		t.Fatalf("doKeyStatus: %v", err)
+	}
+	if !strings.Contains(out.String(), "Not found") {
+		t.Errorf("output = %q, want 'Not found'", out.String())
+	}
+}
+
+func TestDoKeyStatusPresent(t *testing.T) {
+	p := identity.NewPaths(filepath.Join(t.TempDir(), ".dew"))
+	var gen bytes.Buffer
+	if err := doKeygen(p, &gen); err != nil {
+		t.Fatalf("doKeygen: %v", err)
+	}
+
+	var out bytes.Buffer
+	if err := doKeyStatus(p, &out); err != nil {
+		t.Fatalf("doKeyStatus: %v", err)
+	}
+	if !strings.Contains(out.String(), "Present") || !strings.Contains(out.String(), "age1") {
+		t.Errorf("output = %q, want 'Present' and the public key", out.String())
+	}
+}

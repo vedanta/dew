@@ -30,9 +30,7 @@ var keyStatusCmd = &cobra.Command{
 	Use:   "status",
 	Short: "Report whether an identity is present and show its public key",
 	Args:  cobra.NoArgs,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		return errNotImplemented
-	},
+	RunE:  runKeyStatus,
 }
 
 func runKeygen(cmd *cobra.Command, _ []string) error {
@@ -52,6 +50,32 @@ func doKeygen(p identity.Paths, out io.Writer) error {
 	fmt.Fprintln(&b, "Created identity")
 	fmt.Fprintf(&b, "  Private key: %s\n", p.KeyFile)
 	fmt.Fprintf(&b, "  Public key:  %s\n", pub)
+	_, err = io.WriteString(out, b.String())
+	return err
+}
+
+func runKeyStatus(cmd *cobra.Command, _ []string) error {
+	home, err := identity.DefaultHome()
+	if err != nil {
+		return fmt.Errorf("key status: %w", err)
+	}
+	return doKeyStatus(identity.NewPaths(home), cmd.OutOrStdout())
+}
+
+func doKeyStatus(p identity.Paths, out io.Writer) error {
+	s, err := identity.Inspect(p)
+	if err != nil {
+		return err
+	}
+	var b strings.Builder
+	if s.Present {
+		fmt.Fprintln(&b, "Identity: Present")
+		fmt.Fprintf(&b, "Private key: %s\n", s.KeyFile)
+		fmt.Fprintf(&b, "Public key:  %s\n", s.PublicKey)
+	} else {
+		fmt.Fprintln(&b, "Identity: Not found")
+		fmt.Fprintln(&b, "Run 'dew keygen' to create one.")
+	}
 	_, err = io.WriteString(out, b.String())
 	return err
 }
