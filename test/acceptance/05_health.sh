@@ -37,4 +37,18 @@ assert_success
 assert_contains "Incomplete"
 assert_contains "dew restore"
 
-echo "  status ok"
+# doctor diagnoses the missing file and recommends restore.
+run_dew doctor
+assert_success
+assert_contains "Problem:"
+assert_contains "missing"
+assert_contains "dew restore"
+
+# After restoring, doctor reports a healthy repo.
+run_dew restore
+assert_success
+run_dew doctor
+assert_success
+assert_contains "fully hydrated"
+
+echo "  status + doctor ok"
