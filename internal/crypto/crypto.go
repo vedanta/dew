@@ -8,22 +8,31 @@ import (
 	"filippo.io/age"
 )
 
-// Encrypt encrypts everything read from src to dst for the given recipient (an
-// age1... X25519 public key). It uses the native age library — no external
-// tooling.
-func Encrypt(dst io.Writer, src io.Reader, recipient string) error {
+// EncryptWriter returns a WriteCloser that encrypts everything written to it for
+// recipient (an age1... X25519 public key) and writes the ciphertext to dst.
+// Close finalizes the age stream and must be called before dst is used. It uses
+// the native age library — no external tooling.
+func EncryptWriter(dst io.Writer, recipient string) (io.WriteCloser, error) {
 	recip, err := age.ParseX25519Recipient(recipient)
 	if err != nil {
-		return fmt.Errorf("crypto: parse recipient: %w", err)
+		return nil, fmt.Errorf("crypto: parse recipient: %w", err)
 	}
 	w, err := age.Encrypt(dst, recip)
 	if err != nil {
-		return fmt.Errorf("crypto: init encryption: %w", err)
+		return nil, fmt.Errorf("crypto: init encryption: %w", err)
+	}
+	return w, nil
+}
+
+// Encrypt encrypts everything read from src to dst for the given recipient.
+func Encrypt(dst io.Writer, src io.Reader, recipient string) error {
+	w, err := EncryptWriter(dst, recipient)
+	if err != nil {
+		return err
 	}
 	if _, err := io.Copy(w, src); err != nil {
 		return fmt.Errorf("crypto: encrypt: %w", err)
 	}
-	// Close finalizes the age stream; it must run before dst is used.
 	if err := w.Close(); err != nil {
 		return fmt.Errorf("crypto: finalize encryption: %w", err)
 	}
