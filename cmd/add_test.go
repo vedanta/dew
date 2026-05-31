@@ -90,7 +90,7 @@ func TestRepoRelPath(t *testing.T) {
 func mustInit(t *testing.T, root string) {
 	t.Helper()
 	var discard bytes.Buffer
-	if err := doInit(root, false, &discard); err != nil {
+	if err := doInit(root, "", false, "", &discard); err != nil {
 		t.Fatalf("init: %v", err)
 	}
 }

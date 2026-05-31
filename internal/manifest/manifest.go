@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -16,7 +18,31 @@ const (
 	Dir = ".dew"
 	// File is the manifest filename inside Dir.
 	File = "manifest.yaml"
+	// maxProjectNameLen bounds the project name so the derived image filename
+	// stays well within filesystem limits.
+	maxProjectNameLen = 64
 )
+
+// projectNameRe restricts project names to a path-safe charset (no separators,
+// spaces, or control characters), since the name becomes the image filename.
+var projectNameRe = regexp.MustCompile(`^[A-Za-z0-9._-]+$`)
+
+// ValidateProjectName reports whether name is usable as a project name. The
+// name becomes the image filename (<name>.dew.age) under ~/.dew/images, so it
+// must not contain path separators or other unsafe characters.
+func ValidateProjectName(name string) error {
+	switch {
+	case name == "":
+		return errors.New("project name is empty")
+	case len(name) > maxProjectNameLen:
+		return fmt.Errorf("project name %q is too long (max %d characters)", name, maxProjectNameLen)
+	case !projectNameRe.MatchString(name):
+		return fmt.Errorf("project name %q may contain only letters, digits, '.', '_', '-' (no path separators or spaces)", name)
+	case strings.Trim(name, ".") == "":
+		return fmt.Errorf("project name %q must contain a non-dot character", name)
+	}
+	return nil
+}
 
 // Manifest is the repo-level contract committed to Git. It declares which local
 // files dew manages; it never holds secrets, file contents, or keys.

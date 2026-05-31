@@ -9,16 +9,20 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/vedanta/dew/internal/identity"
 	"github.com/vedanta/dew/internal/manifest"
 	"github.com/vedanta/dew/internal/scanner"
 )
 
-var initFromGitignore bool
+var (
+	initFromGitignore bool
+	initProject       string
+)
 
 var initCmd = &cobra.Command{
 	Use:   "init",
 	Short: "Create .dew/manifest.yaml in the current repo",
-	Long:  "Create the repo-level dew manifest. With --from-gitignore, seed candidates from .gitignore (discovery lands in Phase 4).",
+	Long:  "Create the repo-level dew manifest. The project name defaults to the directory name; override it with --project. With --from-gitignore, seed candidates from .gitignore.",
 	Args:  cobra.NoArgs,
 	RunE:  runInit,
 }
@@ -28,12 +32,18 @@ func runInit(cmd *cobra.Command, _ []string) error {
 	if err != nil {
 		return fmt.Errorf("init: %w", err)
 	}
-	return doInit(root, initFromGitignore, cmd.OutOrStdout())
+	home, err := identity.DefaultHome()
+	if err != nil {
+		return fmt.Errorf("init: %w", err)
+	}
+	return doInit(root, initProject, initFromGitignore, identity.NewPaths(home).ImagesDir, cmd.OutOrStdout())
 }
 
 // doInit creates a fresh manifest under root. It refuses to clobber an existing
-// manifest. The project name defaults to the repo directory name.
-func doInit(root string, fromGitignore bool, out io.Writer) error {
+// manifest. The project name comes from the --project value, or defaults to the
+// repo directory name. imagesDir (may be empty) is used only for the
+// name-collision warning.
+func doInit(root, projectFlag string, fromGitignore bool, imagesDir string, out io.Writer) error {
 	path := manifest.Path(root)
 
 	switch _, err := os.Stat(path); {
@@ -43,7 +53,17 @@ func doInit(root string, fromGitignore bool, out io.Writer) error {
 		return fmt.Errorf("init: %w", err)
 	}
 
-	project := filepath.Base(root)
+	project := projectFlag
+	fromFolder := project == ""
+	if fromFolder {
+		project = filepath.Base(root)
+	}
+	if err := manifest.ValidateProjectName(project); err != nil {
+		if fromFolder {
+			return fmt.Errorf("init: could not use the directory name as the project: %w — pass --project <name>", err)
+		}
+		return fmt.Errorf("init: %w", err)
+	}
 	m := manifest.New(project)
 
 	seeded := 0
@@ -67,6 +87,11 @@ func doInit(root string, fromGitignore bool, out io.Writer) error {
 	if _, err := fmt.Fprintf(out, "Created %s (project %q)\n", filepath.Join(manifest.Dir, manifest.File), project); err != nil {
 		return err
 	}
+	if imagesDir != "" && fileExists(filepath.Join(imagesDir, m.Image)) {
+		if _, err := fmt.Fprintf(out, "warning: an image named %s already exists in %s — another repo may use this name; consider 'dew init --project <name>'\n", m.Image, imagesDir); err != nil {
+			return err
+		}
+	}
 	if fromGitignore {
 		if _, err := fmt.Fprintf(out, "Seeded %d candidate(s) from .gitignore.\n", seeded); err != nil {
 			return err
@@ -82,5 +107,6 @@ func doInit(root string, fromGitignore bool, out io.Writer) error {
 
 func init() {
 	initCmd.Flags().BoolVar(&initFromGitignore, "from-gitignore", false, "seed candidates discovered from .gitignore")
+	initCmd.Flags().StringVarP(&initProject, "project", "p", "", "project name (defaults to the directory name)")
 	rootCmd.AddCommand(initCmd)
 }
