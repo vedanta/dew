@@ -82,7 +82,7 @@ plugs into it.
 | Sub-phase | Issue | Deliverables | Tests / acceptance |
 |---|---|---|---|
 | 6.1 | `config` package | read/write `~/.dew/config.yaml`, sync destination | unit: round-trip, missing config |
-| 6.2 | `sync` package | scp/rsync shell-out; **images only, never keys**. Preflight: `depcheck.RequireTool` gracefully errors if `scp`/`rsync` is absent (dew's only external runtime dep — crypto is native, see §3.2) | unit: command construction; guard rejects key paths; missing-tool error |
+| 6.2 | `sync` package | **hybrid transport**: local/mounted destinations use a pure-Go file copy (no deps); remote `host:path` destinations shell out to `scp` (inherits the user's `~/.ssh/config`, agent, and `known_hosts` — offloads auth/host-key security to OpenSSH). **Images only, never keys.** Preflight: `depcheck.RequireTool` gracefully errors if `scp` is absent, only when an SSH destination is used | unit: destination classification; command construction; guard rejects key paths; missing-tool error |
 | 6.3 | `dew sync` (push) | copy current image to destination | acceptance (local dir as dest): image appears at dest |
 | 6.4 | `dew sync pull` | copy image from destination into `~/.dew/images/` | **acceptance: full hydrate — clone → sync pull → restore → doctor = healthy** |
 
