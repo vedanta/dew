@@ -55,7 +55,7 @@ plugs into it.
 | Sub-phase | Issue | Deliverables | Tests / acceptance |
 |---|---|---|---|
 | 3.1 | `archive` package | tar build/extract **with path sanitization**: reject `..` and symlink entries (tar-slip / symlink escape) | unit: malicious tar (`../escape`, symlink) is rejected |
-| 3.2 | `crypto` package | age encrypt/decrypt (shell-out to `age`) | unit: encrypt→decrypt round-trip; wrong-key fails |
+| 3.2 | `crypto` package | age encrypt/decrypt via the native `filippo.io/age` library (no external `age` CLI dependency — resolves design §12) | unit: encrypt→decrypt round-trip; wrong-key fails |
 | 3.3 | compression | zstd compress/decompress wiring | unit: round-trip integrity |
 | 3.4 | `dew pack` | manifest → tar → zstd → age → `~/.dew/images/<project>.dew.age`; validate identity + allowed files exist | acceptance: pack writes image; missing file errors clearly |
 | 3.5 | `restore` package | **atomic, non-destructive**: extract to temp dir, hash/mtime compare, warn/skip before overwrite, then move into place | unit: no overwrite of newer/differing file without consent |
@@ -75,14 +75,14 @@ plugs into it.
 | Sub-phase | Issue | Deliverables | Tests / acceptance |
 |---|---|---|---|
 | 5.1 | `dew status` | identity / manifest / image / tracked count / hydration / sync summary | acceptance: healthy vs degraded states |
-| 5.2 | `dew doctor` | diagnose (missing identity/manifest/image/files, undecryptable image, no sync dest) + recommend next action | acceptance: each problem → correct recommendation |
+| 5.2 | `dew doctor` | diagnose (missing identity/manifest/image/files, undecryptable image, no sync dest, **missing `scp`/`rsync` for sync**) + recommend next action | acceptance: each problem → correct recommendation |
 
 ## Phase 6 — Sync (Milestone 6)
 
 | Sub-phase | Issue | Deliverables | Tests / acceptance |
 |---|---|---|---|
 | 6.1 | `config` package | read/write `~/.dew/config.yaml`, sync destination | unit: round-trip, missing config |
-| 6.2 | `sync` package | scp/rsync shell-out; **images only, never keys** | unit: command construction; guard rejects key paths |
+| 6.2 | `sync` package | scp/rsync shell-out; **images only, never keys**. Preflight: `depcheck.RequireTool` gracefully errors if `scp`/`rsync` is absent (dew's only external runtime dep — crypto is native, see §3.2) | unit: command construction; guard rejects key paths; missing-tool error |
 | 6.3 | `dew sync` (push) | copy current image to destination | acceptance (local dir as dest): image appears at dest |
 | 6.4 | `dew sync pull` | copy image from destination into `~/.dew/images/` | **acceptance: full hydrate — clone → sync pull → restore → doctor = healthy** |
 
@@ -103,9 +103,20 @@ test/acceptance/
 Each script runs against the freshly built binary with an isolated `$HOME` and a
 throwaway temp repo, so tests never touch the developer's real `~/.dew/`.
 
+## Runtime dependencies
+
+dew aims to be a single self-contained binary. Crypto (keygen, pack, restore)
+uses the native `filippo.io/age` library, so there is **no external `age`
+dependency**. The only external runtime tools are `scp`/`rsync`, used solely by
+`dew sync`. Commands check the tools they actually need via
+`depcheck.RequireTool` and exit gracefully with an install hint if one is
+missing — e.g. `dew list` never fails because `scp` is absent. `dew doctor`
+reports availability proactively.
+
 ## Cross-phase invariants (reviewed on every relevant PR)
 
 - Restore never writes outside the repo (`..` / symlink entries rejected).
 - Restore never silently destroys data (compare before overwrite; no version history).
 - Sync transfers encrypted images only — never the private key.
 - `pack` only includes manifest allow-list paths — never "everything ignored."
+- Commands preflight only their own external deps and exit gracefully if missing.
