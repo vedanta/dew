@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -48,6 +49,43 @@ func TestDoPackProducesDecryptableImage(t *testing.T) {
 
 	if got := unpackEntry(t, imagePath, p.KeyFile, ".env.local"); got != "TOKEN=xyz" {
 		t.Errorf("packed .env.local = %q, want TOKEN=xyz", got)
+	}
+}
+
+func TestDoPackHonorsDeny(t *testing.T) {
+	root := t.TempDir()
+	p := mustIdentityPaths(t)
+	mustInit(t, root)
+
+	// An allow-listed directory containing both a wanted file and noise.
+	writeRepoContent(t, root, "data/keep.txt", "keep")
+	writeRepoContent(t, root, "data/scratch.tmp", "noise")
+
+	// Set a per-manifest deny rule and allow the whole directory.
+	m, err := manifest.Load(manifest.Path(root))
+	if err != nil {
+		t.Fatal(err)
+	}
+	m.Deny = []string{"*.tmp"}
+	m.AddAllow("data")
+	if err := manifest.Save(manifest.Path(root), m); err != nil {
+		t.Fatal(err)
+	}
+
+	var out bytes.Buffer
+	if err := doPack(root, p, &out); err != nil {
+		t.Fatalf("doPack: %v", err)
+	}
+
+	imagePath := filepath.Join(p.ImagesDir, m.Image)
+	names := imageNames(t, imagePath, p.KeyFile)
+	if !slices.Contains(names, "data/keep.txt") {
+		t.Errorf("image %v should contain data/keep.txt", names)
+	}
+	for _, n := range names {
+		if strings.HasSuffix(n, ".tmp") {
+			t.Errorf("deny-listed %q was packed (names %v)", n, names)
+		}
 	}
 }
 
@@ -109,9 +147,24 @@ func mustIdentityPaths(t *testing.T) identity.Paths {
 	return p
 }
 
-// unpackEntry reverses the pack pipeline (decrypt -> decompress -> untar) and
-// returns the content of the named entry.
-func unpackEntry(t *testing.T, imagePath, keyFile, name string) string {
+// imageNames reverses the pack pipeline and returns the tar entry names.
+func imageNames(t *testing.T, imagePath, keyFile string) []string {
+	t.Helper()
+	tr := imageTar(t, imagePath, keyFile)
+	var names []string
+	for {
+		hdr, err := tr.Next()
+		if err != nil {
+			break
+		}
+		names = append(names, hdr.Name)
+	}
+	return names
+}
+
+// imageTar reverses the pack pipeline (decrypt -> decompress) and returns a tar
+// reader over the result.
+func imageTar(t *testing.T, imagePath, keyFile string) *tar.Reader {
 	t.Helper()
 	f, err := os.Open(imagePath) //nolint:gosec // test path
 	if err != nil {
@@ -123,12 +176,17 @@ func unpackEntry(t *testing.T, imagePath, keyFile, name string) string {
 	if err := crypto.Decrypt(&compressed, f, keyFile); err != nil {
 		t.Fatalf("decrypt: %v", err)
 	}
-	var tarball bytes.Buffer
-	if err := compress.Decompress(&tarball, &compressed); err != nil {
+	tarball := &bytes.Buffer{}
+	if err := compress.Decompress(tarball, &compressed); err != nil {
 		t.Fatalf("decompress: %v", err)
 	}
+	return tar.NewReader(tarball)
+}
 
-	tr := tar.NewReader(&tarball)
+// unpackEntry returns the content of the named entry in the image.
+func unpackEntry(t *testing.T, imagePath, keyFile, name string) string {
+	t.Helper()
+	tr := imageTar(t, imagePath, keyFile)
 	for {
 		hdr, err := tr.Next()
 		if err != nil {

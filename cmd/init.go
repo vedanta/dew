@@ -48,7 +48,8 @@ func doInit(root string, fromGitignore bool, out io.Writer) error {
 
 	seeded := 0
 	if fromGitignore {
-		res, scanErr := scanner.Scan(root)
+		// A fresh manifest has no deny: rules yet, so only the built-in deny applies.
+		res, scanErr := scanner.Scan(root, m.Deny)
 		if scanErr != nil {
 			return scanErr
 		}

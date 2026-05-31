@@ -15,7 +15,12 @@ import (
 // archived — symlinks and special files are skipped, so an image never carries
 // a symlink. Entry names are stored as clean, slash-separated repo-relative
 // paths.
-func Build(w io.Writer, root string, relPaths []string) error {
+//
+// If skip is non-nil it is consulted for every walked path (with the
+// repo-relative slash name and whether it is a directory); a skipped directory
+// is not descended into, and a skipped file is omitted. This lets the caller
+// apply the deny-list so an allow-listed directory never sweeps in noise.
+func Build(w io.Writer, root string, relPaths []string, skip func(rel string, isDir bool) bool) error {
 	tw := tar.NewWriter(w)
 	for _, rel := range relPaths {
 		abs := filepath.Join(root, filepath.FromSlash(rel))
@@ -23,10 +28,25 @@ func Build(w io.Writer, root string, relPaths []string) error {
 			if err != nil {
 				return err
 			}
-			if !d.Type().IsRegular() {
-				return nil // dirs are recreated on extract; symlinks/specials skipped
+			name, relErr := filepath.Rel(root, path)
+			if relErr != nil {
+				return relErr
 			}
-			return writeEntry(tw, root, path, d)
+			slash := filepath.ToSlash(name)
+
+			if d.IsDir() {
+				if skip != nil && skip(slash, true) {
+					return filepath.SkipDir
+				}
+				return nil
+			}
+			if !d.Type().IsRegular() {
+				return nil // symlinks/specials skipped
+			}
+			if skip != nil && skip(slash, false) {
+				return nil
+			}
+			return writeEntry(tw, slash, path, d)
 		})
 		if walkErr != nil {
 			return fmt.Errorf("archive: build %s: %w", rel, walkErr)
@@ -38,12 +58,8 @@ func Build(w io.Writer, root string, relPaths []string) error {
 	return nil
 }
 
-func writeEntry(tw *tar.Writer, root, path string, d fs.DirEntry) error {
+func writeEntry(tw *tar.Writer, slashName, path string, d fs.DirEntry) error {
 	info, err := d.Info()
-	if err != nil {
-		return err
-	}
-	name, err := filepath.Rel(root, path)
 	if err != nil {
 		return err
 	}
@@ -51,7 +67,7 @@ func writeEntry(tw *tar.Writer, root, path string, d fs.DirEntry) error {
 	if err != nil {
 		return err
 	}
-	hdr.Name = filepath.ToSlash(name)
+	hdr.Name = slashName
 	if err := tw.WriteHeader(hdr); err != nil {
 		return err
 	}

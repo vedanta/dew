@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"testing"
 )
 
@@ -15,7 +16,7 @@ func TestBuildExtractRoundTrip(t *testing.T) {
 	writeSrc(t, root, "certs/dev.pem", "PEM")
 
 	var buf bytes.Buffer
-	if err := Build(&buf, root, []string{".env.local", "certs"}); err != nil {
+	if err := Build(&buf, root, []string{".env.local", "certs"}, nil); err != nil {
 		t.Fatalf("Build: %v", err)
 	}
 
@@ -39,7 +40,7 @@ func TestBuildSkipsSymlinks(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	if err := Build(&buf, root, []string{"real.txt", "link.txt"}); err != nil {
+	if err := Build(&buf, root, []string{"real.txt", "link.txt"}, nil); err != nil {
 		t.Fatalf("Build: %v", err)
 	}
 
@@ -49,6 +50,40 @@ func TestBuildSkipsSymlinks(t *testing.T) {
 			t.Errorf("archive should not contain the symlink, got names %v", names)
 		}
 	}
+}
+
+func TestBuildSkipPredicate(t *testing.T) {
+	root := t.TempDir()
+	writeSrc(t, root, "data/keep.txt", "keep")
+	writeSrc(t, root, "data/debug.log", "noise")
+
+	var buf bytes.Buffer
+	// Skip any *.log file (mimics how pack applies the deny-list).
+	skip := func(rel string, isDir bool) bool {
+		return !isDir && strings.HasSuffix(rel, ".log")
+	}
+	if err := Build(&buf, root, []string{"data"}, skip); err != nil {
+		t.Fatalf("Build: %v", err)
+	}
+
+	names := tarNames(t, buf.Bytes())
+	for _, n := range names {
+		if strings.HasSuffix(n, ".log") {
+			t.Errorf("skip predicate failed; archive contains %q (names %v)", n, names)
+		}
+	}
+	if !contains(names, "data/keep.txt") {
+		t.Errorf("expected data/keep.txt in archive, got %v", names)
+	}
+}
+
+func contains(ss []string, want string) bool {
+	for _, s := range ss {
+		if s == want {
+			return true
+		}
+	}
+	return false
 }
 
 func TestExtractRejectsDotDot(t *testing.T) {

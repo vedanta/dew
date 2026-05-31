@@ -49,7 +49,7 @@ func doAddDiscovered(root string, in io.Reader, out io.Writer, assumeYes bool) e
 		return err
 	}
 
-	res, err := scanner.Scan(root)
+	res, err := scanner.Scan(root, m.Deny)
 	if err != nil {
 		return err
 	}

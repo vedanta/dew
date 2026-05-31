@@ -7,21 +7,11 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
-	"strings"
 
 	gitignore "github.com/sabhiram/go-gitignore"
-)
 
-// denyDirs are directory names that are always treated as noise and never
-// suggested, even if .gitignore would ignore them.
-var denyDirs = map[string]bool{
-	"node_modules": true,
-	"dist":         true,
-	"build":        true,
-	"target":       true,
-	".venv":        true,
-	"__pycache__":  true,
-}
+	"github.com/vedanta/dew/internal/deny"
+)
 
 // Result is the outcome of scanning a repo for candidate local-only files.
 type Result struct {
@@ -34,22 +24,24 @@ type Result struct {
 }
 
 // Scan reads root/.gitignore and walks the working tree, classifying each path
-// as a candidate (git-ignored and not noise) or skipped (noise). .gitignore is
-// only a hint: it never makes a path eligible on its own without the user
-// opting in. If there is no .gitignore, there are no candidates.
-func Scan(root string) (Result, error) {
+// as a candidate (git-ignored and not denied) or skipped (denied noise). The
+// deny set is the built-in patterns plus extraDeny (per-manifest deny: rules).
+// .gitignore is only a hint: it never makes a path eligible without the user
+// opting in, and an absent .gitignore yields no candidates.
+func Scan(root string, extraDeny []string) (Result, error) {
 	var res Result
 
 	ign, err := loadGitignore(filepath.Join(root, ".gitignore"))
 	if err != nil {
 		return res, err
 	}
+	denied := deny.New(extraDeny)
 
-	walkErr := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+	walkErr := filepath.WalkDir(root, func(p string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
-		rel, relErr := filepath.Rel(root, path)
+		rel, relErr := filepath.Rel(root, p)
 		if relErr != nil {
 			return relErr
 		}
@@ -59,9 +51,9 @@ func Scan(root string) (Result, error) {
 		slash := filepath.ToSlash(rel)
 
 		if d.IsDir() {
-			return classifyDir(d.Name(), slash, &res)
+			return classifyDir(d.Name(), slash, denied, &res)
 		}
-		classifyFile(d.Name(), slash, ign, &res)
+		classifyFile(slash, ign, denied, &res)
 		return nil
 	})
 	if walkErr != nil {
@@ -73,34 +65,30 @@ func Scan(root string) (Result, error) {
 	return res, nil
 }
 
-func classifyDir(name, slash string, res *Result) error {
+func classifyDir(name, slash string, denied *deny.Matcher, res *Result) error {
 	// dew's own internals and VCS metadata are never scanned.
 	if name == ".git" || name == ".dew" {
 		return filepath.SkipDir
 	}
-	if denyDirs[name] {
+	if denied.Match(slash, true) {
 		res.Skipped = append(res.Skipped, slash+"/")
 		return filepath.SkipDir
 	}
 	return nil
 }
 
-func classifyFile(name, slash string, ign *gitignore.GitIgnore, res *Result) {
+func classifyFile(slash string, ign *gitignore.GitIgnore, denied *deny.Matcher, res *Result) {
 	// .gitignore itself is tracked by Git; never suggest it.
-	if name == ".gitignore" {
+	if filepath.Base(slash) == ".gitignore" {
 		return
 	}
-	if isNoiseFile(name) {
+	if denied.Match(slash, false) {
 		res.Skipped = append(res.Skipped, slash)
 		return
 	}
 	if ign != nil && ign.MatchesPath(slash) {
 		res.Candidates = append(res.Candidates, slash)
 	}
-}
-
-func isNoiseFile(name string) bool {
-	return name == ".DS_Store" || strings.HasSuffix(name, ".log")
 }
 
 func loadGitignore(path string) (*gitignore.GitIgnore, error) {

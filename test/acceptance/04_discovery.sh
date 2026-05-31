@@ -53,4 +53,15 @@ case "$LAST_OUTPUT" in
 *debug.log*) fail "add . swept in debug.log" ;;
 esac
 
-echo "  scan + init --from-gitignore + add . ok"
+# Per-manifest deny: a deny: rule removes a matching path from candidates.
+printf 'deny:\n  - "*.secret"\n' >>"$REPO/.dew/manifest.yaml"
+printf '*.secret\n' >>"$REPO/.gitignore"
+echo "k" >"$REPO/api.secret"
+run_dew scan
+assert_success
+candidates_section="${LAST_OUTPUT%%Skipped*}"
+case "$candidates_section" in
+*api.secret*) fail "deny-listed api.secret offered as a candidate" ;;
+esac
+
+echo "  scan + init --from-gitignore + add . + per-manifest deny ok"

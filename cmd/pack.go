@@ -12,6 +12,7 @@ import (
 	"github.com/vedanta/dew/internal/archive"
 	"github.com/vedanta/dew/internal/compress"
 	"github.com/vedanta/dew/internal/crypto"
+	"github.com/vedanta/dew/internal/deny"
 	"github.com/vedanta/dew/internal/identity"
 	"github.com/vedanta/dew/internal/manifest"
 )
@@ -66,7 +67,9 @@ func doPack(root string, p identity.Paths, out io.Writer) error {
 		return fmt.Errorf("pack: %w", err)
 	}
 	imagePath := filepath.Join(p.ImagesDir, m.Image)
-	if err := writeImage(imagePath, p.ImagesDir, m.Image, root, m.Allow, st.PublicKey); err != nil {
+	denied := deny.New(m.Deny)
+	skip := func(rel string, isDir bool) bool { return denied.Match(rel, isDir) }
+	if err := writeImage(imagePath, p.ImagesDir, m.Image, root, m.Allow, st.PublicKey, skip); err != nil {
 		return err
 	}
 
@@ -76,7 +79,7 @@ func doPack(root string, p identity.Paths, out io.Writer) error {
 
 // writeImage builds the tar -> zstd -> age pipeline into a temp file, then
 // renames it into place so a failed pack never leaves a half-written image.
-func writeImage(imagePath, imagesDir, name, root string, allow []string, recipient string) (err error) {
+func writeImage(imagePath, imagesDir, name, root string, allow []string, recipient string, skip func(rel string, isDir bool) bool) (err error) {
 	tmp, err := os.CreateTemp(imagesDir, name+".tmp-*")
 	if err != nil {
 		return fmt.Errorf("pack: create temp image: %w", err)
@@ -98,7 +101,7 @@ func writeImage(imagePath, imagesDir, name, root string, allow []string, recipie
 	if err != nil {
 		return err
 	}
-	if err = archive.Build(zw, root, allow); err != nil {
+	if err = archive.Build(zw, root, allow, skip); err != nil {
 		return err
 	}
 	if err = zw.Close(); err != nil {
