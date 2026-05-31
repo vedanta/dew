@@ -23,11 +23,6 @@ assert_contains "dew version"
 run_dew definitely-not-a-real-command
 assert_failure
 
-# Unimplemented stubs exit non-zero with a clear message (until their phase).
-run_dew status
-assert_failure
-assert_contains "not implemented"
-
 # The sandbox really is isolated: no manifest created yet.
 [ ! -e "$REPO/.dew/manifest.yaml" ] || fail "unexpected manifest in fresh sandbox"
 

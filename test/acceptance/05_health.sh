@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+# Health: status (doctor lands with #23).
+here="$(cd "$(dirname "$0")" && pwd)"
+# shellcheck source=test/acceptance/lib.sh
+. "$here/lib.sh"
+
+setup_sandbox
+
+# Fresh repo: no identity, no manifest.
+run_dew status
+assert_success
+assert_contains "Identity:"
+assert_contains "Not found (run 'dew keygen')"
+assert_contains "Manifest:"
+
+# After keygen + init + add + pack: healthy.
+run_dew keygen
+assert_success
+run_dew init
+assert_success
+echo "TOKEN=abc" >"$REPO/.env.local"
+run_dew add .env.local
+assert_success
+run_dew pack
+assert_success
+
+run_dew status
+assert_success
+assert_contains "Present"
+assert_contains "Valid"
+assert_contains "Healthy"
+
+# Simulate a fresh clone (file gone, image present): incomplete.
+rm "$REPO/.env.local"
+run_dew status
+assert_success
+assert_contains "Incomplete"
+assert_contains "dew restore"
+
+echo "  status ok"
