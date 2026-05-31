@@ -31,4 +31,22 @@ assert_success
 assert_contains "Pushed"
 assert_file_exists "$store/repo.dew.age"
 
-echo "  sync push ok"
+# Full hydrate capstone: simulate a fresh clone / new machine that has the repo
+# and identity but no local image and no local files, then pull + restore.
+rm "$HOME/.dew/images/repo.dew.age"
+rm "$REPO/.env.local"
+
+run_dew sync pull
+assert_success
+assert_contains "Pulled"
+assert_file_exists "$HOME/.dew/images/repo.dew.age"
+
+run_dew restore
+assert_success
+[ "$(cat "$REPO/.env.local")" = "TOKEN=abc" ] || fail "restored content does not match"
+
+run_dew doctor
+assert_success
+assert_contains "fully hydrated"
+
+echo "  sync push + pull + full hydrate ok"
