@@ -158,11 +158,32 @@ dew doctor   # → Repository fully hydrated.
 
 ## Status
 
-This repository currently contains the design spec only — implementation has not started. The authoritative MVP spec is [`docs/design.md`](docs/design.md).
+**The MVP is complete and working.** Every command above is implemented and tested — Go unit tests plus binary-level acceptance tests, gated on a cross-platform (Linux/macOS/Windows) CI matrix. See the [build log](docs/BUILDLOG.md) for how it was built, the [build plan](docs/build-plan.md) for the phased issue breakdown, and [`docs/design.md`](docs/design.md) for the spec.
+
+> Pre-built release binaries aren't published yet — build from source.
+
+## Building from source
+
+Requires **Go 1.26+**.
+
+```bash
+git clone https://github.com/vedanta/dew && cd dew
+go build -o dew .      # or: make build
+./dew --help
+```
+
+Run the checks the way CI does:
+
+```bash
+make check        # gofmt + go vet + golangci-lint + go test -race
+make acceptance   # build the binary and run the acceptance suite
+```
+
+dew is a **single self-contained binary**: encryption and compression are pure Go (no external tools). The only external runtime dependency is `scp`, and only when you sync to a remote `host:path` destination — local or mounted destinations need nothing. `$DEW_HOME` overrides the default `~/.dew` location.
 
 ## Tech
 
-Go single binary · [Cobra](https://github.com/spf13/cobra) · `gopkg.in/yaml.v3` · `archive/tar` · zstd · [age](https://github.com/FiloSottile/age) · scp/rsync.
+Go single binary · [Cobra](https://github.com/spf13/cobra) (CLI) · `gopkg.in/yaml.v3` (config + manifest) · `archive/tar` · native [age](https://github.com/FiloSottile/age) encryption via [`filippo.io/age`](https://pkg.go.dev/filippo.io/age) · pure-Go [zstd](https://github.com/klauspost/compress) · `scp` for remote sync (inherits your SSH config).
 
 ## License
 
