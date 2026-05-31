@@ -39,4 +39,18 @@ case "$LAST_OUTPUT" in
 *debug.log*) fail "debug.log was seeded into the manifest" ;;
 esac
 
-echo "  scan + init --from-gitignore ok"
+# 'dew add . --yes' adds discovered candidates non-interactively. Add a new
+# ignored file, then confirm add . picks it up but never sweeps in noise.
+echo "v" >"$REPO/.env.dev"
+printf '.env.dev\n' >>"$REPO/.gitignore"
+run_dew add . --yes
+assert_success
+run_dew list
+assert_success
+assert_contains ".env.dev"
+case "$LAST_OUTPUT" in
+*node_modules*) fail "add . swept in node_modules" ;;
+*debug.log*) fail "add . swept in debug.log" ;;
+esac
+
+echo "  scan + init --from-gitignore + add . ok"
