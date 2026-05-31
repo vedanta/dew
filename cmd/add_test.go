@@ -71,7 +71,7 @@ func TestRepoRelPath(t *testing.T) {
 		{"nested", "certs/dev.pem", "certs/dev.pem", false},
 		{"abs inside", filepath.Join(root, "a/b"), "a/b", false},
 		{"parent escape", "../evil", "", true},
-		{"abs outside", "/etc/passwd", "", true},
+		{"abs outside", filepath.Join(filepath.Dir(root), "dew-outside"), "", true},
 		{"repo root dot", ".", "", true},
 	}
 	for _, c := range cases {
