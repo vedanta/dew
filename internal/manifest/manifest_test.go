@@ -52,6 +52,30 @@ func TestSaveLoadRoundTrip(t *testing.T) {
 	}
 }
 
+func TestAddRemoveAllow(t *testing.T) {
+	m := New("p")
+
+	if !m.AddAllow(".env.local") {
+		t.Error("AddAllow should report a change on first add")
+	}
+	if m.AddAllow(".env.local") {
+		t.Error("AddAllow should be a no-op (no change) on duplicate")
+	}
+	if len(m.Allow) != 1 {
+		t.Fatalf("allow = %v, want one entry", m.Allow)
+	}
+
+	if !m.RemoveAllow(".env.local") {
+		t.Error("RemoveAllow should report a change when present")
+	}
+	if m.RemoveAllow(".env.local") {
+		t.Error("RemoveAllow should be a no-op (no change) when absent")
+	}
+	if len(m.Allow) != 0 {
+		t.Errorf("allow = %v, want empty", m.Allow)
+	}
+}
+
 func TestLoadMalformedYAML(t *testing.T) {
 	dir := t.TempDir()
 	path := Path(dir)

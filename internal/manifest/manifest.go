@@ -71,6 +71,18 @@ func (m *Manifest) AddAllow(p string) bool {
 	return true
 }
 
+// RemoveAllow removes p from the allow-list if present, returning true if the
+// manifest changed.
+func (m *Manifest) RemoveAllow(p string) bool {
+	for i, e := range m.Allow {
+		if e == p {
+			m.Allow = append(m.Allow[:i], m.Allow[i+1:]...)
+			return true
+		}
+	}
+	return false
+}
+
 // Load reads and validates the manifest at path.
 func Load(path string) (*Manifest, error) {
 	// path is the repo's own .dew/manifest.yaml, not attacker-controlled input.

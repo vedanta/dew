@@ -24,7 +24,7 @@ func repoRelPath(root, arg string) (string, error) {
 	case rel == ".." || strings.HasPrefix(rel, "../"):
 		return "", fmt.Errorf("path %q is outside the repository", arg)
 	case rel == ".":
-		return "", errors.New("refusing to add the repository root; specify explicit paths ('dew add .' for discovered candidates arrives in Phase 4)")
+		return "", errors.New("the repository root is not a valid path; specify explicit paths ('dew add .' for discovered candidates arrives in Phase 4)")
 	}
 	return rel, nil
 }
