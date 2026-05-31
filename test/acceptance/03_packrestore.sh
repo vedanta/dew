@@ -27,4 +27,29 @@ if grep -aq "TOKEN=abc" "$HOME/.dew/images/repo.dew.age"; then
 	fail "secret appears in plaintext inside the image"
 fi
 
-echo "  pack ok"
+# Round-trip: simulate a fresh clone (local file gone), then restore.
+rm "$REPO/.env.local"
+run_dew restore
+assert_success
+assert_contains "1 written"
+assert_file_exists "$REPO/.env.local"
+[ "$(cat "$REPO/.env.local")" = "TOKEN=abc" ] || fail "restored content does not match original"
+
+# Restoring again is a no-op (identical).
+run_dew restore
+assert_success
+assert_contains "1 unchanged"
+
+# Non-destructive: a diverged local file is NOT overwritten without --force.
+printf 'TOKEN=local-edit\n' >"$REPO/.env.local"
+run_dew restore
+assert_failure
+assert_contains "conflict"
+[ "$(cat "$REPO/.env.local")" = "TOKEN=local-edit" ] || fail "restore clobbered local changes without --force"
+
+# --force overwrites with the image content.
+run_dew restore --force
+assert_success
+[ "$(cat "$REPO/.env.local")" = "TOKEN=abc" ] || fail "--force did not restore image content"
+
+echo "  pack/restore round-trip ok"

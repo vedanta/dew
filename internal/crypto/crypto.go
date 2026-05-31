@@ -39,22 +39,33 @@ func Encrypt(dst io.Writer, src io.Reader, recipient string) error {
 	return nil
 }
 
-// Decrypt decrypts everything read from src to dst using the age identity in
-// keyFile. It returns an error if no identity in the file matches.
-func Decrypt(dst io.Writer, src io.Reader, keyFile string) error {
+// DecryptReader returns a reader that decrypts src using the age identity in
+// keyFile. The key file is read and closed up front; the returned reader draws
+// from src lazily. It errors if no identity in the file matches.
+func DecryptReader(src io.Reader, keyFile string) (io.Reader, error) {
 	f, err := os.Open(keyFile) //nolint:gosec // G304: identity file is dew-home-local
 	if err != nil {
-		return fmt.Errorf("crypto: open identity %s: %w", keyFile, err)
+		return nil, fmt.Errorf("crypto: open identity %s: %w", keyFile, err)
 	}
 	defer func() { _ = f.Close() }()
 
 	ids, err := age.ParseIdentities(f)
 	if err != nil {
-		return fmt.Errorf("crypto: parse identity %s: %w", keyFile, err)
+		return nil, fmt.Errorf("crypto: parse identity %s: %w", keyFile, err)
 	}
 	r, err := age.Decrypt(src, ids...)
 	if err != nil {
-		return fmt.Errorf("crypto: decrypt (wrong key or corrupt image?): %w", err)
+		return nil, fmt.Errorf("crypto: decrypt (wrong key or corrupt image?): %w", err)
+	}
+	return r, nil
+}
+
+// Decrypt decrypts everything read from src to dst using the age identity in
+// keyFile.
+func Decrypt(dst io.Writer, src io.Reader, keyFile string) error {
+	r, err := DecryptReader(src, keyFile)
+	if err != nil {
+		return err
 	}
 	if _, err := io.Copy(dst, r); err != nil { //nolint:gosec // G110: image size is bounded by the local archive
 		return fmt.Errorf("crypto: read decrypted stream: %w", err)
