@@ -38,6 +38,17 @@ run_dew add ../escape
 assert_failure
 assert_contains "outside the repository"
 
+# remove drops a tracked path.
+run_dew remove .env.local
+assert_success
+assert_contains "removed .env.local"
+grep -q "env.local" "$REPO/.dew/manifest.yaml" && fail "allow-list still has .env.local after remove"
+
+# removing an untracked path is a clean no-op.
+run_dew remove never-added
+assert_success
+assert_contains "not tracked"
+
 # init refuses to clobber an existing manifest.
 run_dew init
 assert_failure
