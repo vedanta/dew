@@ -99,6 +99,24 @@
 
   if (replayBtn) replayBtn.addEventListener("click", run);
 
+  // Copy-to-clipboard for the install banner (and any [data-copy] button).
+  document.querySelectorAll("[data-copy]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var text = btn.getAttribute("data-copy");
+      var done = function () {
+        var orig = btn.textContent;
+        btn.textContent = "Copied!";
+        btn.classList.add("copied");
+        setTimeout(function () { btn.textContent = orig; btn.classList.remove("copied"); }, 1600);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, done);
+      } else {
+        done();
+      }
+    });
+  });
+
   // Run once when the terminal scrolls into view (or immediately as a fallback).
   if ("IntersectionObserver" in window) {
     var io = new IntersectionObserver(function (entries) {
