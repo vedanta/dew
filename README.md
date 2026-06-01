@@ -172,7 +172,19 @@ dew doctor   # → Repository fully hydrated.
 
 **The MVP is complete and working.** Every command above is implemented and tested — Go unit tests plus binary-level acceptance tests, gated on a cross-platform (Linux/macOS/Windows) CI matrix.
 
-> Pre-built release binaries aren't published yet — build from source.
+### Releasing
+
+Releases are cut by pushing a version tag; [GoReleaser](https://goreleaser.com)
+builds the cross-platform binaries (linux/macOS/windows × amd64/arm64),
+generates checksums, and publishes a GitHub Release:
+
+```bash
+git tag v0.1.0 && git push origin v0.1.0
+```
+
+The release workflow injects the version, commit, and date (visible via
+`dew version`). Validate the config locally with `goreleaser release --snapshot --clean`.
+(macOS binaries are not yet notarized — Gatekeeper may warn on direct download.)
 
 ## Building from source
 
