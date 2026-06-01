@@ -168,6 +168,33 @@ dew doctor   # → Repository fully hydrated.
 - **[Build plan](docs/build-plan.md)** & **[build log](docs/BUILDLOG.md)** — how it was planned and built.
 - **[Manual test plan](docs/manual-test-plan.md)** — end-to-end verification walkthrough.
 
+## Install
+
+dew is a single self-contained binary (Linux / macOS / Windows, amd64 & arm64).
+
+**Homebrew** (macOS/Linux):
+```bash
+brew install vedanta/dew/dew
+# or: brew tap vedanta/dew && brew install dew
+```
+
+**Download a binary** from the [latest release](https://github.com/vedanta/dew/releases/latest) — pick your OS/arch, then:
+```bash
+tar -xzf dew_*_<os>_<arch>.tar.gz
+sudo mv dew /usr/local/bin/      # Windows: extract the .zip and add it to PATH
+```
+Verify the download against `checksums.txt`. On macOS the binary isn't notarized yet, so Gatekeeper may warn — `xattr -d com.apple.quarantine ./dew` (or right-click → Open). Homebrew installs avoid this.
+
+**With Go** (1.26+):
+```bash
+go install github.com/vedanta/dew@latest
+```
+
+Then check it works:
+```bash
+dew version
+```
+
 ## Status
 
 **The MVP is complete and working.** Every command above is implemented and tested — Go unit tests plus binary-level acceptance tests, gated on a cross-platform (Linux/macOS/Windows) CI matrix.
