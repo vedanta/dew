@@ -23,11 +23,13 @@ body {
   font-family: var(--sans);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+  overflow-x: clip; /* guard against any horizontal scroll; sticky-safe (unlike overflow:hidden) */
 }
 
+img { max-width: 100%; height: auto; }
 a { color: var(--accent); text-decoration: none; }
 a:hover { text-decoration: underline; }
-code { font-family: var(--mono); font-size: 0.9em; color: #a9e0f7; background: var(--accent-soft); padding: 0.1em 0.4em; border-radius: 4px; }
+code { font-family: var(--mono); font-size: 0.9em; color: #a9e0f7; background: var(--accent-soft); padding: 0.1em 0.4em; border-radius: 4px; overflow-wrap: anywhere; }
 h1, h2, h3 { line-height: 1.2; }
 
 /* Nav */
@@ -83,7 +85,7 @@ h2 { font-size: 1.8rem; margin: 0 0 1rem; }
   box-shadow: 0 10px 30px rgba(0,0,0,0.35);
 }
 .ib-prompt { color: var(--accent); }
-.ib-cmd { background: none; color: #e7edf5; padding: 0; white-space: nowrap; overflow-x: auto; }
+.ib-cmd { background: none; color: #e7edf5; padding: 0; white-space: nowrap; overflow-x: auto; min-width: 0; }
 .copy-btn {
   font-family: var(--mono); font-size: 0.78rem; cursor: pointer;
   background: var(--surface); color: var(--accent); border: 1px solid var(--border);
