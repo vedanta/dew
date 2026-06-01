@@ -1,0 +1,60 @@
+version: 2
+
+project_name: dew
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: dew
+    main: .
+    binary: dew
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+      - -X github.com/vedanta/dew/cmd.version={{.Version}}
+      - -X github.com/vedanta/dew/cmd.commit={{.Commit}}
+      - -X github.com/vedanta/dew/cmd.date={{.Date}}
+
+archives:
+  - id: dew
+    formats:
+      - tar.gz
+    # Windows users expect a zip.
+    format_overrides:
+      - goos: windows
+        formats:
+          - zip
+    files:
+      - README.md
+      - LICENSE
+      - docs/USER-MANUAL.md
+      - docs/COMMANDS.md
+
+checksum:
+  name_template: checksums.txt
+
+changelog:
+  use: github
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
+
+release:
+  github:
+    owner: vedanta
+    name: dew
+  draft: false
+  prerelease: auto
