@@ -20,7 +20,7 @@ var addYes bool
 var addCmd = &cobra.Command{
 	Use:   "add <path>...",
 	Short: "Add a file or directory to the manifest allow-list",
-	Long:  "Add one or more paths to the allow-list. ('dew add .' for discovered candidates arrives in Phase 4 — it does not mean every file in the repo.)",
+	Long:  "Add one or more paths to the allow-list. 'dew add .' adds discovered candidates (from 'dew scan') — not every file in the repo; use -y to accept all without prompting.",
 	Args:  cobra.MinimumNArgs(1),
 	RunE:  runAdd,
 }

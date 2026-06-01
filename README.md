@@ -160,9 +160,17 @@ dew restore
 dew doctor   # → Repository fully hydrated.
 ```
 
+## Documentation
+
+- **[User manual](docs/USER-MANUAL.md)** — concepts, getting started, workflows, security, troubleshooting.
+- **[Command reference](docs/COMMANDS.md)** — every command and flag.
+- **[Design spec](docs/design.md)** — the MVP design and rationale.
+- **[Build plan](docs/build-plan.md)** & **[build log](docs/BUILDLOG.md)** — how it was planned and built.
+- **[Manual test plan](docs/manual-test-plan.md)** — end-to-end verification walkthrough.
+
 ## Status
 
-**The MVP is complete and working.** Every command above is implemented and tested — Go unit tests plus binary-level acceptance tests, gated on a cross-platform (Linux/macOS/Windows) CI matrix. See the [build log](docs/BUILDLOG.md) for how it was built, the [build plan](docs/build-plan.md) for the phased issue breakdown, and [`docs/design.md`](docs/design.md) for the spec.
+**The MVP is complete and working.** Every command above is implemented and tested — Go unit tests plus binary-level acceptance tests, gated on a cross-platform (Linux/macOS/Windows) CI matrix.
 
 > Pre-built release binaries aren't published yet — build from source.
 
