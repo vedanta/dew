@@ -23,7 +23,7 @@ dew restore     # extract local files back into the working tree
 Git gives you the code. dew gives you the missing local context.
 
 <p align="center">
-  <img src="assets/flow.png" alt="git clone (dry) → dew restore → ready to code (hydrated)" width="640">
+  <img src="assets/comic.png" alt="dew in 3 panels: 1) clone a repo — local files are missing, nothing works; 2) dew sync pull && dew restore packs/fetches your local files; 3) back to work — the missing local context is restored" width="760">
 </p>
 
 ## What dew is not
