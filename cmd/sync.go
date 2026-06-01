@@ -19,17 +19,27 @@ import (
 // destination. 'dew sync pull' fetches it back. Sync moves encrypted images
 // only — never the private key.
 var syncCmd = &cobra.Command{
-	Use:   "sync",
-	Short: "Push the current repo's encrypted image to the sync destination",
-	Args:  cobra.NoArgs,
-	RunE:  runSyncPush,
+	Use:     "sync",
+	GroupID: groupSync,
+	Short:   "Push the current repo's encrypted image to the sync destination",
+	Long: `Push the current repo's image to the destination set in ~/.dew/config.yaml.
+
+Hybrid transport: local/mounted paths use a pure-Go copy; remote host:path
+destinations shell out to scp (inheriting your ~/.ssh/config). Only the encrypted
+image is moved — never the private key. Use 'dew sync pull' to fetch.`,
+	Example: `  dew sync         # push
+  dew sync pull    # fetch into ~/.dew/images/`,
+	Args: cobra.NoArgs,
+	RunE: runSyncPush,
 }
 
 var syncPullCmd = &cobra.Command{
-	Use:   "pull",
-	Short: "Pull the encrypted image from the sync destination",
-	Args:  cobra.NoArgs,
-	RunE:  runSyncPull,
+	Use:     "pull",
+	Short:   "Pull the encrypted image from the sync destination",
+	Long:    "Fetch the current repo's image from the configured destination into ~/.dew/images/, then run 'dew restore' to hydrate.",
+	Example: "  dew sync pull",
+	Args:    cobra.NoArgs,
+	RunE:    runSyncPull,
 }
 
 func runSyncPush(cmd *cobra.Command, _ []string) error {

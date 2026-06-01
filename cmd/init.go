@@ -20,11 +20,20 @@ var (
 )
 
 var initCmd = &cobra.Command{
-	Use:   "init",
-	Short: "Create .dew/manifest.yaml in the current repo",
-	Long:  "Create the repo-level dew manifest. The project name defaults to the directory name; override it with --project. With --from-gitignore, seed candidates from .gitignore.",
-	Args:  cobra.NoArgs,
-	RunE:  runInit,
+	Use:     "init",
+	GroupID: groupRepo,
+	Short:   "Create .dew/manifest.yaml in the current repo",
+	Long: `Create the repo-level dew manifest (.dew/manifest.yaml), committed to Git.
+
+The project name defaults to the directory's base name; override it with
+--project (it becomes the image filename). With --from-gitignore, seed the
+allow-list with discovered candidates. Refuses to overwrite an existing
+manifest.`,
+	Example: `  dew init
+  dew init --project billing-svc
+  dew init --from-gitignore`,
+	Args: cobra.NoArgs,
+	RunE: runInit,
 }
 
 func runInit(cmd *cobra.Command, _ []string) error {

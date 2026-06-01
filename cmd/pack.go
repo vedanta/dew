@@ -24,11 +24,20 @@ var (
 )
 
 var packCmd = &cobra.Command{
-	Use:   "pack",
-	Short: "Build the encrypted image from allow-listed files",
-	Long:  "Package allow-listed files: tar -> zstd -> age encrypt -> ~/.dew/images/<project>.dew.age.",
-	Args:  cobra.NoArgs,
-	RunE:  runPack,
+	Use:     "pack",
+	GroupID: groupImage,
+	Short:   "Build the encrypted image from allow-listed files",
+	Long: `Package the allow-listed files into the encrypted image:
+tar -> zstd -> age encrypt -> ~/.dew/images/<project>.dew.age (written atomically).
+
+Honors the deny-list, so an allow-listed directory never packs noise. Refuses to
+overwrite an image created by a different repo (use --force). --dry-run previews
+the file list without writing and needs no identity.`,
+	Example: `  dew pack
+  dew pack --dry-run
+  dew pack --force`,
+	Args: cobra.NoArgs,
+	RunE: runPack,
 }
 
 func runPack(cmd *cobra.Command, _ []string) error {

@@ -15,10 +15,13 @@ import (
 )
 
 var statusCmd = &cobra.Command{
-	Use:   "status",
-	Short: "Show identity, manifest, image, and hydration health",
-	Args:  cobra.NoArgs,
-	RunE:  runStatus,
+	Use:     "status",
+	GroupID: groupHealth,
+	Short:   "Show identity, manifest, image, and hydration health",
+	Long:    "Show a per-repo health snapshot: project, identity, manifest validity, image presence, tracked-file count, hydration state, and sync configuration.",
+	Example: "  dew status",
+	Args:    cobra.NoArgs,
+	RunE:    runStatus,
 }
 
 func runStatus(cmd *cobra.Command, _ []string) error {

@@ -46,10 +46,15 @@ func mergeDeny(global, perManifest []string) []string {
 }
 
 var rulesCmd = &cobra.Command{
-	Use:   "rules",
-	Short: "Show the effective allow-list and deny rules by layer",
-	Args:  cobra.NoArgs,
-	RunE:  runRules,
+	Use:     "rules",
+	GroupID: groupRepo,
+	Short:   "Show the effective allow-list and deny rules by layer",
+	Long: `Show the effective configuration by layer: the repo allow-list, and the
+three deny layers — built-in, global (~/.dew/config.yaml), and repo
+(.dew/manifest.yaml). Useful for understanding why a path is included or skipped.`,
+	Example: "  dew rules",
+	Args:    cobra.NoArgs,
+	RunE:    runRules,
 }
 
 func runRules(cmd *cobra.Command, _ []string) error {

@@ -13,11 +13,17 @@ import (
 )
 
 var scanCmd = &cobra.Command{
-	Use:   "scan",
-	Short: "Discover candidate local-only files",
-	Long:  "Read .gitignore and walk the working tree to suggest candidate files. .gitignore is a hint, not an authority.",
-	Args:  cobra.NoArgs,
-	RunE:  runScan,
+	Use:     "scan",
+	GroupID: groupRepo,
+	Short:   "Discover candidate local-only files",
+	Long: `Read .gitignore and walk the working tree to suggest candidate files,
+filtering out noise (the deny-list). Prints Candidates and Skipped.
+
+.gitignore is a hint, not an authority — nothing is added automatically. Opt in
+with 'dew add'.`,
+	Example: "  dew scan",
+	Args:    cobra.NoArgs,
+	RunE:    runScan,
 }
 
 func runScan(cmd *cobra.Command, _ []string) error {
