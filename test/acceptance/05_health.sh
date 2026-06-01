@@ -30,6 +30,12 @@ assert_contains "Present"
 assert_contains "Valid"
 assert_contains "Healthy"
 
+# dew images lists the global inventory (repo-independent).
+run_dew images
+assert_success
+assert_contains "IMAGE"
+assert_contains "repo.dew.age"
+
 # Simulate a fresh clone (file gone, image present): incomplete.
 rm "$REPO/.env.local"
 run_dew status
