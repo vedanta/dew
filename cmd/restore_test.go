@@ -69,6 +69,18 @@ func TestDoRestoreDryRun(t *testing.T) {
 	assertRepoContent(t, root, ".env.local", "LOCAL")
 }
 
+func TestRestoreHasHydrateAlias(t *testing.T) {
+	found := false
+	for _, a := range restoreCmd.Aliases {
+		if a == "hydrate" {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("restore aliases = %v, want it to include 'hydrate'", restoreCmd.Aliases)
+	}
+}
+
 func TestDoRestoreNoImage(t *testing.T) {
 	root := t.TempDir()
 	p := mustIdentityPaths(t)

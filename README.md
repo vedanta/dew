@@ -126,6 +126,7 @@ dew remove <path> | list        # edit / view the allow-list
 # Image lifecycle
 dew pack | restore              # build / extract the encrypted image
                                 #   --dry-run on either to preview without writing
+                                #   'dew hydrate' is an alias for restore
 
 # Health
 dew status | doctor             # validate hydration state
