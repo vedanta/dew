@@ -31,7 +31,7 @@ func TestDoPackProducesDecryptableImage(t *testing.T) {
 	}
 
 	var out bytes.Buffer
-	if err := doPack(root, p, &out); err != nil {
+	if err := doPack(root, p, false, &out); err != nil {
 		t.Fatalf("doPack: %v", err)
 	}
 	if !strings.Contains(out.String(), "Packed") {
@@ -73,7 +73,7 @@ func TestDoPackHonorsDeny(t *testing.T) {
 	}
 
 	var out bytes.Buffer
-	if err := doPack(root, p, &out); err != nil {
+	if err := doPack(root, p, false, &out); err != nil {
 		t.Fatalf("doPack: %v", err)
 	}
 
@@ -92,7 +92,7 @@ func TestDoPackHonorsDeny(t *testing.T) {
 func TestDoPackNoManifest(t *testing.T) {
 	root := t.TempDir()
 	var out bytes.Buffer
-	err := doPack(root, mustIdentityPaths(t), &out)
+	err := doPack(root, mustIdentityPaths(t), false, &out)
 	if err == nil || !strings.Contains(err.Error(), "dew init") {
 		t.Fatalf("expected init hint, got %v", err)
 	}
@@ -108,7 +108,7 @@ func TestDoPackNoIdentity(t *testing.T) {
 	// Identity paths that were never generated.
 	p := identity.NewPaths(filepath.Join(t.TempDir(), ".dew"))
 	var out bytes.Buffer
-	err := doPack(root, p, &out)
+	err := doPack(root, p, false, &out)
 	if err == nil || !strings.Contains(err.Error(), "dew keygen") {
 		t.Fatalf("expected keygen hint, got %v", err)
 	}
@@ -118,7 +118,7 @@ func TestDoPackEmptyAllowList(t *testing.T) {
 	root := t.TempDir()
 	mustInit(t, root)
 	var out bytes.Buffer
-	err := doPack(root, mustIdentityPaths(t), &out)
+	err := doPack(root, mustIdentityPaths(t), false, &out)
 	if err == nil || !strings.Contains(err.Error(), "nothing to pack") {
 		t.Fatalf("expected empty-allow error, got %v", err)
 	}
@@ -132,9 +132,53 @@ func TestDoPackMissingTrackedFile(t *testing.T) {
 	_ = doAdd(root, []string{"ghost.env"}, &discard)
 
 	var out bytes.Buffer
-	err := doPack(root, mustIdentityPaths(t), &out)
+	err := doPack(root, mustIdentityPaths(t), false, &out)
 	if err == nil || !strings.Contains(err.Error(), "not found") {
 		t.Fatalf("expected not-found error, got %v", err)
+	}
+}
+
+func TestDoPackSameRepoRepackAllowed(t *testing.T) {
+	root, p := packedFixture(t, "TOKEN=abc") // packed once already
+	// Re-packing the same repo is fine — it owns the image.
+	if err := doPack(root, p, false, &bytes.Buffer{}); err != nil {
+		t.Fatalf("re-pack same repo should be allowed, got %v", err)
+	}
+}
+
+func TestDoPackRefusesCrossRepoOverwrite(t *testing.T) {
+	p := mustIdentityPaths(t) // one shared identity + images dir
+
+	rootA := t.TempDir()
+	setupSharedRepo(t, rootA, "shared", "AAA")
+	if err := doPack(rootA, p, false, &bytes.Buffer{}); err != nil {
+		t.Fatalf("pack A: %v", err)
+	}
+
+	// Repo B uses the same project (→ same image name) but a different id.
+	rootB := t.TempDir()
+	setupSharedRepo(t, rootB, "shared", "BBB")
+
+	err := doPack(rootB, p, false, &bytes.Buffer{})
+	if err == nil || !strings.Contains(err.Error(), "different repo") {
+		t.Fatalf("expected cross-repo refusal, got %v", err)
+	}
+
+	// --force lets B overwrite anyway.
+	if err := doPack(rootB, p, true, &bytes.Buffer{}); err != nil {
+		t.Fatalf("pack B --force: %v", err)
+	}
+}
+
+func setupSharedRepo(t *testing.T, root, project, content string) {
+	t.Helper()
+	var d bytes.Buffer
+	if err := doInit(root, project, false, "", &d); err != nil {
+		t.Fatal(err)
+	}
+	writeRepoContent(t, root, "data.txt", content)
+	if err := doAdd(root, []string{"data.txt"}, &d); err != nil {
+		t.Fatal(err)
 	}
 }
 

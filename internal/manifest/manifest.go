@@ -1,6 +1,8 @@
 package manifest
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"os"
@@ -50,8 +52,19 @@ type Manifest struct {
 	Version int      `yaml:"version"`
 	Project string   `yaml:"project"`
 	Image   string   `yaml:"image"`
+	ID      string   `yaml:"id,omitempty"` // per-repo identifier for image-ownership checks
 	Allow   []string `yaml:"allow"`
 	Deny    []string `yaml:"deny,omitempty"`
+}
+
+// NewID returns a random hex identifier for a repo. It is committed in the
+// manifest and used to detect when two repos would clobber each other's image.
+func NewID() (string, error) {
+	b := make([]byte, 16)
+	if _, err := rand.Read(b); err != nil {
+		return "", fmt.Errorf("manifest: generate id: %w", err)
+	}
+	return hex.EncodeToString(b), nil
 }
 
 // Path returns the manifest path for a repo rooted at repoRoot.

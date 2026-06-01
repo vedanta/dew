@@ -78,7 +78,7 @@ func packedFixture(t *testing.T, content string) (string, identity.Paths) {
 	if err := doAdd(root, []string{".env.local"}, &discard); err != nil {
 		t.Fatal(err)
 	}
-	if err := doPack(root, p, &discard); err != nil {
+	if err := doPack(root, p, false, &discard); err != nil {
 		t.Fatal(err)
 	}
 	return root, p

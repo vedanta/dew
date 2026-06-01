@@ -52,4 +52,20 @@ run_dew restore --force
 assert_success
 [ "$(cat "$REPO/.env.local")" = "TOKEN=abc" ] || fail "--force did not restore image content"
 
-echo "  pack/restore round-trip ok"
+# Pack-time ownership: a different repo with the same image name is refused.
+other="$SANDBOX/other-repo"
+mkdir -p "$other"
+cd "$other"
+run_dew init --project repo        # same image name as the first repo (basename "repo")
+assert_success
+echo "OTHER" >other.txt
+run_dew add other.txt
+assert_success
+run_dew pack
+assert_failure
+assert_contains "different repo"
+run_dew pack --force               # explicit override succeeds
+assert_success
+cd "$REPO"
+
+echo "  pack/restore round-trip + ownership guard ok"
