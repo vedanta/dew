@@ -172,10 +172,10 @@ dew doctor   # → Repository fully hydrated.
 
 dew is a single self-contained binary (Linux / macOS / Windows, amd64 & arm64).
 
-**Homebrew** (macOS/Linux):
+**Homebrew** (macOS):
 ```bash
-brew install vedanta/dew/dew
-# or: brew tap vedanta/dew && brew install dew
+brew install --cask vedanta/dew/dew
+# or: brew tap vedanta/dew && brew install --cask dew
 ```
 
 **Download a binary** from the [latest release](https://github.com/vedanta/dew/releases/latest) — pick your OS/arch, then:
