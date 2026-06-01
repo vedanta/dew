@@ -7,8 +7,11 @@
 </p>
 
 <p align="center">
+  <a href="https://vedanta.github.io/dew/"><img src="https://img.shields.io/badge/website-vedanta.github.io%2Fdew-45b3e0" alt="Website"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg" alt="License: Apache 2.0"></a>
 </p>
+
+<p align="center"><a href="https://vedanta.github.io/dew/"><strong>vedanta.github.io/dew</strong></a></p>
 
 **dew** is a local-first CLI that manages the *private* repository state Git intentionally ignores: `.env.local`, dev certificates, `docker-compose.override.yml`, private fixtures, local config — the per-developer files needed to actually run a clone.
 
@@ -162,6 +165,7 @@ dew doctor   # → Repository fully hydrated.
 
 ## Documentation
 
+- **[Website](https://vedanta.github.io/dew/)** — the product page (install, overview, demo).
 - **[User manual](docs/USER-MANUAL.md)** — concepts, getting started, workflows, security, troubleshooting.
 - **[Command reference](docs/COMMANDS.md)** — every command and flag.
 - **[Design spec](docs/design.md)** — the MVP design and rationale.
