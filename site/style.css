@@ -60,6 +60,10 @@ h2 { font-size: 1.8rem; margin: 0 0 1rem; }
 .hero { text-align: center; padding-top: 3rem; border-bottom: none; }
 .hero-logo { image-rendering: pixelated; border-radius: 18px; margin-bottom: 1rem; }
 .hero h1 { font-size: clamp(1.9rem, 5vw, 3rem); margin: 0.5rem 0 1rem; letter-spacing: -0.02em; }
+.hero-comic {
+  display: block; width: 100%; max-width: 540px; height: auto;
+  margin: 1.4rem auto 1.6rem; border-radius: 12px; border: 1px solid var(--border);
+}
 .lede { max-width: 60ch; margin: 0 auto 1.8rem; font-size: 1.12rem; color: var(--text); }
 .cta { display: flex; gap: 0.8rem; justify-content: center; flex-wrap: wrap; }
 .btn {
@@ -93,10 +97,6 @@ h2 { font-size: 1.8rem; margin: 0 0 1rem; }
 
 .badges { margin-top: 1.6rem; display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap; }
 .pill { font-family: var(--mono); font-size: 0.78rem; color: var(--muted); border: 1px solid var(--border); border-radius: 999px; padding: 0.2rem 0.7rem; }
-
-/* Comic */
-.comic { text-align: center; border-bottom: none; padding-top: 1rem; }
-.comic img { max-width: 100%; height: auto; border-radius: 12px; border: 1px solid var(--border); }
 
 /* Bands */
 .band h2 { text-align: left; }
