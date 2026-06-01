@@ -100,3 +100,33 @@ The defining workflow works end-to-end across machines:
 source machine:  dew keygen → dew init → dew add … → dew pack → dew sync
 new machine:      dew sync pull → dew restore → dew doctor  ⇒  Repository fully hydrated.
 ```
+
+## Post-MVP work
+
+After the MVP, several hardening and UX features shipped (each its own CI-gated
+PR, same workflow):
+
+- **Per-manifest deny wired up** — the inert `deny:` field made functional via a
+  shared `internal/deny` matcher (built-in + per-manifest), consumed by both
+  discovery and `pack`.
+- **`dew init --project`** — name a project independently of its folder, with
+  path-safe validation and a collision warning.
+- **Pack-time repo-binding** — a committed manifest `id` + per-image ownership
+  marker; `pack` refuses to overwrite an image created by a different repo
+  (unless `--force`), closing the silent cross-repo clobber.
+- **`--dry-run`** for `pack` and `restore` — preview without writing (a shared
+  `archive.eachFile` walk powers both `Build` and a new `List`).
+- **`dew hydrate`** — alias for `restore` (the product's core verb).
+- **Global deny layer + `dew rules`** — a third (user-level) deny layer in
+  `~/.dew/config.yaml`, and an inspection command showing all three layers.
+- **`dew images`** — global image inventory (project, size, last-packed, owner),
+  repo-independent.
+
+A 27-assertion end-to-end test (two simulated machines, shared remote, manual
+key transfer, wrong-key detection, deny exclusion, non-destructive restore)
+passes clean. Remaining backlog is tracked in GitHub issues (releases/Homebrew,
+image repo-locations).
+
+Full docs set: [`design.md`](design.md) (spec), [`build-plan.md`](build-plan.md)
+(plan), this log, [`USER-MANUAL.md`](USER-MANUAL.md), [`COMMANDS.md`](COMMANDS.md),
+and [`manual-test-plan.md`](manual-test-plan.md).
