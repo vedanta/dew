@@ -19,6 +19,12 @@ run_dew --version
 assert_success
 assert_contains "dew version"
 
+# The version subcommand prints richer build info.
+run_dew version
+assert_success
+assert_contains "commit:"
+assert_contains "go:"
+
 # Unknown commands are rejected.
 run_dew definitely-not-a-real-command
 assert_failure
