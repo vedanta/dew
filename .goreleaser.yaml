@@ -58,3 +58,23 @@ release:
     name: dew
   draft: false
   prerelease: auto
+
+# Homebrew cask (macOS). Linux users: use the binary download or 'go install'.
+homebrew_casks:
+  - name: dew
+    repository:
+      owner: vedanta
+      name: homebrew-dew
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
+    homepage: "https://github.com/vedanta/dew"
+    description: "Manage the private local files Git intentionally ignores"
+    # Don't publish on prerelease tags.
+    skip_upload: auto
+    # The binary isn't notarized; strip the quarantine flag on install so it
+    # runs without a Gatekeeper prompt.
+    hooks:
+      post:
+        install: |
+          if OS.mac?
+            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/dew"]
+          end
