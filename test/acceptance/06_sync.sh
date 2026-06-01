@@ -41,12 +41,13 @@ assert_success
 assert_contains "Pulled"
 assert_file_exists "$HOME/.dew/images/repo.dew.age"
 
-run_dew restore
+# 'dew hydrate' is an alias for restore.
+run_dew hydrate
 assert_success
-[ "$(cat "$REPO/.env.local")" = "TOKEN=abc" ] || fail "restored content does not match"
+[ "$(cat "$REPO/.env.local")" = "TOKEN=abc" ] || fail "hydrate did not restore content"
 
 run_dew doctor
 assert_success
 assert_contains "fully hydrated"
 
-echo "  sync push + pull + full hydrate ok"
+echo "  sync push + pull + hydrate (restore alias) ok"
