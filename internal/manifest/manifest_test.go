@@ -32,6 +32,7 @@ func TestSaveLoadRoundTrip(t *testing.T) {
 	path := Path(dir)
 
 	want := New("liway")
+	want.ID = "abc123def456"
 	want.Allow = []string{".env.local", "certs/dev.pem"}
 	want.Deny = []string{"*.log"}
 
@@ -49,6 +50,20 @@ func TestSaveLoadRoundTrip(t *testing.T) {
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("round-trip mismatch:\n got  %+v\n want %+v", got, want)
+	}
+}
+
+func TestNewID(t *testing.T) {
+	a, err := NewID()
+	if err != nil {
+		t.Fatalf("NewID: %v", err)
+	}
+	b, err := NewID()
+	if err != nil {
+		t.Fatalf("NewID: %v", err)
+	}
+	if a == "" || a == b {
+		t.Errorf("ids should be non-empty and unique, got %q and %q", a, b)
 	}
 }
 

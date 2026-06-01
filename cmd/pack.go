@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -16,6 +17,8 @@ import (
 	"github.com/vedanta/dew/internal/identity"
 	"github.com/vedanta/dew/internal/manifest"
 )
+
+var packForce bool
 
 var packCmd = &cobra.Command{
 	Use:   "pack",
@@ -34,10 +37,10 @@ func runPack(cmd *cobra.Command, _ []string) error {
 	if err != nil {
 		return fmt.Errorf("pack: %w", err)
 	}
-	return doPack(root, identity.NewPaths(home), cmd.OutOrStdout())
+	return doPack(root, identity.NewPaths(home), packForce, cmd.OutOrStdout())
 }
 
-func doPack(root string, p identity.Paths, out io.Writer) error {
+func doPack(root string, p identity.Paths, force bool, out io.Writer) error {
 	m, err := manifest.Load(manifest.Path(root))
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
@@ -67,14 +70,61 @@ func doPack(root string, p identity.Paths, out io.Writer) error {
 		return fmt.Errorf("pack: %w", err)
 	}
 	imagePath := filepath.Join(p.ImagesDir, m.Image)
+	if err := checkImageOwner(imagePath, m.ID, force); err != nil {
+		return err
+	}
+
 	denied := deny.New(m.Deny)
 	skip := func(rel string, isDir bool) bool { return denied.Match(rel, isDir) }
 	if err := writeImage(imagePath, p.ImagesDir, m.Image, root, m.Allow, st.PublicKey, skip); err != nil {
 		return err
 	}
+	if err := writeImageOwner(imagePath, m.ID); err != nil {
+		return err
+	}
 
 	_, err = fmt.Fprintf(out, "Packed %d tracked path(s) → %s\n", len(m.Allow), imagePath)
 	return err
+}
+
+func ownerMarkerPath(imagePath string) string { return imagePath + ".id" }
+
+// checkImageOwner refuses to overwrite an image created by a different repo
+// (its ownership marker holds a different manifest id), unless force is set. An
+// unmarked image, a matching id, or an id-less manifest is allowed through.
+func checkImageOwner(imagePath, manifestID string, force bool) error {
+	if manifestID == "" || force {
+		return nil
+	}
+	owner, err := readImageOwner(imagePath)
+	if err != nil {
+		return err
+	}
+	if owner != "" && owner != manifestID {
+		return fmt.Errorf("pack: %s was created by a different repo; use 'dew init --project <name>' for a unique name, or --force to overwrite it", filepath.Base(imagePath))
+	}
+	return nil
+}
+
+func readImageOwner(imagePath string) (string, error) {
+	b, err := os.ReadFile(ownerMarkerPath(imagePath)) //nolint:gosec // G304: marker path is dew-home-local
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return "", nil
+		}
+		return "", fmt.Errorf("pack: read image owner: %w", err)
+	}
+	return strings.TrimSpace(string(b)), nil
+}
+
+func writeImageOwner(imagePath, manifestID string) error {
+	if manifestID == "" {
+		return nil
+	}
+	if err := os.WriteFile(ownerMarkerPath(imagePath), []byte(manifestID+"\n"), 0o600); err != nil {
+		return fmt.Errorf("pack: write image owner: %w", err)
+	}
+	return nil
 }
 
 // writeImage builds the tar -> zstd -> age pipeline into a temp file, then
@@ -120,5 +170,6 @@ func writeImage(imagePath, imagesDir, name, root string, allow []string, recipie
 }
 
 func init() {
+	packCmd.Flags().BoolVar(&packForce, "force", false, "overwrite an image created by a different repo")
 	rootCmd.AddCommand(packCmd)
 }

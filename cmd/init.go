@@ -65,6 +65,11 @@ func doInit(root, projectFlag string, fromGitignore bool, imagesDir string, out 
 		return fmt.Errorf("init: %w", err)
 	}
 	m := manifest.New(project)
+	id, err := manifest.NewID()
+	if err != nil {
+		return err
+	}
+	m.ID = id
 
 	seeded := 0
 	if fromGitignore {
