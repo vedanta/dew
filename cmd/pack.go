@@ -40,6 +40,9 @@ func runPack(cmd *cobra.Command, _ []string) error {
 	if err != nil {
 		return fmt.Errorf("pack: %w", err)
 	}
+	if err := loadGlobalDeny(); err != nil {
+		return fmt.Errorf("pack: %w", err)
+	}
 	return doPack(root, identity.NewPaths(home), packForce, packDryRun, cmd.OutOrStdout())
 }
 
@@ -61,7 +64,7 @@ func doPack(root string, p identity.Paths, force, dryRun bool, out io.Writer) er
 		}
 	}
 
-	denied := deny.New(m.Deny)
+	denied := deny.New(mergeDeny(globalDenyPatterns, m.Deny))
 	skip := func(rel string, isDir bool) bool { return denied.Match(rel, isDir) }
 
 	if dryRun {

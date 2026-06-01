@@ -73,7 +73,7 @@ Pack:    allow-listed files → tar → zstd → age encrypt → ~/.dew/images/<
 Restore: image → age decrypt → zstd decompress → tar extract → write into repo
 ```
 
-The allow-list is authoritative — `pack` only ever includes paths the manifest lists, never "everything ignored." A deny-list (built-in patterns + per-manifest `deny:`) keeps noise like `node_modules/`, `dist/`, and `*.log` out. `.gitignore` is only a hint for discovery.
+The allow-list is authoritative — `pack` only ever includes paths the manifest lists, never "everything ignored." A three-layer deny-list keeps noise out: **built-in** patterns (`node_modules/`, `dist/`, `*.log`, …), a **global** `deny:` in `~/.dew/config.yaml` (your per-user noise, applied to every repo), and the **repo** `deny:` in the manifest. `dew rules` shows all three. `.gitignore` is only a hint for discovery.
 
 ### Workflow
 
@@ -118,6 +118,7 @@ dew init [--from-gitignore] [--project <name>]   # create .dew/manifest.yaml
 
 # Discovery
 dew scan                        # suggest candidate local files
+dew rules                       # show effective allow / deny (built-in, global, repo)
 
 # Manifest
 dew add <path> | add .          # add file/dir/discovered candidates

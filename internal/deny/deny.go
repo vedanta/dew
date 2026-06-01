@@ -11,15 +11,31 @@ import (
 	gitignore "github.com/sabhiram/go-gitignore"
 )
 
-// builtinDirs are directory names always treated as noise, even when an
+// builtinDirNames are directory names always treated as noise, even when an
 // allow-listed directory would otherwise sweep them in.
-var builtinDirs = map[string]bool{
-	"node_modules": true,
-	"dist":         true,
-	"build":        true,
-	"target":       true,
-	".venv":        true,
-	"__pycache__":  true,
+var builtinDirNames = []string{"node_modules", "dist", "build", "target", ".venv", "__pycache__"}
+
+var builtinDirs = func() map[string]bool {
+	m := make(map[string]bool, len(builtinDirNames))
+	for _, d := range builtinDirNames {
+		m[d] = true
+	}
+	return m
+}()
+
+const (
+	builtinDSStore = ".DS_Store"
+	builtinLogGlob = "*.log"
+)
+
+// Builtin returns the built-in deny patterns in display form (directories with
+// a trailing slash). It is the single source of truth shared with Match.
+func Builtin() []string {
+	out := make([]string, 0, len(builtinDirNames)+2)
+	for _, d := range builtinDirNames {
+		out = append(out, d+"/")
+	}
+	return append(out, builtinDSStore, builtinLogGlob)
 }
 
 // Matcher tests repo-relative slash paths against the built-in rules plus any
@@ -45,7 +61,7 @@ func (m *Matcher) Match(slashPath string, isDir bool) bool {
 	switch {
 	case isDir && builtinDirs[base]:
 		return true
-	case !isDir && (base == ".DS_Store" || strings.HasSuffix(base, ".log")):
+	case !isDir && (base == builtinDSStore || strings.HasSuffix(base, ".log")):
 		return true
 	case m.extra != nil && m.extra.MatchesPath(slashPath):
 		return true

@@ -36,6 +36,9 @@ func runInit(cmd *cobra.Command, _ []string) error {
 	if err != nil {
 		return fmt.Errorf("init: %w", err)
 	}
+	if err := loadGlobalDeny(); err != nil {
+		return fmt.Errorf("init: %w", err)
+	}
 	return doInit(root, initProject, initFromGitignore, identity.NewPaths(home).ImagesDir, cmd.OutOrStdout())
 }
 
@@ -73,8 +76,8 @@ func doInit(root, projectFlag string, fromGitignore bool, imagesDir string, out 
 
 	seeded := 0
 	if fromGitignore {
-		// A fresh manifest has no deny: rules yet, so only the built-in deny applies.
-		res, scanErr := scanner.Scan(root, m.Deny)
+		// A fresh manifest has no deny: rules yet, so only built-in + global apply.
+		res, scanErr := scanner.Scan(root, mergeDeny(globalDenyPatterns, m.Deny))
 		if scanErr != nil {
 			return scanErr
 		}

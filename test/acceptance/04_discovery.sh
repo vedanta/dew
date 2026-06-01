@@ -64,4 +64,28 @@ case "$candidates_section" in
 *api.secret*) fail "deny-listed api.secret offered as a candidate" ;;
 esac
 
-echo "  scan + init --from-gitignore + add . + per-manifest deny ok"
+# dew rules shows the effective allow/deny by layer.
+run_dew rules
+assert_success
+assert_contains "Deny — built-in"
+assert_contains "node_modules/"
+assert_contains "Deny — repo"
+assert_contains "*.secret"
+
+# Global deny (~/.dew/config.yaml) keeps a match out of candidates.
+mkdir -p "$HOME/.dew"
+printf 'deny:\n  - "*.scratch"\n' >"$HOME/.dew/config.yaml"
+printf '*.scratch\n' >>"$REPO/.gitignore"
+echo s >"$REPO/tmp.scratch"
+run_dew rules
+assert_success
+assert_contains "Deny — global"
+assert_contains "*.scratch"
+run_dew scan
+assert_success
+candidates_section="${LAST_OUTPUT%%Skipped*}"
+case "$candidates_section" in
+*tmp.scratch*) fail "global deny did not keep tmp.scratch out of candidates" ;;
+esac
+
+echo "  scan + init --from-gitignore + add . + deny (repo + global) + rules ok"

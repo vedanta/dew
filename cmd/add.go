@@ -32,6 +32,9 @@ func runAdd(cmd *cobra.Command, args []string) error {
 	}
 	// 'dew add .' means "add discovered candidates" — not every file in the repo.
 	if len(args) == 1 && args[0] == "." {
+		if err := loadGlobalDeny(); err != nil {
+			return fmt.Errorf("add: %w", err)
+		}
 		return doAddDiscovered(root, cmd.InOrStdin(), cmd.OutOrStdout(), addYes)
 	}
 	return doAdd(root, args, cmd.OutOrStdout())
@@ -49,7 +52,7 @@ func doAddDiscovered(root string, in io.Reader, out io.Writer, assumeYes bool) e
 		return err
 	}
 
-	res, err := scanner.Scan(root, m.Deny)
+	res, err := scanner.Scan(root, mergeDeny(globalDenyPatterns, m.Deny))
 	if err != nil {
 		return err
 	}

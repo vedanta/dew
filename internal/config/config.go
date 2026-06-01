@@ -17,10 +17,12 @@ const (
 )
 
 // Config is the global dew configuration stored at ~/.dew/config.yaml. It holds
-// no secrets — only preferences such as the sync destination.
+// no secrets — only preferences such as the sync destination and a user-level
+// deny-list applied across all repos.
 type Config struct {
-	Version int  `yaml:"version"`
-	Sync    Sync `yaml:"sync"`
+	Version int      `yaml:"version"`
+	Sync    Sync     `yaml:"sync"`
+	Deny    []string `yaml:"deny,omitempty"`
 }
 
 // Sync holds sync preferences.

@@ -38,6 +38,22 @@ func TestSaveLoadRoundTrip(t *testing.T) {
 	}
 }
 
+func TestDenyRoundTrip(t *testing.T) {
+	path := Path(filepath.Join(t.TempDir(), ".dew"))
+	want := Default()
+	want.Deny = []string{"*.swp", ".idea/"}
+	if err := Save(path, want); err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+	got, err := Load(path)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if len(got.Deny) != 2 || got.Deny[0] != "*.swp" || got.Deny[1] != ".idea/" {
+		t.Errorf("deny = %v, want [*.swp .idea/]", got.Deny)
+	}
+}
+
 func TestLoadMalformed(t *testing.T) {
 	path := Path(t.TempDir())
 	if err := os.WriteFile(path, []byte("sync: : not yaml ]["), 0o600); err != nil {

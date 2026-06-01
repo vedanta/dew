@@ -25,13 +25,16 @@ func runScan(cmd *cobra.Command, _ []string) error {
 	if err != nil {
 		return fmt.Errorf("scan: %w", err)
 	}
+	if err := loadGlobalDeny(); err != nil {
+		return fmt.Errorf("scan: %w", err)
+	}
 	return doScan(root, cmd.OutOrStdout())
 }
 
 func doScan(root string, out io.Writer) error {
-	tracked, extraDeny := manifestHints(root)
+	tracked, repoDeny := manifestHints(root)
 
-	res, err := scanner.Scan(root, extraDeny)
+	res, err := scanner.Scan(root, mergeDeny(globalDenyPatterns, repoDeny))
 	if err != nil {
 		return err
 	}
