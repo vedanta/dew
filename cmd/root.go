@@ -25,8 +25,39 @@ working state:
   git clone <repo> && cd <repo>
   dew sync pull
   dew restore`,
+	Example: `  # First time on a machine
+  dew keygen
+
+  # Set up a repo
+  dew init
+  dew add .env.local certs/
+  dew pack
+  dew sync
+
+  # Hydrate a fresh clone elsewhere
+  dew sync pull
+  dew restore`,
 	Version:      version,
 	SilenceUsage: true,
+}
+
+// Command group IDs, used to organize 'dew --help'.
+const (
+	groupIdentity = "identity"
+	groupRepo     = "repo"
+	groupImage    = "image"
+	groupSync     = "sync"
+	groupHealth   = "health"
+)
+
+func init() {
+	rootCmd.AddGroup(
+		&cobra.Group{ID: groupIdentity, Title: "Identity:"},
+		&cobra.Group{ID: groupRepo, Title: "Repository:"},
+		&cobra.Group{ID: groupImage, Title: "Image:"},
+		&cobra.Group{ID: groupSync, Title: "Sync:"},
+		&cobra.Group{ID: groupHealth, Title: "Health & inventory:"},
+	)
 }
 
 // Execute runs the root command and exits non-zero on error.

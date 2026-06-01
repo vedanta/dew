@@ -16,10 +16,16 @@ import (
 )
 
 var doctorCmd = &cobra.Command{
-	Use:   "doctor",
-	Short: "Diagnose hydration problems and recommend next actions",
-	Args:  cobra.NoArgs,
-	RunE:  runDoctor,
+	Use:     "doctor",
+	GroupID: groupHealth,
+	Short:   "Diagnose hydration problems and recommend next actions",
+	Long: `Diagnose the highest-priority problem and recommend the exact next command
+(missing identity/manifest/image, undecryptable image, missing tracked files, …),
+or report "Repository fully hydrated." It verifies the image actually decrypts,
+not just that it exists.`,
+	Example: "  dew doctor",
+	Args:    cobra.NoArgs,
+	RunE:    runDoctor,
 }
 
 func runDoctor(cmd *cobra.Command, _ []string) error {

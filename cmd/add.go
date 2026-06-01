@@ -18,11 +18,19 @@ import (
 var addYes bool
 
 var addCmd = &cobra.Command{
-	Use:   "add <path>...",
-	Short: "Add a file or directory to the manifest allow-list",
-	Long:  "Add one or more paths to the allow-list. 'dew add .' adds discovered candidates (from 'dew scan') — not every file in the repo; use -y to accept all without prompting.",
-	Args:  cobra.MinimumNArgs(1),
-	RunE:  runAdd,
+	Use:     "add <path>...",
+	GroupID: groupRepo,
+	Short:   "Add a file or directory to the manifest allow-list",
+	Long: `Add one or more paths to the allow-list (deduped). Adding a directory
+includes its files, minus deny-listed noise. Paths outside the repo are rejected.
+
+'dew add .' is special: it adds the discovered candidates (from 'dew scan'),
+prompting Y/n per file — not every file in the repo. Use -y to accept all.`,
+	Example: `  dew add .env.local certs/dev.pem
+  dew add .          # interactively add discovered candidates
+  dew add . --yes    # add all discovered candidates`,
+	Args: cobra.MinimumNArgs(1),
+	RunE: runAdd,
 }
 
 func runAdd(cmd *cobra.Command, args []string) error {

@@ -25,10 +25,20 @@ var (
 var restoreCmd = &cobra.Command{
 	Use:     "restore",
 	Aliases: []string{"hydrate"},
+	GroupID: groupImage,
 	Short:   "Extract the encrypted image back into the repo (alias: hydrate)",
-	Long:    "Restore local files: age decrypt -> zstd decompress -> tar extract. Atomic and non-destructive — files that differ from the image are reported as conflicts and left untouched unless --force is given. Also available as 'dew hydrate'.",
-	Args:    cobra.NoArgs,
-	RunE:    runRestore,
+	Long: `Restore local files from the image: age decrypt -> zstd decompress -> tar
+extract.
+
+Atomic and non-destructive: files are staged to a temp dir, then placed. A file
+that differs from the image is reported as a conflict and left untouched (exit
+non-zero) unless --force. --dry-run previews the outcome without changing the
+working tree. Also available as 'dew hydrate'.`,
+	Example: `  dew restore
+  dew restore --dry-run
+  dew restore --force`,
+	Args: cobra.NoArgs,
+	RunE: runRestore,
 }
 
 func runRestore(cmd *cobra.Command, _ []string) error {

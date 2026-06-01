@@ -16,11 +16,13 @@ import (
 )
 
 var imagesCmd = &cobra.Command{
-	Use:   "images",
-	Short: "List all encrypted images dew manages",
-	Long:  "List every image in ~/.dew/images with its project, size, last-packed time, and owning repo id. Runs from anywhere — it is independent of the current repo.",
-	Args:  cobra.NoArgs,
-	RunE:  runImages,
+	Use:     "images",
+	GroupID: groupHealth,
+	Short:   "List all encrypted images dew manages",
+	Long:    "List every image in ~/.dew/images with its project, size, last-packed time, and owning repo id. Repo-independent — runs from anywhere.",
+	Example: "  dew images",
+	Args:    cobra.NoArgs,
+	RunE:    runImages,
 }
 
 type imageInfo struct {
