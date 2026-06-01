@@ -18,7 +18,10 @@ import (
 	"github.com/vedanta/dew/internal/manifest"
 )
 
-var packForce bool
+var (
+	packForce  bool
+	packDryRun bool
+)
 
 var packCmd = &cobra.Command{
 	Use:   "pack",
@@ -37,24 +40,16 @@ func runPack(cmd *cobra.Command, _ []string) error {
 	if err != nil {
 		return fmt.Errorf("pack: %w", err)
 	}
-	return doPack(root, identity.NewPaths(home), packForce, cmd.OutOrStdout())
+	return doPack(root, identity.NewPaths(home), packForce, packDryRun, cmd.OutOrStdout())
 }
 
-func doPack(root string, p identity.Paths, force bool, out io.Writer) error {
+func doPack(root string, p identity.Paths, force, dryRun bool, out io.Writer) error {
 	m, err := manifest.Load(manifest.Path(root))
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			return errors.New("pack: no manifest found — run 'dew init' first")
 		}
 		return err
-	}
-
-	st, err := identity.Inspect(p)
-	if err != nil {
-		return err
-	}
-	if !st.Present {
-		return errors.New("pack: no identity found — run 'dew keygen' first")
 	}
 
 	if len(m.Allow) == 0 {
@@ -66,6 +61,25 @@ func doPack(root string, p identity.Paths, force bool, out io.Writer) error {
 		}
 	}
 
+	denied := deny.New(m.Deny)
+	skip := func(rel string, isDir bool) bool { return denied.Match(rel, isDir) }
+
+	if dryRun {
+		entries, listErr := archive.List(root, m.Allow, skip)
+		if listErr != nil {
+			return listErr
+		}
+		return reportPackDryRun(out, entries)
+	}
+
+	st, err := identity.Inspect(p)
+	if err != nil {
+		return err
+	}
+	if !st.Present {
+		return errors.New("pack: no identity found — run 'dew keygen' first")
+	}
+
 	if err := os.MkdirAll(p.ImagesDir, 0o700); err != nil {
 		return fmt.Errorf("pack: %w", err)
 	}
@@ -74,8 +88,6 @@ func doPack(root string, p identity.Paths, force bool, out io.Writer) error {
 		return err
 	}
 
-	denied := deny.New(m.Deny)
-	skip := func(rel string, isDir bool) bool { return denied.Match(rel, isDir) }
 	if err := writeImage(imagePath, p.ImagesDir, m.Image, root, m.Allow, st.PublicKey, skip); err != nil {
 		return err
 	}
@@ -85,6 +97,33 @@ func doPack(root string, p identity.Paths, force bool, out io.Writer) error {
 
 	_, err = fmt.Fprintf(out, "Packed %d tracked path(s) → %s\n", len(m.Allow), imagePath)
 	return err
+}
+
+func reportPackDryRun(out io.Writer, entries []archive.Entry) error {
+	var b strings.Builder
+	var total int64
+	for _, e := range entries {
+		total += e.Size
+	}
+	fmt.Fprintf(&b, "Dry run — would pack %d file(s) (%s), no image written:\n", len(entries), humanBytes(total))
+	for _, e := range entries {
+		fmt.Fprintf(&b, "  %s (%s)\n", e.Name, humanBytes(e.Size))
+	}
+	_, err := io.WriteString(out, b.String())
+	return err
+}
+
+func humanBytes(n int64) string {
+	const unit = 1024
+	if n < unit {
+		return fmt.Sprintf("%d B", n)
+	}
+	div, exp := int64(unit), 0
+	for x := n / unit; x >= unit; x /= unit {
+		div *= unit
+		exp++
+	}
+	return fmt.Sprintf("%.1f %ciB", float64(n)/float64(div), "KMGT"[exp])
 }
 
 func ownerMarkerPath(imagePath string) string { return imagePath + ".id" }
@@ -171,5 +210,6 @@ func writeImage(imagePath, imagesDir, name, root string, allow []string, recipie
 
 func init() {
 	packCmd.Flags().BoolVar(&packForce, "force", false, "overwrite an image created by a different repo")
+	packCmd.Flags().BoolVar(&packDryRun, "dry-run", false, "list what would be packed without writing an image")
 	rootCmd.AddCommand(packCmd)
 }

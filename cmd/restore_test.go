@@ -19,7 +19,7 @@ func TestPackRestoreRoundTrip(t *testing.T) {
 	}
 
 	var out bytes.Buffer
-	if err := doRestore(root, p, false, &out); err != nil {
+	if err := doRestore(root, p, false, false, &out); err != nil {
 		t.Fatalf("doRestore: %v", err)
 	}
 	assertRepoContent(t, root, ".env.local", "TOKEN=roundtrip")
@@ -35,7 +35,7 @@ func TestDoRestoreConflictRequiresForce(t *testing.T) {
 	writeRepoContent(t, root, ".env.local", "FROM=local")
 
 	var out bytes.Buffer
-	err := doRestore(root, p, false, &out)
+	err := doRestore(root, p, false, false, &out)
 	if err == nil || !strings.Contains(err.Error(), "differ") {
 		t.Fatalf("expected conflict error, got %v", err)
 	}
@@ -47,10 +47,26 @@ func TestDoRestoreConflictRequiresForce(t *testing.T) {
 
 	// --force overwrites with the image content.
 	var out2 bytes.Buffer
-	if err := doRestore(root, p, true, &out2); err != nil {
+	if err := doRestore(root, p, true, false, &out2); err != nil {
 		t.Fatalf("doRestore --force: %v", err)
 	}
 	assertRepoContent(t, root, ".env.local", "FROM=image")
+}
+
+func TestDoRestoreDryRun(t *testing.T) {
+	root, p := packedFixture(t, "TOKEN=abc")
+	// Diverge the local file so dry-run has a conflict to report.
+	writeRepoContent(t, root, ".env.local", "LOCAL")
+
+	var out bytes.Buffer
+	if err := doRestore(root, p, false, true, &out); err != nil {
+		t.Fatalf("dry-run should not error on conflicts, got %v", err)
+	}
+	if !strings.Contains(out.String(), "Dry run") || !strings.Contains(out.String(), "conflict") {
+		t.Errorf("dry-run output = %q, want a conflict preview", out.String())
+	}
+	// The working tree must be untouched.
+	assertRepoContent(t, root, ".env.local", "LOCAL")
 }
 
 func TestDoRestoreNoImage(t *testing.T) {
@@ -59,7 +75,7 @@ func TestDoRestoreNoImage(t *testing.T) {
 	mustInit(t, root)
 
 	var out bytes.Buffer
-	err := doRestore(root, p, false, &out)
+	err := doRestore(root, p, false, false, &out)
 	if err == nil || !strings.Contains(err.Error(), "no image") {
 		t.Fatalf("expected no-image error, got %v", err)
 	}
@@ -78,7 +94,7 @@ func packedFixture(t *testing.T, content string) (string, identity.Paths) {
 	if err := doAdd(root, []string{".env.local"}, &discard); err != nil {
 		t.Fatal(err)
 	}
-	if err := doPack(root, p, false, &discard); err != nil {
+	if err := doPack(root, p, false, false, &discard); err != nil {
 		t.Fatal(err)
 	}
 	return root, p

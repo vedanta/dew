@@ -16,6 +16,13 @@ echo "TOKEN=abc" >"$REPO/.env.local"
 run_dew add .env.local
 assert_success
 
+# pack --dry-run previews the file list and writes nothing.
+run_dew pack --dry-run
+assert_success
+assert_contains "Dry run"
+assert_contains ".env.local"
+[ ! -e "$HOME/.dew/images/repo.dew.age" ] || fail "dry-run wrote an image"
+
 # pack produces an encrypted image under ~/.dew/images.
 run_dew pack
 assert_success
@@ -29,6 +36,11 @@ fi
 
 # Round-trip: simulate a fresh clone (local file gone), then restore.
 rm "$REPO/.env.local"
+# restore --dry-run previews without writing.
+run_dew restore --dry-run
+assert_success
+assert_contains "Dry run"
+[ ! -e "$REPO/.env.local" ] || fail "dry-run restore wrote a file"
 run_dew restore
 assert_success
 assert_contains "1 written"
