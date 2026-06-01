@@ -24,6 +24,23 @@ func TestBuiltinRules(t *testing.T) {
 	}
 }
 
+func TestBuiltinListMatchesRules(t *testing.T) {
+	got := Builtin()
+	want := map[string]bool{
+		"node_modules/": true, "dist/": true, "build/": true,
+		"target/": true, ".venv/": true, "__pycache__/": true,
+		".DS_Store": true, "*.log": true,
+	}
+	if len(got) != len(want) {
+		t.Fatalf("Builtin() = %v, want %d entries", got, len(want))
+	}
+	for _, g := range got {
+		if !want[g] {
+			t.Errorf("unexpected built-in pattern %q", g)
+		}
+	}
+}
+
 func TestExtraPatterns(t *testing.T) {
 	m := New([]string{"*.tmp", ".next/"})
 
