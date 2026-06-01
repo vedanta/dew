@@ -8,8 +8,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// version is overridden at build time via -ldflags "-X .../cmd.version=...".
-var version = "dev"
+// Build metadata, overridden at build time via -ldflags "-X .../cmd.<var>=...".
+// GoReleaser sets all three on a tagged release; a plain `go build` leaves the
+// defaults.
+var (
+	version = "dev"
+	commit  = "none"
+	date    = "unknown"
+)
 
 var rootCmd = &cobra.Command{
 	Use:   "dew",
