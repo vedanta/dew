@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>dew — the local half of your repo, restored after every clone</title>
+<meta name="description" content="dew is a local-first CLI that manages the private repository state Git intentionally ignores — .env.local, dev certs, overrides — as a single encrypted image per repo, so a fresh clone can be hydrated back to a working state.">
+<meta property="og:title" content="dew — the local half of your repo">
+<meta property="og:description" content="Manage the private local files Git intentionally ignores. Clone, sync pull, restore — fully hydrated.">
+<meta property="og:image" content="assets/comic.png">
+<meta property="og:type" content="website">
+<link rel="icon" href="assets/dew.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="nav">
+  <a class="brand" href="#top">
+    <img src="assets/dew.png" alt="dew" width="28" height="28">
+    <span>dew</span>
+  </a>
+  <nav class="nav-links">
+    <a href="#how">How it works</a>
+    <a href="#features">Features</a>
+    <a href="#install">Install</a>
+    <a href="#developers">Developers</a>
+    <a class="ghost" href="https://github.com/vedanta/dew">GitHub ↗</a>
+  </nav>
+</header>
+
+<main id="top">
+
+  <!-- Hero -->
+  <section class="hero">
+    <img class="hero-logo" src="assets/dew.png" alt="dew logo" width="120" height="120">
+    <h1>The local half of your repo,<br>restored after every clone.</h1>
+    <p class="lede">
+      <strong>dew</strong> manages the private files Git intentionally ignores —
+      <code>.env.local</code>, dev certs, <code>docker-compose.override.yml</code>,
+      local config — as a single <em>encrypted</em> image per repo. Clone, pull, restore,
+      and you're back to a working state.
+    </p>
+    <div class="cta">
+      <a class="btn primary" href="#install">Install dew</a>
+      <a class="btn" href="https://github.com/vedanta/dew">★ Star on GitHub</a>
+    </div>
+    <p class="badges">
+      <span class="pill">Apache-2.0</span>
+      <span class="pill">single Go binary</span>
+      <span class="pill">macOS · Linux · Windows</span>
+      <span class="pill">v0.1.0</span>
+    </p>
+  </section>
+
+  <!-- Comic -->
+  <section class="comic">
+    <img src="assets/comic.png" alt="dew in 3 panels: 1) clone a repo — local files missing, nothing works; 2) dew sync pull && dew restore fetches your local files; 3) back to work — local context restored">
+  </section>
+
+  <!-- Problem -->
+  <section class="band">
+    <h2>Git gives you the code. Not the context.</h2>
+    <p class="prose">
+      A fresh <code>git clone</code> is dry: it has the source, but none of the
+      per-developer files needed to actually run it — they're <code>.gitignore</code>d
+      for good reason. Today you recover them from Slack threads, 1Password notes, or
+      a copy-pasted <code>.env</code>. dew turns that hidden local state into a
+      first-class, encrypted, repo-aware artifact.
+    </p>
+  </section>
+
+  <!-- Terminal demo -->
+  <section class="demo">
+    <h2>One command to save it. One to get it back.</h2>
+    <div class="terminal" id="demo" aria-label="dew workflow demo">
+      <div class="term-bar"><span></span><span></span><span></span><span class="term-title">~/acme-api — dew</span></div>
+      <pre class="term-body" data-lines='[
+        {"p":"$ ","t":"dew keygen","c":"cmd"},
+        {"t":"Created identity  (age1xdde…)","c":"out"},
+        {"p":"$ ","t":"dew init && dew add .env.local certs/","c":"cmd"},
+        {"t":"Created .dew/manifest.yaml  ·  added .env.local  ·  added certs/","c":"out"},
+        {"p":"$ ","t":"dew pack && dew sync","c":"cmd"},
+        {"t":"Packed 4 paths → ~/.dew/images/acme-api.dew.age","c":"out"},
+        {"t":"Pushed acme-api.dew.age → nas:/volume1/dew","c":"out"},
+        {"t":"","c":"gap"},
+        {"t":"# … on a fresh clone, another machine","c":"comment"},
+        {"p":"$ ","t":"dew sync pull && dew restore","c":"cmd"},
+        {"t":"Pulled acme-api.dew.age  ·  Restored: 4 written","c":"out"},
+        {"p":"$ ","t":"dew doctor","c":"cmd"},
+        {"t":"Repository fully hydrated.","c":"ok"}
+      ]'></pre>
+    </div>
+    <p class="demo-note">Replay · <button class="replay" id="replay" type="button">↻ run again</button></p>
+  </section>
+
+  <!-- How it works -->
+  <section id="how" class="band">
+    <h2>How it works</h2>
+    <p class="prose">
+      dew uses a <strong>two-location model</strong>: a small manifest is committed to
+      Git; the encrypted contents live in your home directory and never get committed.
+    </p>
+    <div class="two-col">
+      <div class="card">
+        <h3>In the repo — committed</h3>
+        <p><code>.dew/manifest.yaml</code> declares the project, image name, an
+        <strong>allow-list</strong> of files to manage, and an optional deny-list.
+        Never any secrets, contents, or keys.</p>
+      </div>
+      <div class="card">
+        <h3>In <code>~/.dew/</code> — never committed</h3>
+        <p>One global <code>age</code> keypair, your <code>config.yaml</code>, and
+        <code>images/&lt;project&gt;.dew.age</code> — the encrypted shadow image, one per repo.</p>
+      </div>
+    </div>
+    <pre class="pipeline">pack:    allow-listed files → tar → zstd → <span class="accent">age encrypt</span> → ~/.dew/images/&lt;project&gt;.dew.age
+restore: image → <span class="accent">age decrypt</span> → zstd → tar → write into the repo (atomic, non-destructive)</pre>
+  </section>
+
+  <!-- Features -->
+  <section id="features" class="band">
+    <h2>Built for trust</h2>
+    <div class="grid">
+      <div class="feature"><h3>🔒 Encrypted</h3><p>Images are encrypted with <code>age</code> (authenticated — tampering is detected on decrypt).</p></div>
+      <div class="feature"><h3>📦 Single binary</h3><p>Pure-Go crypto &amp; compression. No external tools, except <code>scp</code> for remote sync.</p></div>
+      <div class="feature"><h3>✅ Allow-list first</h3><p>Only what you list is packed — never "everything ignored." A 3-layer deny-list keeps noise out.</p></div>
+      <div class="feature"><h3>🛟 Non-destructive</h3><p>Restore never silently overwrites local changes — diverged files are flagged as conflicts.</p></div>
+      <div class="feature"><h3>🩺 Diagnosable</h3><p><code>dew doctor</code> tells you exactly what's wrong and the next command to run.</p></div>
+      <div class="feature"><h3>🔁 Hydrate anywhere</h3><p>Clone on a new machine, <code>sync pull</code>, <code>restore</code> — back to working, byte-for-byte.</p></div>
+    </div>
+  </section>
+
+  <!-- Security -->
+  <section class="band security">
+    <h2>Security model</h2>
+    <ul class="checks">
+      <li>Encrypted at rest with <code>age</code> — corruption or tampering fails on decrypt.</li>
+      <li>Restore can't escape the repo — <code>..</code>, absolute paths, and symlinks are rejected.</li>
+      <li>Sync moves the encrypted image only — <strong>never</strong> the private key.</li>
+      <li>Each image is bound to its repo — <code>pack</code> won't clobber another repo's image.</li>
+      <li>Remote sync delegates auth &amp; host-key checks to your system's OpenSSH.</li>
+    </ul>
+    <p class="prose muted">dew is <strong>not</strong> a secrets manager, backup tool, Git LFS, or cloud sync service. It's a repo-aware manager for the local files Git ignores.</p>
+  </section>
+
+  <!-- Install -->
+  <section id="install" class="band">
+    <h2>Install</h2>
+    <div class="install-grid">
+      <div class="install">
+        <h3>Homebrew <span class="muted">(macOS)</span></h3>
+        <pre>brew install --cask vedanta/dew/dew</pre>
+      </div>
+      <div class="install">
+        <h3>Go <span class="muted">(1.26+)</span></h3>
+        <pre>go install github.com/vedanta/dew@latest</pre>
+      </div>
+      <div class="install">
+        <h3>Binary</h3>
+        <pre>Download from the <a href="https://github.com/vedanta/dew/releases/latest">latest release</a> · verify with checksums.txt</pre>
+      </div>
+    </div>
+    <h3 class="qs">Quickstart</h3>
+    <pre class="pipeline">dew keygen                         <span class="comment"># once per machine</span>
+dew init                           <span class="comment"># create .dew/manifest.yaml</span>
+dew add .env.local certs/          <span class="comment"># pick what to manage</span>
+dew pack                           <span class="comment"># build the encrypted image</span>
+dew sync                           <span class="comment"># push it to your destination</span>
+<span class="comment"># on a fresh clone:</span>
+dew sync pull &amp;&amp; dew restore        <span class="comment"># hydrate</span></pre>
+  </section>
+
+  <!-- Developers -->
+  <section id="developers" class="band developers">
+    <h2>For developers</h2>
+    <p class="prose">dew is a single cross-platform Go binary (Cobra + native <code>age</code> + pure-Go zstd). Read the design, browse the source, or contribute.</p>
+    <div class="dev-links">
+      <a class="card" href="https://github.com/vedanta/dew/blob/main/docs/USER-MANUAL.md"><h3>User manual</h3><p>Concepts, workflows, troubleshooting.</p></a>
+      <a class="card" href="https://github.com/vedanta/dew/blob/main/docs/COMMANDS.md"><h3>Command reference</h3><p>Every command and flag.</p></a>
+      <a class="card" href="https://github.com/vedanta/dew/blob/main/docs/design.md"><h3>Design spec</h3><p>The MVP design &amp; rationale.</p></a>
+      <a class="card" href="https://github.com/vedanta/dew/blob/main/docs/BUILDLOG.md"><h3>Build log</h3><p>How it was built, decision by decision.</p></a>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <img src="assets/dew.png" alt="" width="22" height="22">
+  <span>dew — the local half of your repo, restored after every clone.</span>
+  <span class="dot">·</span>
+  <a href="https://github.com/vedanta/dew">GitHub</a>
+  <span class="dot">·</span>
+  <a href="https://github.com/vedanta/dew/blob/main/LICENSE">Apache-2.0</a>
+</footer>
+
+<script src="terminal.js"></script>
+</body>
+</html>
