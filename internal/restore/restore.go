@@ -17,6 +17,9 @@ type Options struct {
 	// Force overwrites files that exist and differ from the image. Without it,
 	// such files are reported as conflicts and left untouched.
 	Force bool
+	// DryRun classifies every file exactly as a real restore would (respecting
+	// Force) but writes nothing to the working tree.
+	DryRun bool
 }
 
 // Result summarizes what a restore did.
@@ -68,8 +71,10 @@ func Restore(r io.Reader, destRoot string, opts Options) (Result, error) {
 func placeFile(staged, target, rel string, opts Options, res *Result) error {
 	switch _, statErr := os.Stat(target); {
 	case errors.Is(statErr, os.ErrNotExist):
-		if err := moveInto(staged, target); err != nil {
-			return err
+		if !opts.DryRun {
+			if err := moveInto(staged, target); err != nil {
+				return err
+			}
 		}
 		res.Written = append(res.Written, rel)
 		return nil
@@ -87,8 +92,10 @@ func placeFile(staged, target, rel string, opts Options, res *Result) error {
 	case !opts.Force:
 		res.Conflicts = append(res.Conflicts, rel)
 	default:
-		if err := moveInto(staged, target); err != nil {
-			return err
+		if !opts.DryRun {
+			if err := moveInto(staged, target); err != nil {
+				return err
+			}
 		}
 		res.Overwritten = append(res.Overwritten, rel)
 	}

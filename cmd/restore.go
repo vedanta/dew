@@ -17,7 +17,10 @@ import (
 	"github.com/vedanta/dew/internal/restore"
 )
 
-var restoreForce bool
+var (
+	restoreForce  bool
+	restoreDryRun bool
+)
 
 var restoreCmd = &cobra.Command{
 	Use:   "restore",
@@ -36,10 +39,10 @@ func runRestore(cmd *cobra.Command, _ []string) error {
 	if err != nil {
 		return fmt.Errorf("restore: %w", err)
 	}
-	return doRestore(root, identity.NewPaths(home), restoreForce, cmd.OutOrStdout())
+	return doRestore(root, identity.NewPaths(home), restoreForce, restoreDryRun, cmd.OutOrStdout())
 }
 
-func doRestore(root string, p identity.Paths, force bool, out io.Writer) error {
+func doRestore(root string, p identity.Paths, force, dryRun bool, out io.Writer) error {
 	m, err := manifest.Load(manifest.Path(root))
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
@@ -76,30 +79,44 @@ func doRestore(root string, p identity.Paths, force bool, out io.Writer) error {
 	}
 	defer zr.Close()
 
-	res, err := restore.Restore(zr, root, restore.Options{Force: force})
+	res, err := restore.Restore(zr, root, restore.Options{Force: force, DryRun: dryRun})
 	if err != nil {
 		return err
 	}
 
-	if err := reportRestore(out, res); err != nil {
+	if err := reportRestore(out, res, dryRun); err != nil {
 		return err
 	}
-	if len(res.Conflicts) > 0 && !force {
+	// A dry run is a preview; only a real run with unresolved conflicts errors.
+	if !dryRun && len(res.Conflicts) > 0 && !force {
 		return fmt.Errorf("restore: %d file(s) differ from the image; re-run with --force to overwrite", len(res.Conflicts))
 	}
 	return nil
 }
 
-func reportRestore(out io.Writer, res restore.Result) error {
+func reportRestore(out io.Writer, res restore.Result, dryRun bool) error {
 	var b strings.Builder
-	fmt.Fprintf(&b, "Restored: %d written, %d unchanged, %d overwritten",
-		len(res.Written), len(res.Skipped), len(res.Overwritten))
+	verb := "Restored"
+	if dryRun {
+		fmt.Fprintln(&b, "Dry run — no files changed.")
+		verb = "Would restore"
+	}
+	fmt.Fprintf(&b, "%s: %d written, %d unchanged, %d overwritten",
+		verb, len(res.Written), len(res.Skipped), len(res.Overwritten))
 	if len(res.Conflicts) > 0 {
 		fmt.Fprintf(&b, ", %d conflict(s)", len(res.Conflicts))
 	}
 	fmt.Fprintln(&b)
+	if dryRun {
+		for _, w := range res.Written {
+			fmt.Fprintf(&b, "  new:        %s\n", w)
+		}
+		for _, o := range res.Overwritten {
+			fmt.Fprintf(&b, "  overwrite:  %s\n", o)
+		}
+	}
 	for _, c := range res.Conflicts {
-		fmt.Fprintf(&b, "  conflict: %s (differs from image; left unchanged)\n", c)
+		fmt.Fprintf(&b, "  conflict:   %s (differs from image)\n", c)
 	}
 	_, err := io.WriteString(out, b.String())
 	return err
@@ -107,5 +124,6 @@ func reportRestore(out io.Writer, res restore.Result) error {
 
 func init() {
 	restoreCmd.Flags().BoolVar(&restoreForce, "force", false, "overwrite local files that differ from the image")
+	restoreCmd.Flags().BoolVar(&restoreDryRun, "dry-run", false, "preview what would be restored without changing the working tree")
 	rootCmd.AddCommand(restoreCmd)
 }

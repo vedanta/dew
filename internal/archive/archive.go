@@ -22,6 +22,42 @@ import (
 // apply the deny-list so an allow-listed directory never sweeps in noise.
 func Build(w io.Writer, root string, relPaths []string, skip func(rel string, isDir bool) bool) error {
 	tw := tar.NewWriter(w)
+	if err := eachFile(root, relPaths, skip, func(slash, path string, d fs.DirEntry) error {
+		return writeEntry(tw, slash, path, d)
+	}); err != nil {
+		return err
+	}
+	if err := tw.Close(); err != nil {
+		return fmt.Errorf("archive: finalize: %w", err)
+	}
+	return nil
+}
+
+// Entry describes a regular file that Build would archive.
+type Entry struct {
+	Name string // repo-relative, slash-separated
+	Size int64
+}
+
+// List returns the regular files Build would archive (after applying skip),
+// with their sizes — without writing anything. Used by 'dew pack --dry-run'.
+func List(root string, relPaths []string, skip func(rel string, isDir bool) bool) ([]Entry, error) {
+	var entries []Entry
+	err := eachFile(root, relPaths, skip, func(slash, path string, d fs.DirEntry) error {
+		info, infoErr := d.Info()
+		if infoErr != nil {
+			return infoErr
+		}
+		entries = append(entries, Entry{Name: slash, Size: info.Size()})
+		return nil
+	})
+	return entries, err
+}
+
+// eachFile walks the allow-list paths under root, applying skip, and calls visit
+// for every regular file that would be archived (symlinks/specials skipped,
+// skipped directories pruned). Shared by Build and List.
+func eachFile(root string, relPaths []string, skip func(rel string, isDir bool) bool, visit func(slash, path string, d fs.DirEntry) error) error {
 	for _, rel := range relPaths {
 		abs := filepath.Join(root, filepath.FromSlash(rel))
 		walkErr := filepath.WalkDir(abs, func(path string, d fs.DirEntry, err error) error {
@@ -46,14 +82,11 @@ func Build(w io.Writer, root string, relPaths []string, skip func(rel string, is
 			if skip != nil && skip(slash, false) {
 				return nil
 			}
-			return writeEntry(tw, slash, path, d)
+			return visit(slash, path, d)
 		})
 		if walkErr != nil {
-			return fmt.Errorf("archive: build %s: %w", rel, walkErr)
+			return fmt.Errorf("archive: walk %s: %w", rel, walkErr)
 		}
-	}
-	if err := tw.Close(); err != nil {
-		return fmt.Errorf("archive: finalize: %w", err)
 	}
 	return nil
 }
