@@ -130,7 +130,8 @@ dew pack | restore              # build / extract the encrypted image
                                 #   'dew hydrate' is an alias for restore
 
 # Health
-dew status | doctor             # validate hydration state
+dew status | doctor             # validate hydration state (current repo)
+dew images                      # list all images dew manages (global)
 
 # Sync
 dew sync | sync pull            # push / pull the encrypted image
