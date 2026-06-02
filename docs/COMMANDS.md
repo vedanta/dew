@@ -224,6 +224,17 @@ dew remote test
 
 Requires `ssh` only for remote destinations (graceful "tool not found" otherwise); local checks need nothing.
 
+### `dew remote images`
+List the `*.dew.age` images stored at the destination — the mirror of [`dew images`](#dew-images) (which lists this machine's `~/.dew/images`). Confirms a push landed, or shows what a new machine can pull.
+
+- **Local / mounted:** read directly, with size and modified time.
+- **Remote `host:path`:** listed over `ssh` (`ls -l`); names and best-effort sizes (the locale-dependent date is shown as `-`).
+- A missing or empty destination prints "No images at …".
+
+```bash
+dew remote images
+```
+
 ### `dew sync`
 Push the current repo's image to the configured destination (`sync.destination` in `~/.dew/config.yaml`). **Hybrid transport:** local/mounted destinations use a pure-Go copy; remote `host:path` destinations shell out to `scp` (inheriting your `~/.ssh/config`, agent, and `known_hosts`). Sync moves the encrypted image only — never the private key.
 

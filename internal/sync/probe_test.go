@@ -104,9 +104,9 @@ func TestProbeRemoteUsesSSHStub(t *testing.T) {
 	if _, err := exec.LookPath("ssh"); err != nil {
 		t.Skip("ssh not available; classification is covered by TestClassifyRemoteProbe")
 	}
-	orig := runSSHProbe
-	t.Cleanup(func() { runSSHProbe = orig })
-	runSSHProbe = func(_ ...string) (string, int, error) { return "", 0, nil }
+	orig := runSSH
+	t.Cleanup(func() { runSSH = orig })
+	runSSH = func(_ ...string) (string, int, error) { return "", 0, nil }
 
 	res, err := Probe("nas:/vol1/dew")
 	if err != nil {
