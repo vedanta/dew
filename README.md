@@ -117,6 +117,7 @@ sequenceDiagram
 # Identity
 dew keygen                      # create the global age identity
 dew key status                  # inspect identity
+dew key push <user@host>        # provision your identity onto another machine (SSH)
 
 # Repository setup
 dew init [--from-gitignore] [--project <name>]   # create .dew/manifest.yaml
@@ -164,7 +165,10 @@ dew remote set nas:/volume1/dew   # one-time: where images sync (shared across r
 dew remote test                   # optional: confirm it's reachable & writable
 dew sync
 
-# On a new machine
+# Get your identity onto the new machine (one-time, over SSH)
+dew key push you@newmachine        # run from the machine that has the identity
+
+# On the new machine
 git clone <repo> && cd myrepo
 dew sync pull
 dew restore
