@@ -37,11 +37,11 @@ func (r ProbeResult) OK() bool {
 	return true
 }
 
-// runSSHProbe runs ssh and returns combined output and the process exit code
+// runSSH runs ssh and returns combined output and the process exit code
 // (0 on success). Overridable in tests. A code of -1 means ssh could not be
 // started. Arguments are argv (never a shell line), so a destination can't
 // inject a local command.
-var runSSHProbe = func(args ...string) (combined string, code int, err error) {
+var runSSH = func(args ...string) (combined string, code int, err error) {
 	cmd := exec.Command("ssh", args...) //nolint:gosec // G204: args are dew-controlled (configured host + a fixed remote test command)
 	out, runErr := cmd.CombinedOutput()
 	combined = strings.TrimSpace(string(out))
@@ -133,7 +133,7 @@ func probeRemote(destination string, res ProbeResult) (ProbeResult, error) {
 	// path (the remote test command's exit). BatchMode means ssh never prompts,
 	// so an unknown/changed host key fails cleanly instead of hanging.
 	remoteCmd := fmt.Sprintf("test -d %s && test -w %s", shellQuote(path), shellQuote(path))
-	out, code, err := runSSHProbe("-o", "BatchMode=yes", "-o", "ConnectTimeout=10", host, remoteCmd)
+	out, code, err := runSSH("-o", "BatchMode=yes", "-o", "ConnectTimeout=10", host, remoteCmd)
 	if err != nil {
 		return res, fmt.Errorf("sync: running ssh: %w", err)
 	}

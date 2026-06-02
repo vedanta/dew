@@ -274,8 +274,11 @@ directory must already exist.
 - **`dew doctor`** — diagnoses the top problem and tells you the exact next
   command; verifies the image actually decrypts. Reports
   `Repository fully hydrated.` when healthy.
-- **`dew images`** — a global inventory of every image dew manages (project,
-  size, last-packed time, owning repo id). Runs from anywhere.
+- **`dew images`** — a global inventory of every image dew manages locally
+  (project, size, last-packed time, owning repo id). Runs from anywhere.
+- **`dew remote images`** — the same view for the *sync destination*: what's
+  actually stored there (confirms a push landed, or shows what a new machine can
+  pull).
 
 ## 11. Identity & keys
 

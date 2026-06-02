@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"text/tabwriter"
 
 	"github.com/spf13/cobra"
 
@@ -66,6 +67,18 @@ prompts, so an untrusted host key fails cleanly). Exits non-zero if unusable.`,
 	Example: "  dew remote test",
 	Args:    cobra.NoArgs,
 	RunE:    runRemoteTest,
+}
+
+var remoteImagesCmd = &cobra.Command{
+	Use:   "images",
+	Short: "List the images stored at the sync destination",
+	Long: `Show the dew images present at the configured destination — the mirror of
+'dew images', which lists what's on this machine. Useful to confirm a push
+landed, or to see what a new machine can pull. A local/mounted path is read
+directly; a remote 'host:path' is listed over ssh.`,
+	Example: "  dew remote images",
+	Args:    cobra.NoArgs,
+	RunE:    runRemoteImages,
 }
 
 func runRemoteShow(cmd *cobra.Command, _ []string) error {
@@ -176,9 +189,58 @@ func doRemoteTest(home string, out io.Writer) error {
 	return nil
 }
 
+func runRemoteImages(cmd *cobra.Command, _ []string) error {
+	home, err := identity.DefaultHome()
+	if err != nil {
+		return fmt.Errorf("remote: %w", err)
+	}
+	return doRemoteImages(home, cmd.OutOrStdout())
+}
+
+func doRemoteImages(home string, out io.Writer) error {
+	cfg, err := config.Load(config.Path(home))
+	if err != nil {
+		return err
+	}
+	if cfg.Sync.Destination == "" {
+		return errors.New("remote: no remote configured — set one with 'dew remote set <dest>'")
+	}
+
+	imgs, err := dewsync.List(cfg.Sync.Destination)
+	if err != nil {
+		return err
+	}
+	if len(imgs) == 0 {
+		_, werr := fmt.Fprintf(out, "No images at %s.\n", cfg.Sync.Destination)
+		return werr
+	}
+
+	var b strings.Builder
+	fmt.Fprintf(&b, "Destination: %s\n", cfg.Sync.Destination)
+	tw := tabwriter.NewWriter(&b, 0, 2, 2, ' ', 0)
+	outf(tw, "IMAGE\tSIZE\tMODIFIED\n")
+	for _, im := range imgs {
+		size := "?"
+		if im.Size >= 0 {
+			size = humanBytes(im.Size)
+		}
+		modified := "-"
+		if !im.Modified.IsZero() {
+			modified = im.Modified.Format("2006-01-02 15:04")
+		}
+		outf(tw, "%s\t%s\t%s\n", im.Name, size, modified)
+	}
+	if err := tw.Flush(); err != nil {
+		return fmt.Errorf("remote: %w", err)
+	}
+	_, werr := io.WriteString(out, b.String())
+	return werr
+}
+
 func init() {
 	remoteCmd.AddCommand(remoteSetCmd)
 	remoteCmd.AddCommand(remoteUnsetCmd)
 	remoteCmd.AddCommand(remoteTestCmd)
+	remoteCmd.AddCommand(remoteImagesCmd)
 	rootCmd.AddCommand(remoteCmd)
 }

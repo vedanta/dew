@@ -52,6 +52,11 @@ assert_contains "not a directory"
 run_dew remote set "$dest"
 assert_success
 
+# Nothing pushed yet, so the destination has no images.
+run_dew remote images
+assert_success
+assert_contains "No images"
+
 # sync now knows where to go (push succeeds without hand-editing config).
 echo "TOKEN=abc" >"$REPO/.env.local"
 run_dew add .env.local
@@ -61,6 +66,11 @@ assert_success
 run_dew sync
 assert_success
 assert_contains "Pushed"
+
+# The pushed image now shows up at the destination.
+run_dew remote images
+assert_success
+assert_contains "repo.dew.age"
 
 # Unset clears it, and sync then points at 'dew remote set'.
 run_dew remote unset
@@ -75,4 +85,4 @@ run_dew sync
 assert_failure
 assert_contains "dew remote set"
 
-echo "  remote set/show/unset + test + status + sync wiring ok"
+echo "  remote set/show/unset + test + images + status + sync wiring ok"
