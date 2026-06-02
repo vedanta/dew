@@ -210,7 +210,7 @@ builds the cross-platform binaries (linux/macOS/windows × amd64/arm64),
 generates checksums, and publishes a GitHub Release:
 
 ```bash
-git tag v0.1.0 && git push origin v0.1.0
+git tag v0.2.0 && git push origin v0.2.0
 ```
 
 The release workflow injects the version, commit, and date (visible via
