@@ -133,9 +133,17 @@ dew sync
 ## 5. Hydrating a fresh clone (new machine)
 
 On a second machine, you need three things: the repo (from Git), the configured
-sync destination, and **your identity** (the private key — dew never syncs it;
-copy `~/.dew/identity.age.*` over yourself, e.g. via a password manager or
-secure transfer).
+sync destination, and **your identity**. dew never *syncs* the private key, but
+it gives you one explicit command to provision it over SSH — run it from a
+machine that already has the identity:
+
+```bash
+dew key push you@newmachine     # copies your identity to that machine over SSH
+```
+
+(Or move `~/.dew/identity.age.*` over yourself — password manager, secure copy.
+Either way, **don't** run `dew keygen` on the new machine: that mints a different
+identity that can't decrypt your images.)
 
 ```bash
 git clone <repo> && cd my-app
@@ -284,10 +292,15 @@ directory must already exist.
 
 - **`dew keygen`** creates the one global identity; it refuses to overwrite.
 - **`dew key status`** shows whether it's present and its public key.
-- The **private key is never synced or committed.** To use dew on another
-  machine, copy `~/.dew/identity.age.key` (and `.pub`) there yourself. Treat it
-  like any other private key. Key backup/rotation is out of scope for now — keep
-  a secure copy.
+- **`dew key push <user@host>`** provisions your identity onto another machine
+  over SSH — the one-time bootstrap for a second machine. It verifies the host
+  key the normal way, writes the key `0600` under `~/.dew` there, and won't
+  overwrite a different identity without `--force`.
+- The **private key is never *synced or committed*.** `dew key push` is the one
+  explicit, opt-in exception that transmits it — only when you run it, over your
+  own SSH access, to a machine you control. (You can still copy
+  `~/.dew/identity.age.key`/`.pub` by hand instead.) Treat the key like any
+  private key; backup/rotation is out of scope — keep a secure copy.
 - `DEW_HOME` relocates the whole `~/.dew` directory if you need multiple
   identities or an isolated setup.
 

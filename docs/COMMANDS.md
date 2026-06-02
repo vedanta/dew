@@ -47,7 +47,7 @@ dew keygen
 ```
 
 ### `dew key`
-Parent for identity inspection. On its own it lists the `key` subcommands; the one that does the work is `key status`.
+Parent for identity commands. On its own it lists the `key` subcommands.
 
 ### `dew key status`
 Report whether an identity is present and show its public key (derives the public key from the private key if the `.pub` file is missing).
@@ -55,6 +55,21 @@ Report whether an identity is present and show its public key (derives the publi
 ```bash
 dew key status
 ```
+
+### `dew key push <user@host>`
+Provision this machine's identity onto another machine over SSH — the one-time bootstrap so a second machine can decrypt your images. Uses your existing SSH access (host key verified the normal way; an unknown host aborts), creates `~/.dew` (0700) and writes the key `0600` on the target, and verifies the target's public key matches afterward.
+
+| Flag | Description |
+|---|---|
+| `--force` | Overwrite a *different* identity already on the target (no-op if it's already the same). |
+| `-y, --yes` | Skip the confirmation prompt. |
+
+```bash
+dew key push vbarooah@nvk2
+dew key push vbarooah@nvk2 --yes
+```
+
+This is the **one** command that transmits your private key — only when you run it, to a machine you control. `dew sync` still never moves the key. Don't run `dew keygen` on the new machine (that creates a different, non-matching identity). Requires `ssh`/`scp` (graceful "tool not found" otherwise).
 
 ---
 

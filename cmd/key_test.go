@@ -37,6 +37,32 @@ func TestDoKeygenRefusesOverwrite(t *testing.T) {
 	}
 }
 
+func TestDoKeyPushNoIdentity(t *testing.T) {
+	p := identity.NewPaths(filepath.Join(t.TempDir(), ".dew")) // no identity
+	var out bytes.Buffer
+	err := doKeyPush(p, "user@host", false, false, strings.NewReader(""), &out)
+	if err == nil || !strings.Contains(err.Error(), "no identity") {
+		t.Fatalf("expected no-identity error, got %v", err)
+	}
+}
+
+func TestDoKeyPushCancelledAtPrompt(t *testing.T) {
+	p := identity.NewPaths(filepath.Join(t.TempDir(), ".dew"))
+	var gen bytes.Buffer
+	if err := doKeygen(p, &gen); err != nil {
+		t.Fatalf("doKeygen: %v", err)
+	}
+	// Decline at the prompt — must cancel before any ssh/scp dependency check.
+	var out bytes.Buffer
+	err := doKeyPush(p, "user@host", false, false, strings.NewReader("n\n"), &out)
+	if err == nil || !strings.Contains(err.Error(), "cancelled") {
+		t.Fatalf("expected cancelled, got %v", err)
+	}
+	if !strings.Contains(out.String(), "PRIVATE dew identity") {
+		t.Errorf("expected the warning to be shown, got %q", out.String())
+	}
+}
+
 func TestDoKeyStatusAbsent(t *testing.T) {
 	p := identity.NewPaths(filepath.Join(t.TempDir(), ".dew"))
 	var out bytes.Buffer
