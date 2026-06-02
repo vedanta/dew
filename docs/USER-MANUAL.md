@@ -41,7 +41,12 @@ dew sync pull   # fetch the encrypted image
 dew restore     # extract the local files back into the working tree
 ```
 
-Git gives you the code. dew gives you the missing local context.
+Git gives you the code. dew gives you the missing local context — it
+**complements Git** and never touches your tracked source.
+
+Every command has a self-contained `dew <command> --help` (what it does, why,
+what happens, what to run next), and `dew --help` groups the commands by purpose.
+When in doubt, `dew doctor` diagnoses the repo and names the next command to run.
 
 ## 2. Installing
 

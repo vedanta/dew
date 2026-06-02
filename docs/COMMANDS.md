@@ -1,7 +1,13 @@
 # dew — Command Reference
 
-Every command, its flags, and behavior. Run `dew <command> --help` for the
-built-in summary. For a narrative guide, see the [user manual](USER-MANUAL.md).
+Every command, its flags, and behavior. Each command also carries a
+self-contained `dew <command> --help` that explains what it does, why, what
+happens, and what to run next. For a narrative guide, see the
+[user manual](USER-MANUAL.md); the online guide is at <https://vedanta.github.io/dew/>.
+
+`dew --help` groups commands by purpose: **Identity**, **Repository**,
+**Image**, **Sync**, and **Health & inventory**. dew complements Git — it never
+touches your tracked source; it carries the local context Git is meant to ignore.
 
 ## Global
 
@@ -12,7 +18,14 @@ dew [command] [flags]
 | Flag | Description |
 |---|---|
 | `-h, --help` | Help for any command. |
-| `-v, --version` | Print the version (`dew version <v>`). |
+| `-v, --version` | Print the version. |
+
+### `dew version`
+Print the version, commit, build date, Go version, and OS/arch — the same detail behind `-v`, as a subcommand.
+
+```bash
+dew version
+```
 
 Environment:
 - **`DEW_HOME`** — overrides the dew home directory (default `~/.dew`). Useful for testing or isolating multiple identities.
@@ -32,6 +45,9 @@ Create the one global age identity (`~/.dew/identity.age.key` + `.pub`) and the 
 ```bash
 dew keygen
 ```
+
+### `dew key`
+Parent for identity inspection. On its own it lists the `key` subcommands; the one that does the work is `key status`.
 
 ### `dew key status`
 Report whether an identity is present and show its public key (derives the public key from the private key if the `.pub` file is missing).
