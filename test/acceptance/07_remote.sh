@@ -36,6 +36,22 @@ run_dew status
 assert_success
 assert_contains "$dest"
 
+# dew remote test: a creatable local destination is usable.
+run_dew remote test
+assert_success
+assert_contains "usable"
+
+# dew remote test: pointing at a regular file fails clearly.
+touch "$SANDBOX/afile"
+run_dew remote set "$SANDBOX/afile"
+assert_success
+run_dew remote test
+assert_failure
+assert_contains "not a directory"
+# Restore the good destination.
+run_dew remote set "$dest"
+assert_success
+
 # sync now knows where to go (push succeeds without hand-editing config).
 echo "TOKEN=abc" >"$REPO/.env.local"
 run_dew add .env.local
@@ -59,4 +75,4 @@ run_dew sync
 assert_failure
 assert_contains "dew remote set"
 
-echo "  remote set/show/unset + status + sync wiring ok"
+echo "  remote set/show/unset + test + status + sync wiring ok"
