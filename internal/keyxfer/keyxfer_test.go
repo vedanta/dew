@@ -108,6 +108,33 @@ func TestPushVerificationMismatch(t *testing.T) {
 	}
 }
 
+func TestRemotePublicKeyReturnsSourcePub(t *testing.T) {
+	stubSSH(t, testPub, true, testPub)
+	pub, err := RemotePublicKey("user@host")
+	if err != nil {
+		t.Fatalf("RemotePublicKey: %v", err)
+	}
+	if pub != testPub {
+		t.Errorf("pub = %q, want %q", pub, testPub)
+	}
+}
+
+func TestRemotePublicKeyNoIdentity(t *testing.T) {
+	stubSSH(t, "", false, "")
+	if _, err := RemotePublicKey("user@host"); err == nil || !strings.Contains(err.Error(), "no dew identity") {
+		t.Fatalf("expected no-identity error, got %v", err)
+	}
+}
+
+func TestRemotePublicKeyUnreachable(t *testing.T) {
+	origSSH := sshRun
+	t.Cleanup(func() { sshRun = origSSH })
+	sshRun = func(_, _ string) (string, int, error) { return "Host key verification failed.", 255, nil }
+	if _, err := RemotePublicKey("user@host"); !errors.Is(err, ErrUnreachable) {
+		t.Fatalf("expected ErrUnreachable, got %v", err)
+	}
+}
+
 func TestShellQuote(t *testing.T) {
 	if got := shellQuote("age1abc"); got != "'age1abc'" {
 		t.Errorf("shellQuote = %q", got)

@@ -69,7 +69,21 @@ dew key push vbarooah@nvk2
 dew key push vbarooah@nvk2 --yes
 ```
 
-This is the **one** command that transmits your private key — only when you run it, to a machine you control. `dew sync` still never moves the key. Don't run `dew keygen` on the new machine (that creates a different, non-matching identity). Requires `ssh`/`scp` (graceful "tool not found" otherwise).
+This is one of two commands that transmit your private key — only when you run it, to a machine you control. `dew sync` still never moves the key. Don't run `dew keygen` on the new machine (that creates a different, non-matching identity). Requires `ssh`/`scp` (graceful "tool not found" otherwise).
+
+### `dew key pull <user@host>`
+The mirror of `key push`: fetch the identity **from** `<user@host>` onto *this* machine — when the new machine reaches back to one that already has the identity. It downloads to a temp file and **verifies it matches the source's public key before installing** it `0600` under `~/.dew` (a bad download never clobbers your local key), and won't replace a *different* local identity without `--force`.
+
+| Flag | Description |
+|---|---|
+| `--force` | Replace a *different* identity already on this machine (no-op if it's already the same). |
+| `-y, --yes` | Skip the confirmation prompt. |
+
+```bash
+dew key pull vbarooah@nvk2
+```
+
+Same stance as `push`: explicit, opt-in, host key verified the normal way; `ssh`/`scp` required for remotes.
 
 ---
 
