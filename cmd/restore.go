@@ -96,6 +96,12 @@ func doRestore(root string, p identity.Paths, force, dryRun bool, out io.Writer)
 
 	decR, err := crypto.DecryptReader(f, p.KeyFile)
 	if err != nil {
+		if errors.Is(err, crypto.ErrWrongIdentity) {
+			return errors.New("restore: this image was encrypted to a different identity.\n" +
+				"  Copy ~/.dew/identity.age.key from the machine that packed it — dew never syncs\n" +
+				"  the key, you carry it. Don't run 'dew keygen' on a new machine; that creates a\n" +
+				"  different identity that can't decrypt this image")
+		}
 		return err
 	}
 	zr, err := compress.NewReader(decR)

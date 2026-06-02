@@ -65,7 +65,7 @@ func TestDoctorUndecryptableImage(t *testing.T) {
 	pB := mustIdentityPaths(t)
 	copyFile(t, filepath.Join(pA.ImagesDir, m.Image), filepath.Join(pB.ImagesDir, m.Image))
 
-	assertDoctor(t, runDoctorFor(t, root, pB), "cannot be decrypted", "identity")
+	assertDoctor(t, runDoctorFor(t, root, pB), "different identity", "dew keygen")
 }
 
 func runDoctorFor(t *testing.T, root string, p identity.Paths) string {

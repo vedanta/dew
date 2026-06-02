@@ -100,8 +100,12 @@ func diagnose(root string, p identity.Paths, b *strings.Builder) (problem, rec s
 	fmt.Fprintln(b, "Image:     present")
 
 	if vErr := verifyImage(imagePath, p.KeyFile); vErr != nil {
-		return "Image cannot be decrypted with this identity (wrong key or corrupt).",
-			"Verify ~/.dew/identity.age.key matches the image's recipient.", nil
+		if errors.Is(vErr, crypto.ErrWrongIdentity) {
+			return "Image was encrypted to a different identity (wrong key on this machine).",
+				"Copy ~/.dew/identity.age.key from the machine that packed it; don't run 'dew keygen' on a new machine.", nil
+		}
+		return "Image cannot be decrypted — it may be corrupt.",
+			"Re-pack on the source machine, or re-run 'dew sync pull'.", nil
 	}
 
 	if len(missing) > 0 {
