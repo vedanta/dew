@@ -1,12 +1,19 @@
 package crypto
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
 
 	"filippo.io/age"
 )
+
+// ErrWrongIdentity reports that the data is valid age ciphertext but was
+// encrypted to a different identity than the one supplied — i.e. the key on this
+// machine isn't the one that packed the image. Callers detect it with errors.Is
+// and surface an actionable hint.
+var ErrWrongIdentity = errors.New("image was encrypted to a different identity (wrong key)")
 
 // EncryptWriter returns a WriteCloser that encrypts everything written to it for
 // recipient (an age1... X25519 public key) and writes the ciphertext to dst.
@@ -55,7 +62,13 @@ func DecryptReader(src io.Reader, keyFile string) (io.Reader, error) {
 	}
 	r, err := age.Decrypt(src, ids...)
 	if err != nil {
-		return nil, fmt.Errorf("crypto: decrypt (wrong key or corrupt image?): %w", err)
+		// A clean "no identity matched" means the data is valid age ciphertext
+		// but encrypted to a different key — distinct from a corrupt image.
+		var noMatch *age.NoIdentityMatchError
+		if errors.As(err, &noMatch) {
+			return nil, fmt.Errorf("crypto: %w", ErrWrongIdentity)
+		}
+		return nil, fmt.Errorf("crypto: decrypt (corrupt image?): %w", err)
 	}
 	return r, nil
 }

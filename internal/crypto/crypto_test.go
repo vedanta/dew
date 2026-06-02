@@ -2,6 +2,7 @@ package crypto
 
 import (
 	"bytes"
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
@@ -42,8 +43,12 @@ func TestDecryptWrongKeyFails(t *testing.T) {
 	}
 
 	var pt bytes.Buffer
-	if err := Decrypt(&pt, &ct, wrongKey); err == nil {
+	err := Decrypt(&pt, &ct, wrongKey)
+	if err == nil {
 		t.Fatal("expected decryption with the wrong key to fail, got nil")
+	}
+	if !errors.Is(err, ErrWrongIdentity) {
+		t.Errorf("expected ErrWrongIdentity, got %v", err)
 	}
 }
 
