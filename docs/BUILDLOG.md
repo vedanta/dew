@@ -122,10 +122,40 @@ PR, same workflow):
 - **`dew images`** — global image inventory (project, size, last-packed, owner),
   repo-independent.
 
-A 27-assertion end-to-end test (two simulated machines, shared remote, manual
-key transfer, wrong-key detection, deny exclusion, non-destructive restore)
-passes clean. Remaining backlog is tracked in GitHub issues (releases/Homebrew,
-image repo-locations).
+A 37-assertion end-to-end test (two simulated machines, shared remote, manual
+key transfer, wrong-key detection, deny exclusion, non-destructive restore +
+`--dry-run`/`--force`, cross-repo collision guard) passes clean.
+
+## Releases & distribution
+
+Distribution was added after the MVP, each piece its own CI-gated PR:
+
+- **Release pipeline** — [GoReleaser](https://goreleaser.com) builds six targets
+  (linux/macOS/windows × amd64/arm64), generates checksums, and publishes a
+  GitHub Release. Triggered purely by pushing a `v*` tag (`release.yml`); the
+  version/commit/date are injected via ldflags and surfaced by `dew version`.
+- **Homebrew** — a `homebrew_casks` block updates the
+  [`vedanta/homebrew-dew`](https://github.com/vedanta/homebrew-dew) tap on each
+  release (`brew install vedanta/dew/dew`). macOS-primary, with Linux URLs too.
+  (Switched from the deprecated `brews` block; macOS binaries are not yet
+  notarized.)
+- **Product site** — a static landing page deployed to
+  [vedanta.github.io/dew](https://vedanta.github.io/dew/) via GitHub Pages
+  (`pages.yml`), independent of the binary.
+
+Release history:
+
+- **v0.1.0** — first tagged release; established the pipeline, the Homebrew cask,
+  and version stamping end-to-end (verified via a `brew install` smoke test).
+- **v0.2.0** — `dew hydrate` promoted from a hidden alias to a first-class listed
+  command; `ls`/`rm` aliases surfaced in help; **CLI help v2** — every command's
+  `--help` rewritten to a calibrated, self-contained style (intent before
+  mechanics: what it does, why, what happens, what to run next). Docs (user
+  manual + command reference) aligned. No functional fixes or breaking changes —
+  a clean additive/polish minor.
+
+Remaining backlog is tracked in GitHub issues (e.g. `dew images` repo-locations,
+discover+pack convenience).
 
 Full docs set: [`design.md`](design.md) (spec), [`build-plan.md`](build-plan.md)
 (plan), this log, [`USER-MANUAL.md`](USER-MANUAL.md), [`COMMANDS.md`](COMMANDS.md),
