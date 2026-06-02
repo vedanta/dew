@@ -24,21 +24,32 @@ var (
 
 var restoreCmd = &cobra.Command{
 	Use:     "restore",
-	Aliases: []string{"hydrate"},
 	GroupID: groupImage,
-	Short:   "Extract the encrypted image back into the repo (alias: hydrate)",
+	Short:   "Extract the encrypted image back into the repo",
 	Long: `Restore local files from the image: age decrypt -> zstd decompress -> tar
 extract.
 
 Atomic and non-destructive: files are staged to a temp dir, then placed. A file
 that differs from the image is reported as a conflict and left untouched (exit
 non-zero) unless --force. --dry-run previews the outcome without changing the
-working tree. Also available as 'dew hydrate'.`,
+working tree. 'dew hydrate' is the same command.`,
 	Example: `  dew restore
   dew restore --dry-run
   dew restore --force`,
 	Args: cobra.NoArgs,
 	RunE: runRestore,
+}
+
+// hydrateCmd is dew's signature verb — the same operation as restore, surfaced
+// as its own command for discoverability.
+var hydrateCmd = &cobra.Command{
+	Use:     "hydrate",
+	GroupID: groupImage,
+	Short:   "Hydrate the repo from its image (same as restore)",
+	Long:    "Hydrate the working tree from the encrypted image — identical to 'dew restore' (atomic, non-destructive; supports --force and --dry-run).",
+	Example: "  dew hydrate\n  dew hydrate --dry-run",
+	Args:    cobra.NoArgs,
+	RunE:    runRestore,
 }
 
 func runRestore(cmd *cobra.Command, _ []string) error {
@@ -133,8 +144,14 @@ func reportRestore(out io.Writer, res restore.Result, dryRun bool) error {
 	return err
 }
 
+func addRestoreFlags(c *cobra.Command) {
+	c.Flags().BoolVar(&restoreForce, "force", false, "overwrite local files that differ from the image")
+	c.Flags().BoolVar(&restoreDryRun, "dry-run", false, "preview what would be restored without changing the working tree")
+}
+
 func init() {
-	restoreCmd.Flags().BoolVar(&restoreForce, "force", false, "overwrite local files that differ from the image")
-	restoreCmd.Flags().BoolVar(&restoreDryRun, "dry-run", false, "preview what would be restored without changing the working tree")
+	addRestoreFlags(restoreCmd)
+	addRestoreFlags(hydrateCmd)
 	rootCmd.AddCommand(restoreCmd)
+	rootCmd.AddCommand(hydrateCmd)
 }
