@@ -17,8 +17,11 @@ import (
 var statusCmd = &cobra.Command{
 	Use:     "status",
 	GroupID: groupHealth,
-	Short:   "Show identity, manifest, image, and hydration health",
-	Long:    "Show a per-repo health snapshot: project, identity, manifest validity, image presence, tracked-file count, hydration state, and sync configuration.",
+	Short:   "Show this repo's dew health at a glance",
+	Long: `Summarize dew's state for this repo: whether your identity and manifest are
+present, whether an image exists, how many files are tracked, and whether the
+working tree is fully hydrated. A quick check after cloning or before packing.
+For a diagnosis with the exact fix to run, use 'dew doctor'.`,
 	Example: "  dew status",
 	Args:    cobra.NoArgs,
 	RunE:    runStatus,

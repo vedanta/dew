@@ -48,10 +48,11 @@ func mergeDeny(global, perManifest []string) []string {
 var rulesCmd = &cobra.Command{
 	Use:     "rules",
 	GroupID: groupRepo,
-	Short:   "Show the effective allow-list and deny rules by layer",
-	Long: `Show the effective configuration by layer: the repo allow-list, and the
-three deny layers — built-in, global (~/.dew/config.yaml), and repo
-(.dew/manifest.yaml). Useful for understanding why a path is included or skipped.`,
+	Short:   "Show which files are allowed and which are denied",
+	Long: `Show the effective rules for this repo: the allow-list (what dew manages) and
+the three deny layers that keep noise out — built-in patterns, your global
+~/.dew/config.yaml, and the repo's .dew/manifest.yaml. Use it to understand why a
+path is included or skipped.`,
 	Example: "  dew rules",
 	Args:    cobra.NoArgs,
 	RunE:    runRules,

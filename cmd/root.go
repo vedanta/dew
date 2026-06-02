@@ -30,7 +30,11 @@ working state:
 
   git clone <repo> && cd <repo>
   dew sync pull
-  dew restore`,
+  dew restore
+
+dew complements Git — it never touches your tracked source; it carries the local
+context Git is meant to ignore. Run 'dew <command> --help' for any command.
+Guide: https://vedanta.github.io/dew/`,
 	Example: `  # First time on a machine
   dew keygen
 

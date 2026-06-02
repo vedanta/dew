@@ -18,11 +18,14 @@ import (
 var doctorCmd = &cobra.Command{
 	Use:     "doctor",
 	GroupID: groupHealth,
-	Short:   "Diagnose hydration problems and recommend next actions",
-	Long: `Diagnose the highest-priority problem and recommend the exact next command
-(missing identity/manifest/image, undecryptable image, missing tracked files, …),
-or report "Repository fully hydrated." It verifies the image actually decrypts,
-not just that it exists.`,
+	Short:   "Diagnose what's wrong and tell you the next command",
+	Long: `Check this repo end to end and report the one thing to fix next — a missing
+identity, no manifest, an unpacked or undecryptable image, or files still waiting
+to be restored — or confirm the repo is fully hydrated. Unlike 'dew status', it
+verifies the image actually decrypts, and every problem comes with the exact
+command to run.
+
+Start here whenever a clone isn't working as expected.`,
 	Example: "  dew doctor",
 	Args:    cobra.NoArgs,
 	RunE:    runDoctor,
