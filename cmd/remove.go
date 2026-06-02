@@ -16,7 +16,7 @@ var removeCmd = &cobra.Command{
 	Use:     "remove <path>...",
 	Aliases: []string{"rm"},
 	GroupID: groupRepo,
-	Short:   "Remove a path from the manifest allow-list",
+	Short:   "Remove a path from the manifest allow-list (alias: rm)",
 	Long:    "Remove one or more paths from the allow-list. Removing an untracked path is a clean no-op.",
 	Example: "  dew remove .env.local",
 	Args:    cobra.MinimumNArgs(1),
