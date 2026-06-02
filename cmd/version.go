@@ -9,9 +9,10 @@ import (
 )
 
 var versionCmd = &cobra.Command{
-	Use:     "version",
-	Short:   "Print version, commit, and build information",
-	Long:    "Print dew's version along with the build commit, date, and Go toolchain. (See also the --version flag.)",
+	Use:   "version",
+	Short: "Print version, commit, and build information",
+	Long: `Print dew's version along with the build commit, date, and Go toolchain —
+handy when reporting a bug. (See also the --version flag.)`,
 	Example: "  dew version",
 	Args:    cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, _ []string) error {

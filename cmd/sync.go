@@ -22,12 +22,13 @@ var syncCmd = &cobra.Command{
 	Use:     "sync",
 	GroupID: groupSync,
 	Short:   "Push this repo's image to your sync destination",
-	Long: `Copy this repo's encrypted image to the destination set in ~/.dew/config.yaml
-so another machine can fetch it. Local or mounted paths are copied directly; a
-remote host:path goes over scp using your existing SSH config. Only the encrypted
-image moves — never your private key.
+	Long: `Copy this repo's encrypted image to the destination you configured with
+'dew remote set' so another machine can fetch it. Local or mounted paths are
+copied directly; a remote host:path goes over scp using your existing SSH config.
+Only the encrypted image moves — never your private key.
 
-Run it after 'dew pack'. On the other machine, 'dew sync pull' fetches it.`,
+Run it after 'dew pack' (and 'dew remote test' if you want to check the
+destination first). On the other machine, 'dew sync pull' fetches it.`,
 	Example: `  dew sync         # push this repo's image to the destination
   dew sync pull    # fetch it on another machine, then 'dew restore'`,
 	Args: cobra.NoArgs,

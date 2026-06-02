@@ -95,6 +95,8 @@ sequenceDiagram
     CLI->>Repo: write .dew/manifest.yaml
     Dev->>CLI: dew pack
     CLI->>Store: tar → zstd → age → image
+    Dev->>CLI: dew remote set <dest>
+    CLI->>Store: save sync destination
     Dev->>CLI: dew sync
     CLI->>Remote: push encrypted image
     Dev->>Repo: git commit manifest & push
@@ -109,7 +111,7 @@ sequenceDiagram
     CLI-->>Dev: Repository fully hydrated.
 ```
 
-## Command set (MVP)
+## Commands
 
 ```bash
 # Identity
@@ -137,6 +139,9 @@ dew status | doctor             # validate hydration state (current repo)
 dew images                      # list all images dew manages (global)
 
 # Sync
+dew remote set <dest>           # set the sync destination (also: remote, remote unset)
+dew remote test                 # check it's reachable / trusted / writable
+dew remote images               # list the images stored at the destination
 dew sync | sync pull            # push / pull the encrypted image
 ```
 
@@ -154,6 +159,9 @@ dew add .env.local
 dew add docker-compose.override.yml
 dew pack
 git add .dew/manifest.yaml && git commit -m "Add dew manifest" && git push
+
+dew remote set nas:/volume1/dew   # one-time: where images sync (shared across repos)
+dew remote test                   # optional: confirm it's reachable & writable
 dew sync
 
 # On a new machine
@@ -239,7 +247,7 @@ dew is a **single self-contained binary**: encryption and compression are pure G
 
 ## Tech
 
-Go single binary · [Cobra](https://github.com/spf13/cobra) (CLI) · `gopkg.in/yaml.v3` (config + manifest) · `archive/tar` · native [age](https://github.com/FiloSottile/age) encryption via [`filippo.io/age`](https://pkg.go.dev/filippo.io/age) · pure-Go [zstd](https://github.com/klauspost/compress) · `scp` for remote sync (inherits your SSH config).
+Go single binary · [Cobra](https://github.com/spf13/cobra) (CLI) · `gopkg.in/yaml.v3` (config + manifest) · `archive/tar` · native [age](https://github.com/FiloSottile/age) encryption via [`filippo.io/age`](https://pkg.go.dev/filippo.io/age) · pure-Go [zstd](https://github.com/klauspost/compress) · `scp`/`ssh` for remote sync and checks (inherits your SSH config).
 
 ## License
 
