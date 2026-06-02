@@ -31,7 +31,7 @@ jobs:
           cp site/index.html site/style.css site/terminal.js _site/
           cp assets/comic.png assets/dew.png _site/assets/
 
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: _site
 
