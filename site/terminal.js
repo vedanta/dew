@@ -117,6 +117,22 @@
     });
   });
 
+  // Keep the version badge in sync with the latest GitHub release. Progressive
+  // enhancement: on any failure the static value baked into the HTML stands.
+  var pill = document.getElementById("version-pill");
+  if (pill && window.fetch) {
+    fetch("https://api.github.com/repos/vedanta/dew/releases/latest", {
+      headers: { Accept: "application/vnd.github+json" },
+    })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        if (data && /^v\d+\.\d+\.\d+/.test(data.tag_name || "")) {
+          pill.textContent = data.tag_name;
+        }
+      })
+      .catch(function () {});
+  }
+
   // Run once when the terminal scrolls into view (or immediately as a fallback).
   if ("IntersectionObserver" in window) {
     var io = new IntersectionObserver(function (entries) {
