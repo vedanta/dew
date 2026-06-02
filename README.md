@@ -235,7 +235,7 @@ make acceptance   # build the binary and run the acceptance suite
 make e2e          # full two-machine end-to-end test (test/e2e.sh)
 ```
 
-dew is a **single self-contained binary**: encryption and compression are pure Go (no external tools). The only external runtime dependency is `scp`, and only when you sync to a remote `host:path` destination — local or mounted destinations need nothing. `$DEW_HOME` overrides the default `~/.dew` location.
+dew is a **single self-contained binary**: encryption and compression are pure Go (no external tools). The only external runtime dependencies are OpenSSH's `scp` (syncing to a remote `host:path`) and `ssh` (`dew remote test` against a remote) — both ship together, and only remote destinations need them; local or mounted destinations need nothing. `$DEW_HOME` overrides the default `~/.dew` location.
 
 ## Tech
 

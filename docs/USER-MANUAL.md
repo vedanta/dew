@@ -60,9 +60,10 @@ sudo mv dew /usr/local/bin/   # optional: put it on your PATH
 dew --version
 ```
 
-The only external runtime dependency is `scp`, and only when you sync to a
-remote `host:path` destination — local/mounted destinations need nothing.
-Encryption and compression are built in (no external `age`/`zstd`).
+The only external runtime dependencies are OpenSSH's `scp` (syncing to a remote
+`host:path`) and `ssh` (`dew remote test`/`images` against a remote) — both ship
+together, and only remote destinations need them; local/mounted destinations
+need nothing. Encryption and compression are built in (no external `age`/`zstd`).
 
 ## 3. Concepts
 
@@ -241,7 +242,15 @@ dew remote unset                  # clear it
 ```
 
 The destination lives in `~/.dew/config.yaml` and is shared across all your
-repos. Then:
+repos. Before relying on it, you can check it's actually usable:
+
+```bash
+dew remote test   # reachable? trusted? writable?
+```
+
+For a local/mounted path this catches the classic "the NAS isn't mounted" case;
+for a remote `host:path` it verifies over `ssh` that the host is reachable, its
+key is trusted, and the path is writable (reporting OpenSSH's own verdict). Then:
 
 ```bash
 dew sync         # push the current repo's image

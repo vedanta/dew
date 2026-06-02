@@ -10,6 +10,7 @@ import (
 
 	"github.com/vedanta/dew/internal/config"
 	"github.com/vedanta/dew/internal/identity"
+	dewsync "github.com/vedanta/dew/internal/sync"
 )
 
 var remoteCmd = &cobra.Command{
@@ -52,6 +53,19 @@ destination is configured.`,
 	Example: "  dew remote unset",
 	Args:    cobra.NoArgs,
 	RunE:    runRemoteUnset,
+}
+
+var remoteTestCmd = &cobra.Command{
+	Use:   "test",
+	Short: "Check the destination is reachable, trusted, and writable",
+	Long: `Verify the configured destination is actually usable before you rely on
+'dew sync'. A local/mounted path is checked in place (is the volume mounted? is
+it writable?). A remote 'host:path' is checked over ssh — reachable, host key
+trusted, and the path writable — reporting OpenSSH's own verdict (it never
+prompts, so an untrusted host key fails cleanly). Exits non-zero if unusable.`,
+	Example: "  dew remote test",
+	Args:    cobra.NoArgs,
+	RunE:    runRemoteTest,
 }
 
 func runRemoteShow(cmd *cobra.Command, _ []string) error {
@@ -111,8 +125,60 @@ func doRemoteUnset(home string, out io.Writer) error {
 	return err
 }
 
+func runRemoteTest(cmd *cobra.Command, _ []string) error {
+	home, err := identity.DefaultHome()
+	if err != nil {
+		return fmt.Errorf("remote: %w", err)
+	}
+	return doRemoteTest(home, cmd.OutOrStdout())
+}
+
+func doRemoteTest(home string, out io.Writer) error {
+	cfg, err := config.Load(config.Path(home))
+	if err != nil {
+		return err
+	}
+	if cfg.Sync.Destination == "" {
+		return errors.New("remote: no remote configured — set one with 'dew remote set <dest>'")
+	}
+
+	res, err := dewsync.Probe(cfg.Sync.Destination)
+	if err != nil {
+		return err
+	}
+
+	var b strings.Builder
+	kind := "local"
+	if res.Remote {
+		kind = "remote"
+	}
+	fmt.Fprintf(&b, "Testing %s destination %s\n", kind, res.Destination)
+	for _, c := range res.Checks {
+		mark := "ok  "
+		if !c.OK {
+			mark = "FAIL"
+		}
+		if c.Note != "" {
+			fmt.Fprintf(&b, "  %s  %s — %s\n", mark, c.Name, c.Note)
+		} else {
+			fmt.Fprintf(&b, "  %s  %s\n", mark, c.Name)
+		}
+	}
+	if res.OK() {
+		fmt.Fprintln(&b, "\nDestination is usable.")
+	}
+	if _, werr := io.WriteString(out, b.String()); werr != nil {
+		return werr
+	}
+	if !res.OK() {
+		return errors.New("remote: destination is not usable (see above)")
+	}
+	return nil
+}
+
 func init() {
 	remoteCmd.AddCommand(remoteSetCmd)
 	remoteCmd.AddCommand(remoteUnsetCmd)
+	remoteCmd.AddCommand(remoteTestCmd)
 	rootCmd.AddCommand(remoteCmd)
 }

@@ -212,6 +212,18 @@ dew remote unset                  # clear it
 - `unset` is a no-op if nothing is configured.
 - The destination also appears in `dew status`.
 
+### `dew remote test`
+Check the configured destination is actually usable before relying on `dew sync`. Exits non-zero if not.
+
+- **Local / mounted:** verifies the directory exists and is writable (or that a missing path is creatable under a writable ancestor) — catching the common "the volume isn't mounted" case.
+- **Remote `host:path`:** over `ssh` (`BatchMode`, so it never prompts), reports *reachable*, *trusted* (host key in `known_hosts`), and *path writable* — surfacing OpenSSH's own verdict. An untrusted host key fails with a hint to `ssh <host>` once to accept it.
+
+```bash
+dew remote test
+```
+
+Requires `ssh` only for remote destinations (graceful "tool not found" otherwise); local checks need nothing.
+
 ### `dew sync`
 Push the current repo's image to the configured destination (`sync.destination` in `~/.dew/config.yaml`). **Hybrid transport:** local/mounted destinations use a pure-Go copy; remote `host:path` destinations shell out to `scp` (inheriting your `~/.ssh/config`, agent, and `known_hosts`). Sync moves the encrypted image only — never the private key.
 
