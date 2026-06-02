@@ -24,7 +24,8 @@ assert_contains "no destination"
 
 # Configure a local destination and push.
 store="$SANDBOX/remote"
-printf 'sync:\n  destination: %s\n' "$store" >"$HOME/.dew/config.yaml"
+run_dew remote set "$store"
+assert_success
 
 run_dew sync
 assert_success

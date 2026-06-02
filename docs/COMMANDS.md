@@ -198,6 +198,20 @@ dew images
 
 ## Sync
 
+### `dew remote`
+Manage the single sync destination (stored in `~/.dew/config.yaml`, shared across all repos). With no subcommand, prints the current destination — or a hint if none is set.
+
+```bash
+dew remote                        # show the current destination
+dew remote set /Volumes/nas/dew   # set it (local/mounted path)
+dew remote set nas:/volume1/dew   # or an scp-style host:path
+dew remote unset                  # clear it
+```
+
+- `set <dest>` replaces any existing destination; empty/whitespace is rejected.
+- `unset` is a no-op if nothing is configured.
+- The destination also appears in `dew status`.
+
 ### `dew sync`
 Push the current repo's image to the configured destination (`sync.destination` in `~/.dew/config.yaml`). **Hybrid transport:** local/mounted destinations use a pure-Go copy; remote `host:path` destinations shell out to `scp` (inheriting your `~/.ssh/config`, agent, and `known_hosts`). Sync moves the encrypted image only — never the private key.
 

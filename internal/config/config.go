@@ -67,6 +67,28 @@ func Load(path string) (*Config, error) {
 	return &c, nil
 }
 
+// SetDestination updates the sync destination and persists the config at path,
+// preserving every other field. A missing config is created.
+func SetDestination(path, dest string) error {
+	c, err := Load(path)
+	if err != nil {
+		return err
+	}
+	c.Sync.Destination = dest
+	return Save(path, c)
+}
+
+// ClearDestination removes the sync destination and persists the config,
+// preserving every other field.
+func ClearDestination(path string) error {
+	c, err := Load(path)
+	if err != nil {
+		return err
+	}
+	c.Sync.Destination = ""
+	return Save(path, c)
+}
+
 // Save writes the config to path, creating the dew home directory if needed.
 func Save(path string, c *Config) error {
 	if c.Version == 0 {
