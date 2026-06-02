@@ -138,7 +138,9 @@ it gives you one explicit command to provision it over SSH — run it from a
 machine that already has the identity:
 
 ```bash
-dew key push you@newmachine     # copies your identity to that machine over SSH
+dew key push you@newmachine     # from a machine that HAS the identity, push it over
+# ── or, run this ON the new machine to pull it from one that has it ──
+dew key pull you@oldmachine
 ```
 
 (Or move `~/.dew/identity.age.*` over yourself — password manager, secure copy.
@@ -295,7 +297,9 @@ directory must already exist.
 - **`dew key push <user@host>`** provisions your identity onto another machine
   over SSH — the one-time bootstrap for a second machine. It verifies the host
   key the normal way, writes the key `0600` under `~/.dew` there, and won't
-  overwrite a different identity without `--force`.
+  overwrite a different identity without `--force`. **`dew key pull <user@host>`**
+  is the mirror — run it *on* the new machine to fetch the identity from one that
+  already has it (it verifies the download before installing).
 - The **private key is never *synced or committed*.** `dew key push` is the one
   explicit, opt-in exception that transmits it — only when you run it, over your
   own SSH access, to a machine you control. (You can still copy

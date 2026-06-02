@@ -67,6 +67,37 @@ var scpUpload = func(localPath, host, remotePath string) error {
 	return nil
 }
 
+// scpDownload copies host:remotePath to localPath. Overridable in tests.
+var scpDownload = func(host, remotePath, localPath string) error {
+	cmd := exec.Command("scp", "-o", "BatchMode=yes", "-o", "ConnectTimeout=10", host+":"+remotePath, localPath) //nolint:gosec // G204: host is the user's target; localPath is dew-home-local
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("keyxfer: scp %s:%s → local: %w: %s", host, remotePath, err, strings.TrimSpace(string(out)))
+	}
+	return nil
+}
+
+// RemotePublicKey returns the public key of the identity on host, erroring if
+// host has no usable identity or can't be reached.
+func RemotePublicKey(host string) (string, error) {
+	pub, hasKey, err := inspectTarget(host)
+	switch {
+	case err != nil:
+		return "", err
+	case pub != "":
+		return pub, nil
+	case hasKey:
+		return "", fmt.Errorf("keyxfer: %s has a private key but no readable public key (run 'dew key status' there)", host)
+	default:
+		return "", fmt.Errorf("keyxfer: no dew identity on %s", host)
+	}
+}
+
+// Download copies host's private identity key into localPath (typically a temp
+// file the caller verifies before installing).
+func Download(host, localPath string) error {
+	return scpDownload(host, remoteKeyPath, localPath)
+}
+
 // Push provisions the local identity (private key at keyFile, public key
 // localPub) onto host's ~/.dew. It refuses to overwrite a different identity
 // unless force is set, and verifies the target's public key matches afterward.

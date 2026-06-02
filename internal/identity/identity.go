@@ -123,6 +123,12 @@ func Inspect(p Paths) (Status, error) {
 	return s, nil
 }
 
+// PublicKeyFromFile derives the age public key (recipient string) from a
+// private key file — used to verify a key fetched from another machine.
+func PublicKeyFromFile(keyFile string) (string, error) {
+	return publicFromKeyFile(keyFile)
+}
+
 func publicFromKeyFile(keyFile string) (string, error) {
 	f, err := os.Open(keyFile) //nolint:gosec // G304: key file is dew-home-local
 	if err != nil {

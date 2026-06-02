@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -127,6 +128,113 @@ func doKeyPush(p identity.Paths, host string, force, assumeYes bool, in io.Reade
 	return nil
 }
 
+var (
+	keyPullForce bool
+	keyPullYes   bool
+)
+
+var keyPullCmd = &cobra.Command{
+	Use:   "pull <user@host>",
+	Short: "Fetch your dew identity from another machine over SSH",
+	Long: `Copy the dew identity FROM <user@host> onto this machine, so it can decrypt your
+images — the bootstrap when a new machine reaches back to one that already has
+the identity. It verifies the source's host key the normal way (an unknown host
+aborts), downloads to a temp file and checks it matches the source's public key
+before installing it 0600 under ~/.dew, and won't replace a different local
+identity without --force.
+
+The mirror of 'dew key push'. 'dew sync' still never moves the key; this is an
+explicit, opt-in transfer you initiate.`,
+	Example: `  dew key pull vbarooah@nvk2
+  dew key pull vbarooah@nvk2 --yes`,
+	Args: cobra.ExactArgs(1),
+	RunE: runKeyPull,
+}
+
+func runKeyPull(cmd *cobra.Command, args []string) error {
+	home, err := identity.DefaultHome()
+	if err != nil {
+		return fmt.Errorf("key pull: %w", err)
+	}
+	return doKeyPull(identity.NewPaths(home), args[0], keyPullForce, keyPullYes, cmd.InOrStdin(), cmd.OutOrStdout())
+}
+
+func doKeyPull(p identity.Paths, host string, force, assumeYes bool, in io.Reader, out io.Writer) error {
+	st, err := identity.Inspect(p)
+	if err != nil {
+		return err
+	}
+
+	// Confirm before checking tools, so a decline never depends on ssh/scp.
+	if !assumeYes {
+		outf(out, "This fetches a dew identity from %s onto this machine.\n", host)
+		if st.Present {
+			outf(out, "This machine already has an identity (%s); pulling will replace it.\n", st.PublicKey)
+		}
+		if !confirm(in, out, fmt.Sprintf("Pull the identity from %s?", host)) {
+			return errors.New("key pull: cancelled")
+		}
+	}
+
+	if err := depcheck.RequireTool("ssh", sshToolHint); err != nil {
+		return err
+	}
+	if err := depcheck.RequireTool("scp", sshToolHint); err != nil {
+		return err
+	}
+
+	sourcePub, err := keyxfer.RemotePublicKey(host)
+	if err != nil {
+		return fmt.Errorf("key pull: %w", err)
+	}
+	if st.Present && st.PublicKey == sourcePub {
+		outf(out, "This machine already has that identity (%s) — nothing to do.\n", sourcePub)
+		return nil
+	}
+	if st.Present && !force {
+		return fmt.Errorf("key pull: this machine has a different identity (%s); re-run with --force to replace it", st.PublicKey)
+	}
+
+	if err := os.MkdirAll(p.Home, 0o700); err != nil {
+		return fmt.Errorf("key pull: %w", err)
+	}
+	tmp := p.KeyFile + ".pulling"
+	if err := keyxfer.Download(host, tmp); err != nil {
+		return fmt.Errorf("key pull: %w", err)
+	}
+	defer func() { _ = os.Remove(tmp) }() // no-op once renamed into place
+
+	if err := installPulledKey(p, tmp, sourcePub); err != nil {
+		return err
+	}
+	outf(out, "Pulled identity (%s) from %s\n", sourcePub, host)
+	outf(out, "Now run here: 'dew remote set <dest> && dew sync pull && dew restore'.\n")
+	return nil
+}
+
+// installPulledKey verifies the downloaded key at tmp actually corresponds to
+// sourcePub, then atomically installs it as the local identity. The live key is
+// only replaced after verification, so a bad download never clobbers it.
+func installPulledKey(p identity.Paths, tmp, sourcePub string) error {
+	pulledPub, err := identity.PublicKeyFromFile(tmp)
+	if err != nil {
+		return fmt.Errorf("key pull: downloaded key is unreadable: %w", err)
+	}
+	if pulledPub != sourcePub {
+		return fmt.Errorf("key pull: verification failed — downloaded key is %s, source reported %s", pulledPub, sourcePub)
+	}
+	if err := os.Chmod(tmp, 0o600); err != nil {
+		return fmt.Errorf("key pull: %w", err)
+	}
+	if err := os.Rename(tmp, p.KeyFile); err != nil {
+		return fmt.Errorf("key pull: install key: %w", err)
+	}
+	if err := os.WriteFile(p.PubFile, []byte(pulledPub+"\n"), 0o600); err != nil {
+		return fmt.Errorf("key pull: write public key: %w", err)
+	}
+	return nil
+}
+
 // confirm prompts for a yes/no answer defaulting to NO (empty input or EOF
 // declines) — the safe default for an action that moves your private key.
 func confirm(in io.Reader, out io.Writer, prompt string) bool {
@@ -190,8 +298,11 @@ func doKeyStatus(p identity.Paths, out io.Writer) error {
 func init() {
 	keyPushCmd.Flags().BoolVar(&keyPushForce, "force", false, "overwrite a different identity already on the target")
 	keyPushCmd.Flags().BoolVarP(&keyPushYes, "yes", "y", false, "skip the confirmation prompt")
+	keyPullCmd.Flags().BoolVar(&keyPullForce, "force", false, "replace a different identity already on this machine")
+	keyPullCmd.Flags().BoolVarP(&keyPullYes, "yes", "y", false, "skip the confirmation prompt")
 	keyCmd.AddCommand(keyStatusCmd)
 	keyCmd.AddCommand(keyPushCmd)
+	keyCmd.AddCommand(keyPullCmd)
 	rootCmd.AddCommand(keygenCmd)
 	rootCmd.AddCommand(keyCmd)
 }
