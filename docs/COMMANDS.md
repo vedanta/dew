@@ -236,7 +236,7 @@ dew remote images
 ```
 
 ### `dew sync`
-Push the current repo's image to the configured destination (`sync.destination` in `~/.dew/config.yaml`). **Hybrid transport:** local/mounted destinations use a pure-Go copy; remote `host:path` destinations shell out to `scp` (inheriting your `~/.ssh/config`, agent, and `known_hosts`). Sync moves the encrypted image only — never the private key.
+Push the current repo's image to the destination configured with [`dew remote set`](#dew-remote). **Hybrid transport:** local/mounted destinations use a pure-Go copy; remote `host:path` destinations shell out to `scp` (inheriting your `~/.ssh/config`, agent, and `known_hosts`). Sync moves the encrypted image only — never the private key.
 
 ```bash
 dew sync
@@ -258,4 +258,5 @@ dew sync pull
 - `dew restore` with unresolved conflicts (no `--force`) — exits non-zero so the conflicts are visible (a `--dry-run` preview always exits 0).
 - `dew pack` against an image owned by a different repo (no `--force`).
 - `dew keygen` / `dew init` when the target already exists.
-- A required external tool is missing (`scp`, only for remote sync destinations).
+- A required external tool is missing — `scp` (`dew sync` to a remote) or `ssh` (`dew remote test`/`images` against a remote); only for remote destinations.
+- `dew remote test` when the destination is unusable (unreachable, untrusted host key, or not writable).

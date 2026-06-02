@@ -17,7 +17,9 @@ var removeCmd = &cobra.Command{
 	Aliases: []string{"rm"},
 	GroupID: groupRepo,
 	Short:   "Stop tracking a path (alias: rm)",
-	Long:    "Remove one or more paths from this repo's allow-list so dew no longer manages them. Removing a path that isn't tracked is a harmless no-op. The next 'dew pack' reflects the change.",
+	Long: `Remove one or more paths from this repo's allow-list so dew no longer manages
+them. Removing a path that isn't tracked is a harmless no-op. The next 'dew pack'
+reflects the change; existing images are untouched until you re-pack.`,
 	Example: "  dew remove .env.local",
 	Args:    cobra.MinimumNArgs(1),
 	RunE:    runRemove,

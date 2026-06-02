@@ -38,10 +38,11 @@ Guide: https://vedanta.github.io/dew/`,
 	Example: `  # First time on a machine
   dew keygen
 
-  # Set up a repo
+  # Set up a repo and push it
   dew init
   dew add .env.local certs/
   dew pack
+  dew remote set nas:/volume1/dew
   dew sync
 
   # Hydrate a fresh clone elsewhere
