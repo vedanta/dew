@@ -190,6 +190,13 @@ dew pack
 dew pack --dry-run    # preview the file list + sizes; write nothing
 ```
 
+> **You declare files once, then just pack.** `dew add` records a path in the
+> committed manifest — a one-time declaration per file. After that, `dew pack`
+> re-packages the *current contents* of everything already listed; you don't
+> re-`add`. So the steady-state flow is just `dew pack && dew sync` after you
+> edit a tracked file. (`dew init --from-gitignore` can seed the allow-list at
+> setup, so you can skip the explicit `add` on the first run.)
+
 dew binds each image to the repo that created it. If a *different* repo would
 overwrite an image of the same name, `pack` refuses:
 
@@ -210,7 +217,7 @@ temp directory, then for each file:
 dew restore
 dew restore --dry-run    # preview written / unchanged / conflict, change nothing
 dew restore --force      # overwrite conflicting files with the image
-dew hydrate              # alias for restore
+dew hydrate              # same as restore (its own command)
 ```
 
 A plain `dew restore` with unresolved conflicts exits non-zero so you notice; a
