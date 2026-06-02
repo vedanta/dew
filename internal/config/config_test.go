@@ -54,6 +54,59 @@ func TestDenyRoundTrip(t *testing.T) {
 	}
 }
 
+func TestSetAndClearDestinationPreserveOtherFields(t *testing.T) {
+	path := Path(filepath.Join(t.TempDir(), ".dew"))
+
+	// Seed a config with a deny-list so we can confirm it survives.
+	seed := Default()
+	seed.Deny = []string{"*.swp"}
+	if err := Save(path, seed); err != nil {
+		t.Fatalf("Save seed: %v", err)
+	}
+
+	if err := SetDestination(path, "nas:/vol1/dew"); err != nil {
+		t.Fatalf("SetDestination: %v", err)
+	}
+	got, err := Load(path)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if got.Sync.Destination != "nas:/vol1/dew" {
+		t.Errorf("destination = %q, want nas:/vol1/dew", got.Sync.Destination)
+	}
+	if len(got.Deny) != 1 || got.Deny[0] != "*.swp" {
+		t.Errorf("deny not preserved: %v", got.Deny)
+	}
+
+	if err := ClearDestination(path); err != nil {
+		t.Fatalf("ClearDestination: %v", err)
+	}
+	got, err = Load(path)
+	if err != nil {
+		t.Fatalf("Load after clear: %v", err)
+	}
+	if got.Sync.Destination != "" {
+		t.Errorf("destination = %q, want empty after clear", got.Sync.Destination)
+	}
+	if len(got.Deny) != 1 || got.Deny[0] != "*.swp" {
+		t.Errorf("deny not preserved after clear: %v", got.Deny)
+	}
+}
+
+func TestSetDestinationCreatesMissingConfig(t *testing.T) {
+	path := Path(filepath.Join(t.TempDir(), ".dew"))
+	if err := SetDestination(path, "/Volumes/nas/dew"); err != nil {
+		t.Fatalf("SetDestination: %v", err)
+	}
+	got, err := Load(path)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if got.Sync.Destination != "/Volumes/nas/dew" {
+		t.Errorf("destination = %q", got.Sync.Destination)
+	}
+}
+
 func TestLoadMalformed(t *testing.T) {
 	path := Path(t.TempDir())
 	if err := os.WriteFile(path, []byte("sync: : not yaml ]["), 0o600); err != nil {

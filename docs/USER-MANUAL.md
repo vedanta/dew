@@ -121,10 +121,11 @@ dew pack                      # build ~/.dew/images/my-app.dew.age
 git add .dew/manifest.yaml && git commit -m "Add dew manifest" && git push
 ```
 
-Then configure and push the image (see [Syncing](#9-syncing)):
+Then point dew at a sync destination and push the image (see
+[Syncing](#9-syncing)):
 
 ```bash
-# ~/.dew/config.yaml:  sync:\n  destination: nas:/volume1/dew
+dew remote set nas:/volume1/dew   # local path or scp-style host:path
 dew sync
 ```
 
@@ -230,13 +231,17 @@ A plain `dew restore` with unresolved conflicts exits non-zero so you notice; a
 
 ## 9. Syncing
 
-Sync copies the encrypted image to/from a destination set in
-`~/.dew/config.yaml`:
+Sync copies the encrypted image to/from a single destination. Set the
+destination once with **`dew remote`** (no need to hand-edit config):
 
-```yaml
-sync:
-  destination: nas:/volume1/dew     # remote (scp) — or a local/mounted path
+```bash
+dew remote set nas:/volume1/dew   # remote (scp) — or a local/mounted path
+dew remote                        # show the current destination
+dew remote unset                  # clear it
 ```
+
+The destination lives in `~/.dew/config.yaml` and is shared across all your
+repos. Then:
 
 ```bash
 dew sync         # push the current repo's image

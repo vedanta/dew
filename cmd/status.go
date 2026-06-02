@@ -10,6 +10,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/vedanta/dew/internal/config"
 	"github.com/vedanta/dew/internal/identity"
 	"github.com/vedanta/dew/internal/manifest"
 )
@@ -36,10 +37,14 @@ func runStatus(cmd *cobra.Command, _ []string) error {
 	if err != nil {
 		return fmt.Errorf("status: %w", err)
 	}
-	return doStatus(root, identity.NewPaths(home), cmd.OutOrStdout())
+	cfg, err := config.Load(config.Path(home))
+	if err != nil {
+		return err
+	}
+	return doStatus(root, identity.NewPaths(home), cfg.Sync.Destination, cmd.OutOrStdout())
 }
 
-func doStatus(root string, p identity.Paths, out io.Writer) error {
+func doStatus(root string, p identity.Paths, syncDest string, out io.Writer) error {
 	var b strings.Builder
 
 	st, err := identity.Inspect(p)
@@ -73,8 +78,11 @@ func doStatus(root string, p identity.Paths, out io.Writer) error {
 		writeStatusLine(&b, "Hydration", hydrationStatus(root, m.Allow, imagePresent))
 	}
 
-	// Sync configuration lands in Phase 6.
-	writeStatusLine(&b, "Sync", "Not configured")
+	if syncDest == "" {
+		writeStatusLine(&b, "Sync", "Not configured (run 'dew remote set <dest>')")
+	} else {
+		writeStatusLine(&b, "Sync", "→ "+syncDest)
+	}
 
 	_, err = io.WriteString(out, b.String())
 	return err

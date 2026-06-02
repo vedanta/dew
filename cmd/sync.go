@@ -114,7 +114,7 @@ func syncContext() (string, identity.Paths, string, error) {
 // loadForSync validates a destination is configured and loads the manifest.
 func loadForSync(root, destination string) (*manifest.Manifest, error) {
 	if destination == "" {
-		return nil, errors.New("sync: no destination configured — set sync.destination in ~/.dew/config.yaml")
+		return nil, errors.New("sync: no destination configured — run 'dew remote set <dest>'")
 	}
 	m, err := manifest.Load(manifest.Path(root))
 	if err != nil {

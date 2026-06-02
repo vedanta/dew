@@ -28,7 +28,7 @@ func TestDoStatusFreshRepo(t *testing.T) {
 	mustInit(t, root)
 
 	var out bytes.Buffer
-	if err := doStatus(root, p, &out); err != nil {
+	if err := doStatus(root, p, "", &out); err != nil {
 		t.Fatalf("doStatus: %v", err)
 	}
 	s := out.String()
@@ -43,7 +43,7 @@ func TestDoStatusHealthyAfterPack(t *testing.T) {
 	root, p := packedFixture(t, "TOKEN=abc") // identity + manifest + image + file present
 
 	var out bytes.Buffer
-	if err := doStatus(root, p, &out); err != nil {
+	if err := doStatus(root, p, "", &out); err != nil {
 		t.Fatalf("doStatus: %v", err)
 	}
 	s := out.String()
@@ -61,11 +61,25 @@ func TestDoStatusIncompleteWhenFileMissing(t *testing.T) {
 	removeRepoFile(t, root, ".env.local")
 
 	var out bytes.Buffer
-	if err := doStatus(root, p, &out); err != nil {
+	if err := doStatus(root, p, "", &out); err != nil {
 		t.Fatalf("doStatus: %v", err)
 	}
 	if !strings.Contains(out.String(), "Incomplete") || !strings.Contains(out.String(), "dew restore") {
 		t.Errorf("expected incomplete + restore hint:\n%s", out.String())
+	}
+}
+
+func TestDoStatusShowsConfiguredRemote(t *testing.T) {
+	root := t.TempDir()
+	p := mustIdentityPaths(t)
+	mustInit(t, root)
+
+	var out bytes.Buffer
+	if err := doStatus(root, p, "nas:/vol1/dew", &out); err != nil {
+		t.Fatalf("doStatus: %v", err)
+	}
+	if !strings.Contains(out.String(), "nas:/vol1/dew") {
+		t.Errorf("expected configured remote in status:\n%s", out.String())
 	}
 }
 
@@ -74,7 +88,7 @@ func TestDoStatusNoIdentityNoManifest(t *testing.T) {
 	p := emptyIdentityPaths(t) // not generated
 
 	var out bytes.Buffer
-	if err := doStatus(root, p, &out); err != nil {
+	if err := doStatus(root, p, "", &out); err != nil {
 		t.Fatalf("doStatus: %v", err)
 	}
 	s := out.String()
