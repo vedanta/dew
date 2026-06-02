@@ -71,6 +71,15 @@ The spec ([`docs/design.md`](docs/design.md) §23) prescribes a deliberate seque
 5. Health (`status`, `doctor`)
 6. Sync (`sync`, `sync pull`)
 
+### Writing CLI help
+
+When you add or change a command or flag, write its `--help` to our house style:
+**[`docs/help-style.md`](docs/help-style.md)**. In short — lead with intent, let
+each `Long` answer *what it does / why / what happens / what to run next*, keep it
+calibrated (not the manual), and verify by rendering the actual `--help` output.
+Keep [`docs/USER-MANUAL.md`](docs/USER-MANUAL.md) and
+[`docs/COMMANDS.md`](docs/COMMANDS.md) in step.
+
 ## Security-sensitive areas
 
 dew handles private files and encryption keys. Two invariants must hold and are reviewed carefully:
