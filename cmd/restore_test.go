@@ -69,15 +69,21 @@ func TestDoRestoreDryRun(t *testing.T) {
 	assertRepoContent(t, root, ".env.local", "LOCAL")
 }
 
-func TestRestoreHasHydrateAlias(t *testing.T) {
-	found := false
-	for _, a := range restoreCmd.Aliases {
-		if a == "hydrate" {
+func TestHydrateCommandRegistered(t *testing.T) {
+	var found bool
+	for _, c := range rootCmd.Commands() {
+		if c.Name() == "hydrate" {
 			found = true
+			if c.GroupID != groupImage {
+				t.Errorf("hydrate group = %q, want %q", c.GroupID, groupImage)
+			}
+			if c.RunE == nil {
+				t.Error("hydrate has no RunE")
+			}
 		}
 	}
 	if !found {
-		t.Errorf("restore aliases = %v, want it to include 'hydrate'", restoreCmd.Aliases)
+		t.Error("expected a top-level 'hydrate' command")
 	}
 }
 
