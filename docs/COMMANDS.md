@@ -131,7 +131,7 @@ dew pack --dry-run
 dew pack --force
 ```
 
-### `dew restore` (alias `hydrate`)
+### `dew restore`
 Extract the image back into the repo: age decrypt → zstd decompress → tar extract. **Atomic and non-destructive** — staged to a temp dir, then placed; a file that differs from the image is reported as a **conflict and left untouched** (exit non-zero) unless `--force`.
 
 | Flag | Description |
@@ -143,7 +143,14 @@ Extract the image back into the repo: age decrypt → zstd decompress → tar ex
 dew restore
 dew restore --dry-run
 dew restore --force
-dew hydrate          # alias
+```
+
+### `dew hydrate`
+The same operation as `dew restore` (same flags), surfaced as its own command — dew's signature verb.
+
+```bash
+dew hydrate
+dew hydrate --dry-run
 ```
 
 ---
