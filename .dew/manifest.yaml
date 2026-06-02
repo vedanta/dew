@@ -1,0 +1,8 @@
+version: 1
+project: dew
+image: dew.dew.age
+id: 62e65a9ec913fbf8ea12e66ed4df9202
+allow:
+    - CLAUDE.md
+    - idea/design-1.md
+    - idea/design-2.md
