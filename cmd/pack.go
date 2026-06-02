@@ -26,16 +26,21 @@ var (
 var packCmd = &cobra.Command{
 	Use:     "pack",
 	GroupID: groupImage,
-	Short:   "Build the encrypted image from allow-listed files",
-	Long: `Package the allow-listed files into the encrypted image:
-tar -> zstd -> age encrypt -> ~/.dew/images/<project>.dew.age (written atomically).
+	Short:   "Encrypt your tracked local files into a single image",
+	Long: `Bundle the local files dew tracks for this repo — the context Git ignores
+(.env.local, dev certs, docker-compose.override.yml, local config) — into one
+encrypted image at ~/.dew/images/<project>.dew.age.
 
-Honors the deny-list, so an allow-listed directory never packs noise. Refuses to
-overwrite an image created by a different repo (use --force). --dry-run previews
-the file list without writing and needs no identity.`,
-	Example: `  dew pack
-  dew pack --dry-run
-  dew pack --force`,
+Run it after you add or change a tracked file: pack always uses the current
+contents of the allow-list, so you declare files once with 'dew add' and never
+re-add. The image is what 'dew sync' ships and 'dew restore' restores — packing
+is how your local state becomes portable. Next: 'dew sync' to push it.
+
+The deny-list keeps noise out even from allow-listed directories, and pack won't
+overwrite an image created by a different repo unless you pass --force.`,
+	Example: `  dew pack              # encrypt the tracked files into the image
+  dew pack --dry-run    # preview what would be included; write nothing
+  dew pack --force      # overwrite an image created by a different repo`,
 	Args: cobra.NoArgs,
 	RunE: runPack,
 }
@@ -222,6 +227,6 @@ func writeImage(imagePath, imagesDir, name, root string, allow []string, recipie
 
 func init() {
 	packCmd.Flags().BoolVar(&packForce, "force", false, "overwrite an image created by a different repo")
-	packCmd.Flags().BoolVar(&packDryRun, "dry-run", false, "list what would be packed without writing an image")
+	packCmd.Flags().BoolVar(&packDryRun, "dry-run", false, "preview what would be packed; write nothing")
 	rootCmd.AddCommand(packCmd)
 }

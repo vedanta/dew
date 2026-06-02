@@ -22,16 +22,19 @@ var (
 var initCmd = &cobra.Command{
 	Use:     "init",
 	GroupID: groupRepo,
-	Short:   "Create .dew/manifest.yaml in the current repo",
-	Long: `Create the repo-level dew manifest (.dew/manifest.yaml), committed to Git.
+	Short:   "Set up dew in this repo (creates .dew/manifest.yaml)",
+	Long: `Start managing this repo's local context with dew. Creates .dew/manifest.yaml —
+the list of which local files dew should manage. The manifest holds no secrets
+or file contents, only paths, so it's safe to commit; committing it means
+teammates and other machines know what to hydrate.
 
-The project name defaults to the directory's base name; override it with
---project (it becomes the image filename). With --from-gitignore, seed the
-allow-list with discovered candidates. Refuses to overwrite an existing
-manifest.`,
-	Example: `  dew init
-  dew init --project billing-svc
-  dew init --from-gitignore`,
+The project name defaults to the directory name (override with --project); it
+becomes the image name. With --from-gitignore, dew seeds the allow-list with
+candidates discovered from your .gitignore so you can go straight to pack.
+Next: 'dew add <path>' (or 'dew scan') to choose what to manage, then 'dew pack'.`,
+	Example: `  dew init                        # create the manifest (project = folder name)
+  dew init --project billing-svc  # name the project independently of the folder
+  dew init --from-gitignore       # seed the allow-list from .gitignore`,
 	Args: cobra.NoArgs,
 	RunE: runInit,
 }
@@ -123,7 +126,7 @@ func doInit(root, projectFlag string, fromGitignore bool, imagesDir string, out 
 }
 
 func init() {
-	initCmd.Flags().BoolVar(&initFromGitignore, "from-gitignore", false, "seed candidates discovered from .gitignore")
-	initCmd.Flags().StringVarP(&initProject, "project", "p", "", "project name (defaults to the directory name)")
+	initCmd.Flags().BoolVar(&initFromGitignore, "from-gitignore", false, "seed the allow-list with candidates found in .gitignore")
+	initCmd.Flags().StringVarP(&initProject, "project", "p", "", "name this project (defaults to the directory name)")
 	rootCmd.AddCommand(initCmd)
 }
