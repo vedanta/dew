@@ -16,8 +16,10 @@ var listCmd = &cobra.Command{
 	Use:     "list",
 	Aliases: []string{"ls"},
 	GroupID: groupRepo,
-	Short:   "List files tracked by the manifest (alias: ls)",
-	Long:    "Print the project name and the tracked allow-list. To see deny rules too, use 'dew rules'.",
+	Short:   "List the files dew tracks for this repo (alias: ls)",
+	Long: `Show this repo's allow-list — the local files dew manages — and the project
+name. These are the paths 'dew pack' will include. To see the deny rules by
+layer as well, use 'dew rules'.`,
 	Example: "  dew list",
 	Args:    cobra.NoArgs,
 	RunE:    runList,
