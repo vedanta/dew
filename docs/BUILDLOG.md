@@ -153,6 +153,16 @@ Release history:
   mechanics: what it does, why, what happens, what to run next). Docs (user
   manual + command reference) aligned. No functional fixes or breaking changes —
   a clean additive/polish minor.
+- **v0.3.0** — the **`dew remote`** command family: the sync destination is now
+  CLI-managed instead of a hand-edited `~/.dew/config.yaml`. `dew remote set` /
+  `dew remote` / `dew remote unset` configure, show, and clear it; `dew remote
+  test` checks a destination is reachable, trusted, and writable (over `ssh` for
+  remotes, surfacing OpenSSH's verdict); `dew remote images` lists what's stored
+  there. `dew status` now shows the real destination, and `dew sync`'s
+  no-destination error points at `dew remote set`. Adds an `ssh` dependency for
+  remote `test`/`images` only (ships with the `scp` already required; local needs
+  nothing). Tracked under #111 (children #108–#110); also shipped a product-site
+  rewrite and a Node-24 CI bump. No breaking changes — a new command surface.
 
 Remaining backlog is tracked in GitHub issues (e.g. `dew images` repo-locations,
 discover+pack convenience).
