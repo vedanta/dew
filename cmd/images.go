@@ -18,8 +18,11 @@ import (
 var imagesCmd = &cobra.Command{
 	Use:     "images",
 	GroupID: groupHealth,
-	Short:   "List all encrypted images dew manages",
-	Long:    "List every image in ~/.dew/images with its project, size, last-packed time, and owning repo id. Repo-independent — runs from anywhere.",
+	Short:   "List every image dew manages, across all repos",
+	Long: `Show a global inventory of the encrypted images in ~/.dew/images — each one's
+project, size, when it was last packed, and which repo owns it. Where 'dew status'
+and 'dew list' describe the current repo, images spans every repo and runs from
+anywhere.`,
 	Example: "  dew images",
 	Args:    cobra.NoArgs,
 	RunE:    runImages,

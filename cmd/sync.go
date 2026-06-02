@@ -21,22 +21,25 @@ import (
 var syncCmd = &cobra.Command{
 	Use:     "sync",
 	GroupID: groupSync,
-	Short:   "Push the current repo's encrypted image to the sync destination",
-	Long: `Push the current repo's image to the destination set in ~/.dew/config.yaml.
+	Short:   "Push this repo's image to your sync destination",
+	Long: `Copy this repo's encrypted image to the destination set in ~/.dew/config.yaml
+so another machine can fetch it. Local or mounted paths are copied directly; a
+remote host:path goes over scp using your existing SSH config. Only the encrypted
+image moves — never your private key.
 
-Hybrid transport: local/mounted paths use a pure-Go copy; remote host:path
-destinations shell out to scp (inheriting your ~/.ssh/config). Only the encrypted
-image is moved — never the private key. Use 'dew sync pull' to fetch.`,
-	Example: `  dew sync         # push
-  dew sync pull    # fetch into ~/.dew/images/`,
+Run it after 'dew pack'. On the other machine, 'dew sync pull' fetches it.`,
+	Example: `  dew sync         # push this repo's image to the destination
+  dew sync pull    # fetch it on another machine, then 'dew restore'`,
 	Args: cobra.NoArgs,
 	RunE: runSyncPush,
 }
 
 var syncPullCmd = &cobra.Command{
-	Use:     "pull",
-	Short:   "Pull the encrypted image from the sync destination",
-	Long:    "Fetch the current repo's image from the configured destination into ~/.dew/images/, then run 'dew restore' to hydrate.",
+	Use:   "pull",
+	Short: "Fetch this repo's image from your sync destination",
+	Long: `Download this repo's encrypted image from the configured destination into
+~/.dew/images, so you can restore it. Run this on a fresh clone, then 'dew restore'
+(or 'dew hydrate'). Your identity must already be on this machine to decrypt.`,
 	Example: "  dew sync pull",
 	Args:    cobra.NoArgs,
 	RunE:    runSyncPull,

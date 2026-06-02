@@ -15,12 +15,14 @@ import (
 var scanCmd = &cobra.Command{
 	Use:     "scan",
 	GroupID: groupRepo,
-	Short:   "Discover candidate local-only files",
-	Long: `Read .gitignore and walk the working tree to suggest candidate files,
-filtering out noise (the deny-list). Prints Candidates and Skipped.
+	Short:   "Suggest local files worth tracking (doesn't change anything)",
+	Long: `Look through this repo's .gitignore and working tree and suggest local files
+dew could manage — the per-developer context Git leaves out — while filtering out
+noise like build output and logs.
 
-.gitignore is a hint, not an authority — nothing is added automatically. Opt in
-with 'dew add'.`,
+scan only suggests; nothing is added until you opt in. Use it to discover what's
+worth tracking. Next: 'dew add <path>' for specific files, 'dew add .' to take the
+suggestions, or 'dew init --from-gitignore' to seed them at setup.`,
 	Example: "  dew scan",
 	Args:    cobra.NoArgs,
 	RunE:    runScan,

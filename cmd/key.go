@@ -14,30 +14,32 @@ import (
 var keygenCmd = &cobra.Command{
 	Use:     "keygen",
 	GroupID: groupIdentity,
-	Short:   "Create the global age identity",
-	Long: `Generate the one age identity shared across all your repos:
-~/.dew/identity.age.key (private, 0600) and identity.age.pub.
+	Short:   "Create your dew identity (the key that encrypts images)",
+	Long: `Generate the one age keypair dew uses to encrypt and decrypt your images,
+stored in ~/.dew/. Run this once per machine, before you pack anything.
 
-This key decrypts your images, so it is never synced or committed. To use dew on
-another machine, copy it there yourself. keygen refuses to overwrite an existing
-identity.`,
-	Args: cobra.NoArgs,
-	RunE: runKeygen,
+The private key never leaves your machine — dew never commits or syncs it — so to
+use dew on another machine you copy ~/.dew/identity.age.key there yourself. Guard
+it like any private key: without it, images can't be decrypted. keygen won't
+overwrite an existing identity. Next: 'dew init' inside a repo.`,
+	Example: "  dew keygen",
+	Args:    cobra.NoArgs,
+	RunE:    runKeygen,
 }
 
 // keyCmd groups identity inspection subcommands.
 var keyCmd = &cobra.Command{
 	Use:     "key",
 	GroupID: groupIdentity,
-	Short:   "Inspect the global age identity",
-	Long:    "Inspect the global age identity. See 'dew key status'.",
+	Short:   "Inspect your dew identity",
+	Long:    "Inspect your dew identity. See 'dew key status'.",
 	Args:    cobra.NoArgs,
 }
 
 var keyStatusCmd = &cobra.Command{
 	Use:     "status",
-	Short:   "Report whether an identity is present and show its public key",
-	Long:    "Report whether a global identity exists and print its public key (derived from the private key if the .pub file is missing).",
+	Short:   "Show whether an identity exists and its public key",
+	Long:    "Report whether this machine has a dew identity and print its public key. Use it to confirm a machine is set up before you restore.",
 	Args:    cobra.NoArgs,
 	Example: "  dew key status",
 	RunE:    runKeyStatus,

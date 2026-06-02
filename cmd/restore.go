@@ -25,17 +25,18 @@ var (
 var restoreCmd = &cobra.Command{
 	Use:     "restore",
 	GroupID: groupImage,
-	Short:   "Extract the encrypted image back into the repo",
-	Long: `Restore local files from the image: age decrypt -> zstd decompress -> tar
-extract.
+	Short:   "Bring your local files back from the image",
+	Long: `Hydrate the working tree from this repo's encrypted image: decrypt, decompress,
+and write the tracked files back into place. This is what makes a fresh clone
+runnable — pair it with 'dew sync pull' on a new machine.
 
-Atomic and non-destructive: files are staged to a temp dir, then placed. A file
-that differs from the image is reported as a conflict and left untouched (exit
-non-zero) unless --force. --dry-run previews the outcome without changing the
-working tree. 'dew hydrate' is the same command.`,
-	Example: `  dew restore
-  dew restore --dry-run
-  dew restore --force`,
+Safe by default: files are staged first, and any local file that differs from the
+image is reported as a conflict and left untouched, so you won't lose local edits
+unless you pass --force. --dry-run shows exactly what would change, touching
+nothing. ('dew hydrate' is the same command.)`,
+	Example: `  dew restore             # write the tracked files back into the repo
+  dew restore --dry-run   # preview new / unchanged / conflicts; change nothing
+  dew restore --force     # overwrite local files that differ from the image`,
 	Args: cobra.NoArgs,
 	RunE: runRestore,
 }
@@ -45,8 +46,10 @@ working tree. 'dew hydrate' is the same command.`,
 var hydrateCmd = &cobra.Command{
 	Use:     "hydrate",
 	GroupID: groupImage,
-	Short:   "Hydrate the repo from its image (same as restore)",
-	Long:    "Hydrate the working tree from the encrypted image — identical to 'dew restore' (atomic, non-destructive; supports --force and --dry-run).",
+	Short:   "Bring your local files back from the image (same as restore)",
+	Long: `Hydrate the working tree from this repo's encrypted image — identical to
+'dew restore', with the same --force and --dry-run flags. dew's signature verb;
+use whichever name you reach for first.`,
 	Example: "  dew hydrate\n  dew hydrate --dry-run",
 	Args:    cobra.NoArgs,
 	RunE:    runRestore,
@@ -146,7 +149,7 @@ func reportRestore(out io.Writer, res restore.Result, dryRun bool) error {
 
 func addRestoreFlags(c *cobra.Command) {
 	c.Flags().BoolVar(&restoreForce, "force", false, "overwrite local files that differ from the image")
-	c.Flags().BoolVar(&restoreDryRun, "dry-run", false, "preview what would be restored without changing the working tree")
+	c.Flags().BoolVar(&restoreDryRun, "dry-run", false, "preview what would change; touch nothing")
 }
 
 func init() {

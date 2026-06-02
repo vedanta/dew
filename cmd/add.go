@@ -20,15 +20,18 @@ var addYes bool
 var addCmd = &cobra.Command{
 	Use:     "add <path>...",
 	GroupID: groupRepo,
-	Short:   "Add a file or directory to the manifest allow-list",
-	Long: `Add one or more paths to the allow-list (deduped). Adding a directory
-includes its files, minus deny-listed noise. Paths outside the repo are rejected.
+	Short:   "Track a local file or directory with dew",
+	Long: `Add files to this repo's allow-list — the local context you want dew to manage
+(.env.local, certs, overrides). Adding is a one-time declaration recorded in the
+committed manifest; 'dew pack' then always uses the files' current contents, so
+you never re-add after editing.
 
-'dew add .' is special: it adds the discovered candidates (from 'dew scan'),
-prompting Y/n per file — not every file in the repo. Use -y to accept all.`,
-	Example: `  dew add .env.local certs/dev.pem
-  dew add .          # interactively add discovered candidates
-  dew add . --yes    # add all discovered candidates`,
+Adding a directory includes its files (minus deny-listed noise); paths outside
+the repo are rejected. 'dew add .' is special — it adds the candidates 'dew scan'
+found, prompting Y/n each, not every file in the repo. Next: 'dew pack'.`,
+	Example: `  dew add .env.local certs/dev.pem   # track specific paths
+  dew add .                          # interactively add discovered candidates
+  dew add . --yes                    # add all discovered candidates`,
 	Args: cobra.MinimumNArgs(1),
 	RunE: runAdd,
 }
