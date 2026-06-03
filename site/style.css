@@ -128,9 +128,11 @@ a.card:hover { border-color: var(--accent); text-decoration: none; }
   background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
   padding: 1rem 1.2rem; overflow-x: auto; margin-top: 1.4rem; color: var(--text);
 }
+.install { min-width: 0; }   /* let 1fr columns shrink; don't widen the grid to fit a long line */
 .install pre {
   font-family: var(--mono); font-size: 0.85rem; background: var(--surface);
-  border: 1px solid var(--border); border-radius: 8px; padding: 0.8rem; overflow-x: auto; margin: 0;
+  border: 1px solid var(--border); border-radius: 8px; padding: 0.8rem; margin: 0;
+  white-space: pre-wrap; overflow-wrap: anywhere;   /* wrap long commands/links instead of overflowing */
 }
 .install h3 { font-size: 1rem; margin: 0 0 0.6rem; }
 .qs { margin: 0.5rem 0 0; font-size: 1.1rem; }
