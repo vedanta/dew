@@ -13,9 +13,9 @@
 
 <p align="center"><a href="https://vedanta.github.io/dew/"><strong>vedanta.github.io/dew</strong></a></p>
 
-**dew** is a local-first CLI that manages the *private* repository state Git intentionally ignores: `.env.local`, dev certificates, `docker-compose.override.yml`, private fixtures, local config — the per-developer files needed to actually run a clone.
+**dew** is a local-first CLI for the *private, local* repository context Git can't hold: `.env.local` and secrets, dev certificates, `docker-compose.override.yml`, private fixtures, machine-specific config, the local notes you don't commit — the per-developer files needed to actually run a clone.
 
-Git tracks shared project state. dew tracks the local-only files that make a cloned repo work. It packages an allow-listed set of files into a single encrypted image per repo and can sync that image to a remote, so a fresh clone can be **hydrated** back to a working state.
+Git tracks your shared code. dew manages the local-only files that make a cloned repo work — shared docs still live in Git; dew is for what shouldn't. It packages an allow-listed set of files into a single encrypted image per repo and can sync that image to a remote, so a fresh clone can be **hydrated** back to a working state.
 
 ```bash
 git clone <repo> && cd <repo>

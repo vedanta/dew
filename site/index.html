@@ -49,9 +49,10 @@
       <div class="hero-id-text">
         <h1>The local half of your repo,<br>restored after every clone.</h1>
         <p class="lede">
-          <strong>dew</strong> manages the private files Git intentionally ignores —
-          <code>.env.local</code>, dev certs, <code>docker-compose.override.yml</code>,
-          local config — as a single <em>encrypted</em> image per repo. Clone, pull,
+          Git tracks your shared code. <strong>dew</strong> manages the private,
+          local context it can't hold — <code>.env.local</code> and secrets, dev
+          certs, overrides, machine-specific config, the local notes you don't
+          commit — as a single <em>encrypted</em> image per repo. Clone, pull,
           restore, and you're back to a working state.
         </p>
       </div>
@@ -78,10 +79,10 @@
     <p class="prose">
       A fresh <code>git clone</code> is dry: it has the source, but none of the
       per-developer files needed to actually run it — they're
-      <code>.gitignore</code>d for good reason. Today you recover them from Slack
-      threads, password-manager notes, or a copy-pasted <code>.env</code>. dew turns
-      that hidden local state into a first-class, encrypted, repo-aware artifact you
-      can carry to any clone.
+      <code>.gitignore</code>d for good reason. Today you recover them from chat
+      threads, a password manager, or a copy-pasted <code>.env</code>. dew keeps that
+      private, local context in one encrypted image you can restore on any clone.
+      Shared docs still belong in Git — dew is for what shouldn't.
     </p>
   </section>
 
@@ -109,6 +110,16 @@
       ]'></pre>
     </div>
     <p class="demo-note">Replay · <button class="replay" id="replay" type="button">↻ run again</button></p>
+  </section>
+
+  <!-- When to use it -->
+  <section class="band">
+    <h2>When to reach for dew</h2>
+    <div class="grid">
+      <div class="feature"><h3>🆕 A new machine</h3><p>Clone, <code>sync pull</code>, <code>restore</code> — your <code>.env.local</code>, certs, and overrides are back. No re-hunting through chat or a password manager.</p></div>
+      <div class="feature"><h3>🖥️ A dev box you SSH into</h3><p>Keep a build server or remote workstation in sync with the same local config you run on your laptop.</p></div>
+      <div class="feature"><h3>🔁 After any fresh checkout</h3><p>Re-clone a repo and immediately restore the gitignored files it needs to actually run.</p></div>
+    </div>
   </section>
 
   <!-- How it works -->

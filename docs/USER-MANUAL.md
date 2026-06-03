@@ -26,14 +26,16 @@ the [command reference](COMMANDS.md); for the design rationale see
 ## 1. What dew is
 
 Git tracks the **shared** state of a project — source, docs, manifests. It
-deliberately ignores the **private, per-developer** state needed to actually run
-a clone: `.env.local`, dev certificates, `docker-compose.override.yml`, private
-fixtures, local config.
+deliberately ignores the **private, per-developer** context needed to actually
+run a clone: `.env.local` and secrets, dev certificates,
+`docker-compose.override.yml`, private fixtures, machine-specific config, and the
+local notes you keep out of Git.
 
-dew manages exactly that ignored state. It packages an allow-listed set of files
-into a single **encrypted image** per repo and can sync that image to a remote,
-so after a fresh `git clone` you can **hydrate** the repo back to a working
-state:
+dew manages exactly that local context — the part Git can't hold. (Shared docs
+still belong in Git; dew is for what shouldn't.) It packages an allow-listed set
+of files into a single **encrypted image** per repo and can sync that image to a
+remote, so after a fresh `git clone` you can **hydrate** the repo back to a
+working state:
 
 ```bash
 git clone <repo> && cd <repo>

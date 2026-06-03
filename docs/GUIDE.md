@@ -3,10 +3,11 @@
 A task-first walkthrough of **dew**, organized by what you're trying to do. Each
 step is a command you can copy, with a one-line note on what it does.
 
-> **The one idea:** Git carries your project's *shared* files; dew carries the
-> *local* ones Git ignores — `.env.local`, dev certs, `docker-compose.override.yml`,
-> local config — as a single **encrypted image** per repo. dew complements Git;
-> it never touches your tracked source.
+> **The one idea:** Git tracks your project's *shared* code; dew manages the
+> *private, local* context it can't hold — `.env.local` and secrets, dev certs,
+> overrides, machine-specific config, the local notes you don't commit — as a
+> single **encrypted image** per repo. dew complements Git: shared docs still
+> live in Git, and dew never touches your tracked source.
 
 **Pick your scenario:**
 1. [One machine](#scenario-1--one-machine) — track and snapshot your local files.

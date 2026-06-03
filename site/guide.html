@@ -38,11 +38,12 @@
       is a command you can copy.
     </p>
     <div class="callout" style="max-width:60ch;margin:1.2rem auto;text-align:left">
-      <strong>The one idea:</strong> Git carries your project's <em>shared</em> files;
-      dew carries the <em>local</em> ones Git ignores — <code>.env.local</code>, dev
-      certs, <code>docker-compose.override.yml</code>, local config — as a single
-      <em>encrypted</em> image per repo. dew complements Git; it never touches your
-      tracked source.
+      <strong>The one idea:</strong> Git tracks your project's <em>shared</em> code;
+      dew manages the <em>private, local</em> context it can't hold —
+      <code>.env.local</code> and secrets, dev certs, overrides, machine-specific
+      config, the local notes you don't commit — as a single <em>encrypted</em>
+      image per repo. dew complements Git; shared docs still live in Git, and dew
+      never touches your tracked source.
     </div>
     <div class="scenario-pick">
       <a class="card" href="#one"><h3>1 · One machine</h3><span>Track &amp; snapshot your local files.</span></a>
