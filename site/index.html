@@ -31,21 +31,38 @@
 
 <main id="top">
 
-  <!-- Hero -->
+  <!-- Hero: comic → buttons → logo + pitch -->
   <section class="hero">
-    <img class="hero-logo" src="assets/dew.png" alt="dew logo" width="120" height="120">
-    <h1>The local half of your repo,<br>restored after every clone.</h1>
-    <p class="lede">
-      <strong>dew</strong> manages the private files Git intentionally ignores —
-      <code>.env.local</code>, dev certs, <code>docker-compose.override.yml</code>,
-      local config — as a single <em>encrypted</em> image per repo. Clone, pull,
-      restore, and you're back to a working state.
-    </p>
-    <div class="install-banner" role="group" aria-label="Install on macOS with Homebrew">
-      <span class="ib-prompt">$</span>
-      <code class="ib-cmd">brew install --cask vedanta/dew/dew</code>
-      <button class="copy-btn" type="button" data-copy="brew install --cask vedanta/dew/dew" aria-label="Copy install command">Copy</button>
+    <img class="hero-comic" src="assets/comic.png" alt="dew in 3 panels: 1) clone a repo — local files missing, nothing works; 2) dew sync pull && dew restore fetches your local files; 3) back to work — local context restored">
+
+    <div class="hero-cta">
+      <div class="install-banner" role="group" aria-label="Install on macOS with Homebrew">
+        <span class="ib-prompt">$</span>
+        <code class="ib-cmd">brew install --cask vedanta/dew/dew</code>
+        <button class="copy-btn" type="button" data-copy="brew install --cask vedanta/dew/dew" aria-label="Copy install command">Copy</button>
+      </div>
+      <a class="btn primary" href="guide.html">User guide →</a>
     </div>
+
+    <div class="hero-id">
+      <img class="hero-logo" src="assets/dew.png" alt="dew logo" width="104" height="104">
+      <div class="hero-id-text">
+        <h1>The local half of your repo,<br>restored after every clone.</h1>
+        <p class="lede">
+          <strong>dew</strong> manages the private files Git intentionally ignores —
+          <code>.env.local</code>, dev certs, <code>docker-compose.override.yml</code>,
+          local config — as a single <em>encrypted</em> image per repo. Clone, pull,
+          restore, and you're back to a working state.
+        </p>
+      </div>
+    </div>
+
+    <p class="badges">
+      <span class="pill">Apache-2.0</span>
+      <span class="pill">single Go binary</span>
+      <span class="pill">macOS · Linux · Windows</span>
+      <span class="pill" id="version-pill">v0.2.0</span>
+    </p>
     <p class="hero-sub">
       <a href="#install">other ways to install ↓</a>
       <span class="dot">·</span>
@@ -53,18 +70,11 @@
       <span class="dot">·</span>
       <a href="https://github.com/vedanta/dew">GitHub ↗</a>
     </p>
-    <p class="badges">
-      <span class="pill">Apache-2.0</span>
-      <span class="pill">single Go binary</span>
-      <span class="pill">macOS · Linux · Windows</span>
-      <span class="pill" id="version-pill">v0.2.0</span>
-    </p>
   </section>
 
-  <!-- Problem → solution (the comic narrates it) -->
-  <section class="band story">
+  <!-- Problem → solution -->
+  <section class="band">
     <h2>Git gives you the code. Not the context.</h2>
-    <img class="story-comic" src="assets/comic.png" alt="dew in 3 panels: 1) clone a repo — local files missing, nothing works; 2) dew sync pull && dew restore fetches your local files; 3) back to work — local context restored">
     <p class="prose">
       A fresh <code>git clone</code> is dry: it has the source, but none of the
       per-developer files needed to actually run it — they're
