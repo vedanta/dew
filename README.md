@@ -119,6 +119,7 @@ dew keygen                      # create the global age identity
 dew key status                  # inspect identity
 dew key push <user@host>        # provision your identity onto another machine (SSH)
 dew key pull <user@host>        # or fetch it from a machine that has it (SSH)
+dew key devices                 # where the identity has been sent/received (audit log)
 
 # Repository setup
 dew init [--from-gitignore] [--project <name>]   # create .dew/manifest.yaml
