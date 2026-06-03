@@ -300,6 +300,11 @@ directory must already exist.
   overwrite a different identity without `--force`. **`dew key pull <user@host>`**
   is the mirror — run it *on* the new machine to fetch the identity from one that
   already has it (it verifies the download before installing).
+- **`dew key devices`** lists where your identity has been sent/received (a local
+  `~/.dew/devices.yaml` log, written on both ends of each push/pull). It's a
+  best-effort audit log, **not** a registry or revocation tool — manual copies
+  aren't recorded, and there's no rotation, so listing a machine doesn't let you
+  de-provision it.
 - The **private key is never *synced or committed*.** `dew key push` is the one
   explicit, opt-in exception that transmits it — only when you run it, over your
   own SSH access, to a machine you control. (You can still copy

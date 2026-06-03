@@ -85,6 +85,15 @@ dew key pull vbarooah@nvk2
 
 Same stance as `push`: explicit, opt-in, host key verified the normal way; `ssh`/`scp` required for remotes.
 
+### `dew key devices`
+List `~/.dew/devices.yaml` — where this machine's identity has been sent or received via `key push`/`pull` (peer, direction, public-key fingerprint, when, optional label). Each `push`/`pull` records the transfer on **both** ends (symmetric provenance), so any machine can show where its key came from or went.
+
+```bash
+dew key devices
+```
+
+> **Best-effort audit log, not a registry or revocation tool.** Manual key copies aren't recorded, and dew has no key rotation — so a machine listed here can't be de-provisioned by removing it. It answers "where have I distributed this key", nothing more.
+
 ---
 
 ## Repository setup

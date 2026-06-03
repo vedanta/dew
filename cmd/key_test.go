@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/vedanta/dew/internal/devices"
 	"github.com/vedanta/dew/internal/identity"
 )
 
@@ -128,6 +129,35 @@ func TestInstallPulledKeyRejectsMismatch(t *testing.T) {
 	}
 	if _, e := os.Stat(tgt.KeyFile); e == nil {
 		t.Error("key must not be installed on a verification failure")
+	}
+}
+
+func TestDoKeyDevicesEmptyAndPopulated(t *testing.T) {
+	home := filepath.Join(t.TempDir(), ".dew")
+
+	var empty bytes.Buffer
+	if err := doKeyDevices(home, &empty); err != nil {
+		t.Fatalf("doKeyDevices: %v", err)
+	}
+	if !strings.Contains(empty.String(), "No identity transfers recorded") {
+		t.Errorf("empty output = %q", empty.String())
+	}
+
+	// Recording a transfer should then show up in the listing.
+	recordLocal(home, devices.Entry{
+		Peer: "vbarooah@nvk2", Direction: devices.SentTo,
+		Fingerprint: "age1qdu770rzemhrmnukjhdu3pa5p2374fhprnm3l0aymcxxfx3wre0syc8rza",
+		At:          "2026-06-02T17:00:00Z", Label: "nvk2",
+	}, &bytes.Buffer{})
+
+	var out bytes.Buffer
+	if err := doKeyDevices(home, &out); err != nil {
+		t.Fatalf("doKeyDevices: %v", err)
+	}
+	for _, want := range []string{"vbarooah@nvk2", "sent-to", "age1qdu770rzemhr…", "nvk2"} {
+		if !strings.Contains(out.String(), want) {
+			t.Errorf("listing missing %q:\n%s", want, out.String())
+		}
 	}
 }
 

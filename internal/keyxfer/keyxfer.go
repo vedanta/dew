@@ -98,6 +98,51 @@ func Download(host, localPath string) error {
 	return scpDownload(host, remoteKeyPath, localPath)
 }
 
+// sshRunStdin runs command on host with stdin piped from input. Overridable in
+// tests.
+var sshRunStdin = func(host, command, input string) (string, int, error) {
+	cmd := exec.Command("ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=10", host, command) //nolint:gosec // G204: host is the user's target; command is a fixed dew-controlled string
+	cmd.Stdin = strings.NewReader(input)
+	out, err := cmd.CombinedOutput()
+	s := strings.TrimSpace(string(out))
+	if err == nil {
+		return s, 0, nil
+	}
+	var ee *exec.ExitError
+	if errors.As(err, &ee) {
+		return s, ee.ExitCode(), nil
+	}
+	return s, -1, err
+}
+
+// ReadRemoteFile returns the contents of a path under the target's home ("" if
+// absent or unreadable). Used to merge the peer's provenance inventory.
+func ReadRemoteFile(host, relPath string) (string, error) {
+	out, code, err := sshRun(host, "cat "+shellQuote(relPath)+" 2>/dev/null")
+	if err != nil {
+		return "", err
+	}
+	if code != 0 {
+		return "", nil // absent — treat as empty
+	}
+	return out, nil
+}
+
+// WriteRemoteFile writes content to a path under the target's home (creating
+// ~/.dew), used to record provenance on the peer. The target need not have dew
+// installed — this is plain file I/O over the SSH session.
+func WriteRemoteFile(host, relPath, content string) error {
+	cmd := "mkdir -p ~/.dew && cat > " + shellQuote(relPath)
+	out, code, err := sshRunStdin(host, cmd, content)
+	if err != nil {
+		return fmt.Errorf("keyxfer: write %s on %s: %w", relPath, host, err)
+	}
+	if code != 0 {
+		return fmt.Errorf("keyxfer: write %s on %s failed: %s", relPath, host, firstLine(out))
+	}
+	return nil
+}
+
 // Push provisions the local identity (private key at keyFile, public key
 // localPub) onto host's ~/.dew. It refuses to overwrite a different identity
 // unless force is set, and verifies the target's public key matches afterward.

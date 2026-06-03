@@ -7,10 +7,13 @@ import (
 	"io"
 	"os"
 	"strings"
+	"text/tabwriter"
+	"time"
 
 	"github.com/spf13/cobra"
 
 	"github.com/vedanta/dew/internal/depcheck"
+	"github.com/vedanta/dew/internal/devices"
 	"github.com/vedanta/dew/internal/identity"
 	"github.com/vedanta/dew/internal/keyxfer"
 )
@@ -119,6 +122,8 @@ func doKeyPush(p identity.Paths, host string, force, assumeYes bool, in io.Reade
 		return fmt.Errorf("key push: %w", err)
 	}
 
+	recordPush(p.Home, host, st.PublicKey, out)
+
 	if outcome == keyxfer.AlreadyPresent {
 		outf(out, "%s already has this identity (%s) — nothing to do.\n", host, st.PublicKey)
 		return nil
@@ -188,6 +193,7 @@ func doKeyPull(p identity.Paths, host string, force, assumeYes bool, in io.Reade
 		return fmt.Errorf("key pull: %w", err)
 	}
 	if st.Present && st.PublicKey == sourcePub {
+		recordPull(p.Home, host, sourcePub, out)
 		outf(out, "This machine already has that identity (%s) — nothing to do.\n", sourcePub)
 		return nil
 	}
@@ -207,6 +213,7 @@ func doKeyPull(p identity.Paths, host string, force, assumeYes bool, in io.Reade
 	if err := installPulledKey(p, tmp, sourcePub); err != nil {
 		return err
 	}
+	recordPull(p.Home, host, sourcePub, out)
 	outf(out, "Pulled identity (%s) from %s\n", sourcePub, host)
 	outf(out, "Now run here: 'dew remote set <dest> && dew sync pull && dew restore'.\n")
 	return nil
@@ -233,6 +240,132 @@ func installPulledKey(p identity.Paths, tmp, sourcePub string) error {
 		return fmt.Errorf("key pull: write public key: %w", err)
 	}
 	return nil
+}
+
+var keyDevicesCmd = &cobra.Command{
+	Use:   "devices",
+	Short: "List where this machine's identity has been sent or received",
+	Long: `Show ~/.dew/devices.yaml — a local log of 'dew key push'/'pull' transfers
+(peer, direction, public-key fingerprint, when, optional label).
+
+This is a best-effort audit log, NOT a registry or revocation tool: manual key
+copies aren't recorded, and there's no key rotation — so a machine listed here
+can't be de-provisioned by removing it. Use it to recall where you've
+distributed your identity.`,
+	Example: "  dew key devices",
+	Args:    cobra.NoArgs,
+	RunE:    runKeyDevices,
+}
+
+func runKeyDevices(cmd *cobra.Command, _ []string) error {
+	home, err := identity.DefaultHome()
+	if err != nil {
+		return fmt.Errorf("key devices: %w", err)
+	}
+	return doKeyDevices(home, cmd.OutOrStdout())
+}
+
+func doKeyDevices(home string, out io.Writer) error {
+	log, err := devices.Load(devices.Path(home))
+	if err != nil {
+		return err
+	}
+	if len(log.Devices) == 0 {
+		_, werr := io.WriteString(out, "No identity transfers recorded.\n")
+		return werr
+	}
+	var b strings.Builder
+	tw := tabwriter.NewWriter(&b, 0, 2, 2, ' ', 0)
+	outf(tw, "PEER\tDIRECTION\tFINGERPRINT\tWHEN\tLABEL\n")
+	for _, e := range log.Devices {
+		label := e.Label
+		if label == "" {
+			label = "-"
+		}
+		outf(tw, "%s\t%s\t%s\t%s\t%s\n", e.Peer, e.Direction, shortFingerprint(e.Fingerprint), e.At, label)
+	}
+	if err := tw.Flush(); err != nil {
+		return fmt.Errorf("key devices: %w", err)
+	}
+	_, werr := io.WriteString(out, b.String())
+	return werr
+}
+
+func shortFingerprint(fp string) string {
+	if len(fp) > 16 {
+		return fp[:16] + "…"
+	}
+	return fp
+}
+
+func nowUTC() string { return time.Now().UTC().Format(time.RFC3339) }
+
+// selfPeer is a best-effort "user@hostname" label for this machine, recorded in
+// the peer's inventory so it can see where its key came from / went.
+func selfPeer() string {
+	host, _ := os.Hostname()
+	user := os.Getenv("USER")
+	if user == "" {
+		user = os.Getenv("USERNAME")
+	}
+	switch {
+	case user != "" && host != "":
+		return user + "@" + host
+	case host != "":
+		return host
+	default:
+		return "unknown"
+	}
+}
+
+// recordPush logs locally that we sent our identity to host, and writes the
+// matching "received-from us" record into host's inventory. Best-effort: a
+// logging failure is reported but never fails the transfer.
+func recordPush(home, host, fingerprint string, out io.Writer) {
+	recordLocal(home, devices.Entry{Peer: host, Direction: devices.SentTo, Fingerprint: fingerprint, At: nowUTC()}, out)
+	recordRemote(host, devices.Entry{Peer: selfPeer(), Direction: devices.ReceivedFrom, Fingerprint: fingerprint, At: nowUTC()}, out)
+}
+
+// recordPull logs locally that we received our identity from host, and writes
+// the matching "sent-to us" record into host's inventory.
+func recordPull(home, host, fingerprint string, out io.Writer) {
+	recordLocal(home, devices.Entry{Peer: host, Direction: devices.ReceivedFrom, Fingerprint: fingerprint, At: nowUTC()}, out)
+	recordRemote(host, devices.Entry{Peer: selfPeer(), Direction: devices.SentTo, Fingerprint: fingerprint, At: nowUTC()}, out)
+}
+
+func recordLocal(home string, e devices.Entry, out io.Writer) {
+	path := devices.Path(home)
+	log, err := devices.Load(path)
+	if err != nil {
+		outf(out, "note: could not read the device log: %v\n", err)
+		return
+	}
+	log.Record(e)
+	if err := devices.Save(path, log); err != nil {
+		outf(out, "note: could not update the device log: %v\n", err)
+	}
+}
+
+func recordRemote(host string, e devices.Entry, out io.Writer) {
+	content, err := keyxfer.ReadRemoteFile(host, ".dew/devices.yaml")
+	if err != nil {
+		outf(out, "note: could not read %s's device log: %v\n", host, err)
+		return
+	}
+	log, err := devices.Parse([]byte(content))
+	if err != nil {
+		outf(out, "note: %s's device log is unreadable: %v\n", host, err)
+		return
+	}
+	log.Record(e)
+	data, err := log.Marshal()
+	if err != nil {
+		outf(out, "note: could not encode %s's device log: %v\n", host, err)
+		return
+	}
+	if err := keyxfer.WriteRemoteFile(host, ".dew/devices.yaml", string(data)); err != nil {
+		outf(out, "note: could not update %s's device log: %v\n", host, err)
+	}
 }
 
 // confirm prompts for a yes/no answer defaulting to NO (empty input or EOF
@@ -303,6 +436,7 @@ func init() {
 	keyCmd.AddCommand(keyStatusCmd)
 	keyCmd.AddCommand(keyPushCmd)
 	keyCmd.AddCommand(keyPullCmd)
+	keyCmd.AddCommand(keyDevicesCmd)
 	rootCmd.AddCommand(keygenCmd)
 	rootCmd.AddCommand(keyCmd)
 }
