@@ -163,9 +163,22 @@ Release history:
   remote `test`/`images` only (ships with the `scp` already required; local needs
   nothing). Tracked under #111 (children #108–#110); also shipped a product-site
   rewrite and a Node-24 CI bump. No breaking changes — a new command surface.
+- **v0.4.0** — the **`dew key push`/`pull`/`devices`** family: identity bootstrap
+  over SSH, so setting up a second machine is one guarded step instead of a
+  manual `scp`. `key push` provisions this machine's identity onto another;
+  `key pull` fetches it from a machine that has it (verifying the download before
+  installing); `key devices` is a best-effort, symmetric provenance log of where
+  the identity has been sent/received. Guardrails: strict host-key verification,
+  refuse-to-clobber-a-different-identity without `--force`, confirmation on by
+  default. The sync invariant holds — these are separate, explicit, opt-in
+  commands, not sync. Also: `restore`/`doctor` now give an actionable message
+  when an image was packed by a different identity (#121). Designed in #122
+  (lane A: carry the key, over multiple-recipients); children #123–#125. No
+  breaking changes — a new command surface.
 
 Remaining backlog is tracked in GitHub issues (e.g. `dew images` repo-locations,
-discover+pack convenience).
+discover+pack convenience). Lane B (multiple recipients / per-device keys) from
+#122 is parked.
 
 Full docs set: [`design.md`](design.md) (spec), [`build-plan.md`](build-plan.md)
 (plan), this log, [`USER-MANUAL.md`](USER-MANUAL.md), [`COMMANDS.md`](COMMANDS.md),
