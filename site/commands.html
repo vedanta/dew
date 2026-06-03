@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>dew — command reference</title>
+<meta name="description" content="Every dew command, grouped by purpose: what it does, when to use it, usage, flags, and caveats.">
+<meta property="og:title" content="dew — command reference">
+<meta property="og:description" content="Every dew command, grouped by purpose, with usage, flags, and caveats.">
+<meta property="og:image" content="assets/comic.png">
+<meta property="og:type" content="website">
+<link rel="icon" href="assets/dew.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="nav">
+  <a class="brand" href="index.html">
+    <img src="assets/dew.png" alt="dew" width="28" height="28">
+    <span>dew</span>
+  </a>
+  <nav class="nav-links">
+    <a href="index.html#how">How it works</a>
+    <a href="index.html#features">Features</a>
+    <a href="guide.html">Guide</a>
+    <a href="commands.html">Commands</a>
+    <a href="index.html#install">Install</a>
+    <a class="ghost" href="https://github.com/vedanta/dew">GitHub ↗</a>
+  </nav>
+</header>
+
+<main id="top">
+
+  <!-- Intro + TOC -->
+  <section class="guide-intro">
+    <h1>Command reference</h1>
+    <p class="lede">
+      Every command, grouped by purpose — what it does, when to reach for it, and
+      its flags and caveats. This mirrors <code>dew &lt;command&gt; --help</code>;
+      for a task-first walkthrough, see the <a href="guide.html">guide</a>.
+    </p>
+    <div class="toc">
+      <div>
+        <h4>Identity</h4>
+        <ul>
+          <li><a href="#keygen">keygen</a></li>
+          <li><a href="#key-status">key status</a></li>
+          <li><a href="#key-push">key push</a></li>
+          <li><a href="#key-pull">key pull</a></li>
+          <li><a href="#key-devices">key devices</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Repository</h4>
+        <ul>
+          <li><a href="#init">init</a></li>
+          <li><a href="#scan">scan</a></li>
+          <li><a href="#add">add</a></li>
+          <li><a href="#remove">remove</a></li>
+          <li><a href="#list">list</a></li>
+          <li><a href="#rules">rules</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Image</h4>
+        <ul>
+          <li><a href="#pack">pack</a></li>
+          <li><a href="#restore">restore</a></li>
+          <li><a href="#hydrate">hydrate</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Sync</h4>
+        <ul>
+          <li><a href="#remote">remote</a></li>
+          <li><a href="#remote-test">remote test</a></li>
+          <li><a href="#remote-images">remote images</a></li>
+          <li><a href="#sync">sync</a></li>
+          <li><a href="#sync-pull">sync pull</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Health</h4>
+        <ul>
+          <li><a href="#status">status</a></li>
+          <li><a href="#doctor">doctor</a></li>
+          <li><a href="#images">images</a></li>
+          <li><a href="#version">version</a></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Identity -->
+  <section class="band cmdref">
+    <h2>Identity</h2>
+    <p class="prose muted">One global age identity per machine, shared across all your repos. The private key encrypts and decrypts your images; it never gets committed or synced.</p>
+
+    <div class="cmd">
+      <h3 id="keygen">dew keygen</h3>
+      <p class="desc">Create the one age identity this machine uses. Run it once per machine, before you pack anything. It refuses to overwrite an existing identity, and writes the private key <code>0600</code>.</p>
+      <pre class="pipeline">dew keygen</pre>
+      <p class="meta">See also: <a href="#key-push">key push</a> to set the same identity up on another machine — don't run <code>keygen</code> there.</p>
+    </div>
+
+    <div class="cmd">
+      <h3 id="key-status">dew key status</h3>
+      <p class="desc">Show whether this machine has an identity and print its public key. Use it to confirm a machine is set up before you restore.</p>
+      <pre class="pipeline">dew key status</pre>
+    </div>
+
+    <div class="cmd">
+      <h3 id="key-push">dew key push &lt;user@host&gt;</h3>
+      <p class="desc">Provision this machine's identity onto another machine over SSH — the one-time bootstrap so a second machine can decrypt your images. Verifies the host key the normal way (an unknown host aborts), creates <code>~/.dew</code> and writes the key <code>0600</code> there, and verifies the result.</p>
+      <pre class="pipeline">dew key push vbarooah@nvk2
+dew key push vbarooah@nvk2 --yes     <span class="comment"># skip the confirmation</span></pre>
+      <table>
+        <tr><th>Flag</th><th>Description</th></tr>
+        <tr><td><code>--force</code></td><td>Overwrite a <em>different</em> identity already on the target (no-op if it's the same).</td></tr>
+        <tr><td><code>-y, --yes</code></td><td>Skip the confirmation prompt.</td></tr>
+      </table>
+      <div class="callout warn">This is one of two commands that transmit your private key — only when you run it, to a machine you control. <code>dew sync</code> still never moves the key. Don't run <code>dew keygen</code> on the new machine. Requires <code>ssh</code>/<code>scp</code>.</div>
+    </div>
+
+    <div class="cmd">
+      <h3 id="key-pull">dew key pull &lt;user@host&gt;</h3>
+      <p class="desc">The mirror of <a href="#key-push">key push</a>: fetch the identity <em>from</em> a machine that has it onto this one. Downloads to a temp file and verifies it matches the source's public key <em>before</em> installing — a bad download never clobbers your local key — and won't replace a different local identity without <code>--force</code>.</p>
+      <pre class="pipeline">dew key pull vbarooah@nvk2</pre>
+      <table>
+        <tr><th>Flag</th><th>Description</th></tr>
+        <tr><td><code>--force</code></td><td>Replace a <em>different</em> identity already on this machine.</td></tr>
+        <tr><td><code>-y, --yes</code></td><td>Skip the confirmation prompt.</td></tr>
+      </table>
+    </div>
+
+    <div class="cmd">
+      <h3 id="key-devices">dew key devices</h3>
+      <p class="desc">List where this machine's identity has been sent or received via <code>key push</code>/<code>pull</code> — peer, direction, public-key fingerprint, when. Each transfer records on both ends.</p>
+      <pre class="pipeline">dew key devices</pre>
+      <div class="callout">A best-effort audit log, <strong>not</strong> a registry or revocation tool: manual key copies aren't recorded, and dew has no key rotation — so removing an entry doesn't de-provision a machine.</div>
+    </div>
+  </section>
+
+  <!-- Repository -->
+  <section class="band cmdref">
+    <h2>Repository</h2>
+    <p class="prose muted">The committed half of the model: <code>.dew/manifest.yaml</code> declares the project, image name, and the allow-list of files to manage. It holds paths only — never secrets, contents, or keys.</p>
+
+    <div class="cmd">
+      <h3 id="init">dew init</h3>
+      <p class="desc">Set up dew in the current repo by creating <code>.dew/manifest.yaml</code>. Commit that file — it's how a clone knows which image to fetch. Refuses to overwrite an existing manifest.</p>
+      <pre class="pipeline">dew init
+dew init --project billing-svc      <span class="comment"># name independent of the folder</span>
+dew init --from-gitignore           <span class="comment"># seed the allow-list from discovered candidates</span></pre>
+      <table>
+        <tr><th>Flag</th><th>Description</th></tr>
+        <tr><td><code>-p, --project &lt;name&gt;</code></td><td>Project name (default: the directory's base name); becomes the image filename <code>&lt;name&gt;.dew.age</code>.</td></tr>
+        <tr><td><code>--from-gitignore</code></td><td>Seed the allow-list with discovered candidates.</td></tr>
+      </table>
+    </div>
+
+    <div class="cmd">
+      <h3 id="scan">dew scan</h3>
+      <p class="desc">Suggest local files worth tracking — reads <code>.gitignore</code> and the working tree and lists candidates, filtering out noise (build output, logs). It only suggests; nothing is added until you opt in.</p>
+      <pre class="pipeline">dew scan</pre>
+    </div>
+
+    <div class="cmd">
+      <h3 id="add">dew add &lt;path&gt;...</h3>
+      <p class="desc">Track one or more files or directories — a one-time declaration recorded in the manifest; <code>dew pack</code> then always uses their current contents. Paths outside the repo are rejected.</p>
+      <pre class="pipeline">dew add .env.local certs/dev.pem    <span class="comment"># track specific paths</span>
+dew add .                           <span class="comment"># interactively add discovered candidates</span>
+dew add . --yes                     <span class="comment"># add all discovered candidates</span></pre>
+      <table>
+        <tr><th>Flag</th><th>Description</th></tr>
+        <tr><td><code>-y, --yes</code></td><td>With <code>add .</code>, accept all discovered candidates without prompting.</td></tr>
+      </table>
+      <p class="meta"><code>dew add .</code> adds the candidates <code>scan</code> found — not every file in the repo.</p>
+    </div>
+
+    <div class="cmd">
+      <h3 id="remove">dew remove &lt;path&gt;...  <span class="muted">(alias: rm)</span></h3>
+      <p class="desc">Stop tracking one or more paths. Removing a path that isn't tracked is a harmless no-op; the next <code>dew pack</code> reflects the change.</p>
+      <pre class="pipeline">dew remove .env.local</pre>
+    </div>
+
+    <div class="cmd">
+      <h3 id="list">dew list  <span class="muted">(alias: ls)</span></h3>
+      <p class="desc">Show this repo's allow-list — the files dew manages — and the project name. These are the paths <code>dew pack</code> will include.</p>
+      <pre class="pipeline">dew list</pre>
+      <p class="meta">See also: <a href="#rules">rules</a> for the deny layers too.</p>
+    </div>
+
+    <div class="cmd">
+      <h3 id="rules">dew rules</h3>
+      <p class="desc">Show the effective rules: the allow-list plus the three deny layers that keep noise out — built-in patterns, your global <code>~/.dew/config.yaml</code>, and the repo's manifest. Use it to understand why a path is included or skipped.</p>
+      <pre class="pipeline">dew rules</pre>
+    </div>
+  </section>
+
+  <!-- Image -->
+  <section class="band cmdref">
+    <h2>Image</h2>
+    <p class="prose muted">Pack turns your tracked files into one encrypted image; restore brings them back. Pipeline: <code>files → tar → zstd → age encrypt</code>, and the reverse.</p>
+
+    <div class="cmd">
+      <h3 id="pack">dew pack</h3>
+      <p class="desc">Encrypt the tracked files into <code>~/.dew/images/&lt;project&gt;.dew.age</code> (written atomically). Run it after you add or change a tracked file — pack always uses the current contents, so you declare files once and never re-add. The deny-list keeps noise out even from allow-listed directories.</p>
+      <pre class="pipeline">dew pack
+dew pack --dry-run                  <span class="comment"># preview what would be included; write nothing</span>
+dew pack --force                    <span class="comment"># overwrite an image created by a different repo</span></pre>
+      <table>
+        <tr><th>Flag</th><th>Description</th></tr>
+        <tr><td><code>--dry-run</code></td><td>List what would be packed (files + sizes); write nothing. Needs no identity.</td></tr>
+        <tr><td><code>--force</code></td><td>Overwrite an image created by a different repo.</td></tr>
+      </table>
+      <div class="callout">Each image is bound to the repo that created it; <code>pack</code> refuses to overwrite a different repo's image without <code>--force</code>.</div>
+    </div>
+
+    <div class="cmd">
+      <h3 id="restore">dew restore</h3>
+      <p class="desc">Hydrate the working tree from this repo's image — decrypt, decompress, and write the tracked files back. This is what makes a fresh clone runnable; pair it with <code>dew sync pull</code> on a new machine.</p>
+      <pre class="pipeline">dew restore
+dew restore --dry-run               <span class="comment"># preview new / unchanged / conflicts; change nothing</span>
+dew restore --force                 <span class="comment"># overwrite local files that differ from the image</span></pre>
+      <table>
+        <tr><th>Flag</th><th>Description</th></tr>
+        <tr><td><code>--dry-run</code></td><td>Preview the written / unchanged / conflict classification; change nothing.</td></tr>
+        <tr><td><code>--force</code></td><td>Overwrite local files that differ from the image.</td></tr>
+      </table>
+      <div class="callout">Safe by default: files are staged first, and any local file that differs from the image is reported as a conflict and left untouched unless you pass <code>--force</code> — there's no version history, so a careless restore can't lose your edits.</div>
+    </div>
+
+    <div class="cmd">
+      <h3 id="hydrate">dew hydrate</h3>
+      <p class="desc">The same operation as <a href="#restore">restore</a>, with the same flags — dew's signature verb, surfaced as its own command.</p>
+      <pre class="pipeline">dew hydrate
+dew hydrate --dry-run</pre>
+    </div>
+  </section>
+
+  <!-- Sync -->
+  <section class="band cmdref">
+    <h2>Sync</h2>
+    <p class="prose muted">A single destination, set with <code>dew remote</code> and stored in <code>~/.dew/config.yaml</code>. Local/mounted paths are copied directly; remote <code>host:path</code> destinations go over <code>scp</code>, inheriting your SSH config. Sync moves the encrypted image only — never the private key.</p>
+
+    <div class="cmd">
+      <h3 id="remote">dew remote</h3>
+      <p class="desc">Manage the sync destination. With no subcommand it prints the current destination; <code>set</code> changes it (a local path or scp-style <code>host:path</code>); <code>unset</code> clears it.</p>
+      <pre class="pipeline">dew remote                        <span class="comment"># show the current destination</span>
+dew remote set /Volumes/nas/dew   <span class="comment"># a local/mounted path</span>
+dew remote set nas:/volume1/dew   <span class="comment"># an scp-style remote</span>
+dew remote unset                  <span class="comment"># clear it</span></pre>
+    </div>
+
+    <div class="cmd">
+      <h3 id="remote-test">dew remote test</h3>
+      <p class="desc">Check the configured destination is actually usable before you rely on <code>dew sync</code> — reachable, trusted (host key), and writable. Exits non-zero if not. For a local path it catches the classic "the volume isn't mounted"; for a remote it reports OpenSSH's own verdict.</p>
+      <pre class="pipeline">dew remote test</pre>
+      <p class="meta">Uses <code>ssh</code> for remote destinations (local checks need nothing).</p>
+    </div>
+
+    <div class="cmd">
+      <h3 id="remote-images">dew remote images</h3>
+      <p class="desc">List the images stored at the destination — the mirror of <a href="#images">dew images</a> (which lists this machine's). Confirms a push landed, or shows what a new machine can pull.</p>
+      <pre class="pipeline">dew remote images</pre>
+    </div>
+
+    <div class="cmd">
+      <h3 id="sync">dew sync</h3>
+      <p class="desc">Push this repo's encrypted image to the destination you configured with <code>dew remote set</code>, so another machine can fetch it. Run it after <code>dew pack</code>.</p>
+      <pre class="pipeline">dew sync</pre>
+    </div>
+
+    <div class="cmd">
+      <h3 id="sync-pull">dew sync pull</h3>
+      <p class="desc">Fetch this repo's image from the destination into <code>~/.dew/images</code>, so you can restore it. Run it on a fresh clone, then <code>dew restore</code>. Your identity must already be on this machine to decrypt.</p>
+      <pre class="pipeline">dew sync pull</pre>
+    </div>
+  </section>
+
+  <!-- Health & inventory -->
+  <section class="band cmdref">
+    <h2>Health &amp; inventory</h2>
+
+    <div class="cmd">
+      <h3 id="status">dew status</h3>
+      <p class="desc">A per-repo snapshot: whether your identity and manifest are present, whether an image exists, how many files are tracked, the hydration state, and the configured sync destination. A quick check after cloning or before packing.</p>
+      <pre class="pipeline">dew status</pre>
+      <p class="meta">See also: <a href="#doctor">doctor</a> for a diagnosis with the exact fix.</p>
+    </div>
+
+    <div class="cmd">
+      <h3 id="doctor">dew doctor</h3>
+      <p class="desc">Check the repo end to end and report the one thing to fix next — a missing identity, no manifest, an unpacked or undecryptable image, files waiting to be restored — or confirm it's fully hydrated. Unlike <code>status</code>, it verifies the image actually decrypts, and every problem comes with the exact command to run. <strong>Start here whenever a clone isn't working.</strong></p>
+      <pre class="pipeline">dew doctor</pre>
+    </div>
+
+    <div class="cmd">
+      <h3 id="images">dew images</h3>
+      <p class="desc">A global inventory of every image dew manages in <code>~/.dew/images</code> — project, size, when it was last packed, and which repo owns it. Runs from anywhere.</p>
+      <pre class="pipeline">dew images</pre>
+    </div>
+
+    <div class="cmd">
+      <h3 id="version">dew version</h3>
+      <p class="desc">Print the version, commit, build date, and Go toolchain — handy when reporting a bug. (Also available as <code>dew --version</code>.)</p>
+      <pre class="pipeline">dew version</pre>
+    </div>
+  </section>
+
+  <!-- Global notes -->
+  <section class="band">
+    <h2>Global</h2>
+    <table>
+      <tr><th>Item</th><th>Description</th></tr>
+      <tr><td><code>-h, --help</code></td><td>Help for any command. Every command's <code>--help</code> is self-contained.</td></tr>
+      <tr><td><code>-v, --version</code></td><td>Print the version.</td></tr>
+      <tr><td><code>DEW_HOME</code></td><td>Environment variable that overrides the dew home directory (default <code>~/.dew</code>) — handy for testing or isolating identities.</td></tr>
+    </table>
+    <h3 class="subhead">Exit codes</h3>
+    <p class="prose">dew exits non-zero on error (printed as <code>dew: error: …</code>). Notable cases: <code>restore</code> with unresolved conflicts (no <code>--force</code>); <code>pack</code> against another repo's image (no <code>--force</code>); <code>keygen</code>/<code>init</code> when the target already exists; <code>remote test</code> when the destination is unusable; a required tool (<code>scp</code>/<code>ssh</code>) missing for a remote.</p>
+    <p class="prose" style="margin-top:1.2rem">For a task-first walkthrough see the <a href="guide.html">guide</a>; for the deepest detail, the <a href="https://github.com/vedanta/dew/blob/main/docs/COMMANDS.md">command reference</a> and <a href="https://github.com/vedanta/dew/blob/main/docs/USER-MANUAL.md">user manual</a> on GitHub.</p>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <img src="assets/dew.png" alt="" width="22" height="22">
+  <span>dew — the local half of your repo, restored after every clone.</span>
+  <span class="dot">·</span>
+  <a href="index.html">Home</a>
+  <span class="dot">·</span>
+  <a href="guide.html">Guide</a>
+  <span class="dot">·</span>
+  <a href="https://github.com/vedanta/dew">GitHub</a>
+</footer>
+
+</body>
+</html>
