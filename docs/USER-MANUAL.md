@@ -143,9 +143,11 @@ dew key push you@newmachine     # from a machine that HAS the identity, push it 
 dew key pull you@oldmachine
 ```
 
-(Or move `~/.dew/identity.age.*` over yourself — password manager, secure copy.
-Either way, **don't** run `dew keygen` on the new machine: that mints a different
-identity that can't decrypt your images.)
+(Or move the key over yourself — password manager, secure copy. Only
+`~/.dew/identity.age.key` is needed: decryption uses the private key alone, and
+dew derives the public key from it, so the `.pub` file is optional. Either way,
+**don't** run `dew keygen` on the new machine: that mints a different identity
+that can't decrypt your images.)
 
 ```bash
 git clone <repo> && cd my-app
@@ -307,9 +309,10 @@ directory must already exist.
   de-provision it.
 - The **private key is never *synced or committed*.** `dew key push` is the one
   explicit, opt-in exception that transmits it — only when you run it, over your
-  own SSH access, to a machine you control. (You can still copy
-  `~/.dew/identity.age.key`/`.pub` by hand instead.) Treat the key like any
-  private key; backup/rotation is out of scope — keep a secure copy.
+  own SSH access, to a machine you control. (You can still copy the key by hand
+  instead — just `~/.dew/identity.age.key`; the `.pub` is optional, since dew
+  derives the public key from the private one.) Treat the key like any private
+  key; backup/rotation is out of scope — keep a secure copy.
 - `DEW_HOME` relocates the whole `~/.dew` directory if you need multiple
   identities or an isolated setup.
 
