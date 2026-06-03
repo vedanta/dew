@@ -158,6 +158,20 @@ a.card:hover { border-color: var(--accent); text-decoration: none; }
 .replay { font-family: var(--mono); font-size: 0.82rem; background: var(--surface); color: var(--accent); border: 1px solid var(--border); border-radius: 6px; padding: 0.2rem 0.6rem; cursor: pointer; }
 .replay:hover { border-color: var(--accent); }
 
+/* Guide page */
+.guide-intro { text-align: center; padding-top: 2.5rem; border-bottom: none; }
+.guide-intro h1 { font-size: clamp(1.8rem, 4vw, 2.6rem); margin: 0.3rem 0 1rem; letter-spacing: -0.02em; }
+.scenario-pick { grid-template-columns: repeat(3, 1fr); display: grid; gap: 1rem; margin-top: 1.6rem; text-align: left; }
+.scenario-pick .card span { display: block; color: var(--muted); font-size: 0.9rem; margin-top: 0.3rem; }
+.callout { border-left: 3px solid var(--accent); background: var(--accent-soft); border-radius: 8px; padding: 0.8rem 1rem; margin: 1.2rem 0; }
+.callout.warn { border-left-color: #e0a23c; background: rgba(224, 162, 60, 0.12); }
+.subhead { font-size: 1.1rem; margin: 1.6rem 0 0.4rem; color: var(--text); }
+
+/* Tables (guide reference + troubleshooting) */
+table { border-collapse: collapse; width: 100%; margin-top: 1.2rem; font-size: 0.92rem; }
+th, td { text-align: left; padding: 0.5rem 0.7rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+th { color: var(--muted); font-weight: 600; }
+
 /* Footer */
 .footer {
   display: flex; align-items: center; justify-content: center; gap: 0.6rem; flex-wrap: wrap;

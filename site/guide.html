@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>dew — step-by-step guide</title>
+<meta name="description" content="A task-first, scenario-based guide to dew: set up on one machine, hydrate a second machine, and work across a few of your own machines.">
+<meta property="og:title" content="dew — step-by-step guide">
+<meta property="og:description" content="Scenario-based walkthroughs: one machine, two machines, more machines.">
+<meta property="og:image" content="assets/comic.png">
+<meta property="og:type" content="website">
+<link rel="icon" href="assets/dew.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="nav">
+  <a class="brand" href="index.html">
+    <img src="assets/dew.png" alt="dew" width="28" height="28">
+    <span>dew</span>
+  </a>
+  <nav class="nav-links">
+    <a href="index.html#how">How it works</a>
+    <a href="index.html#features">Features</a>
+    <a href="index.html#install">Install</a>
+    <a href="guide.html">Guide</a>
+    <a class="ghost" href="https://github.com/vedanta/dew">GitHub ↗</a>
+  </nav>
+</header>
+
+<main id="top">
+
+  <!-- Intro -->
+  <section class="guide-intro">
+    <h1>Step-by-step guide</h1>
+    <p class="lede">
+      A task-first walkthrough, organized by what you're trying to do. Every step
+      is a command you can copy.
+    </p>
+    <div class="callout" style="max-width:60ch;margin:1.2rem auto;text-align:left">
+      <strong>The one idea:</strong> Git carries your project's <em>shared</em> files;
+      dew carries the <em>local</em> ones Git ignores — <code>.env.local</code>, dev
+      certs, <code>docker-compose.override.yml</code>, local config — as a single
+      <em>encrypted</em> image per repo. dew complements Git; it never touches your
+      tracked source.
+    </div>
+    <div class="scenario-pick">
+      <a class="card" href="#one"><h3>1 · One machine</h3><span>Track &amp; snapshot your local files.</span></a>
+      <a class="card" href="#two"><h3>2 · Two machines</h3><span>Set your files up on a second machine.</span></a>
+      <a class="card" href="#more"><h3>3 · More machines</h3><span>A few of your own machines (advanced).</span></a>
+    </div>
+  </section>
+
+  <!-- Before you start -->
+  <section class="band">
+    <h2>Before you start</h2>
+    <p class="prose"><strong>Install dew</strong> (once per machine):</p>
+    <pre class="pipeline">brew install --cask vedanta/dew/dew        <span class="comment"># macOS — or grab a binary from the releases page</span>
+dew version                                <span class="comment"># confirm it's installed</span></pre>
+    <p class="prose"><strong>Create your identity</strong> (once per machine — the key that encrypts and decrypts your images):</p>
+    <pre class="pipeline">dew keygen          <span class="comment"># writes ~/.dew/identity.age.key — guard it like any private key</span>
+dew key status      <span class="comment"># shows your public key</span></pre>
+    <div class="callout">
+      Your identity is <strong>yours</strong>, shared across all your repos. On a
+      <em>new</em> machine you bring this same key over (Scenario&nbsp;2) — you don't
+      run <code>keygen</code> again.
+    </div>
+  </section>
+
+  <!-- Scenario 1 -->
+  <section id="one" class="band">
+    <h2>Scenario 1 — One machine</h2>
+    <p class="prose"><strong>Goal:</strong> capture the gitignored files a repo needs into one encrypted image — to restore them after an accidental delete, or to get ready to go multi-machine.</p>
+    <pre class="pipeline">cd my-app
+
+dew init                          <span class="comment"># 1. create .dew/manifest.yaml in the repo</span>
+dew scan                          <span class="comment"># 2. see which local files dew suggests tracking</span>
+dew add .env.local certs/         <span class="comment"># 3. track specific files (or 'dew add .' for the suggestions)</span>
+dew list                          <span class="comment"># 4. review what's tracked ('dew rules' shows deny rules too)</span>
+dew pack                          <span class="comment"># 5. build the encrypted image at ~/.dew/images/my-app.dew.age</span>
+
+git add .dew/manifest.yaml        <span class="comment"># 6. commit the manifest (paths only — no secrets)</span>
+git commit -m "Add dew manifest"</pre>
+    <p class="prose">After you edit a tracked file, just re-run <code>dew pack</code> — you declare files once and never re-add. To bring files back (e.g. after deleting one):</p>
+    <pre class="pipeline">dew restore                       <span class="comment"># writes the tracked files back into the repo</span>
+dew restore --dry-run             <span class="comment"># preview first — change nothing</span>
+dew doctor                        <span class="comment"># checks the repo and reports the next step</span></pre>
+    <div class="callout">
+      <strong>Note:</strong> on a single machine there's no key to move. dew here is a
+      repo-aware, encrypted snapshot of your local files — not a backup tool (no
+      history; one image per repo, latest pack only).
+    </div>
+  </section>
+
+  <!-- Scenario 2 -->
+  <section id="two" class="band">
+    <h2>Scenario 2 — Two machines</h2>
+    <p class="prose"><strong>Goal:</strong> you packed on machine <strong>A</strong>; now hydrate the same local files on machine <strong>B</strong> (a new laptop, a dev server, …).</p>
+
+    <p class="subhead">On machine A (the source) — publish</p>
+    <pre class="pipeline">dew remote set nas:/volume1/dew   <span class="comment"># 1. where images sync — a local path or scp-style host:path</span>
+dew remote test                   <span class="comment"># 2. check it's reachable &amp; writable</span>
+dew sync                          <span class="comment"># 3. push the encrypted image to the destination</span>
+git push                          <span class="comment"># 4. push the repo (with the committed .dew/manifest.yaml)</span></pre>
+
+    <p class="subhead">Bring your identity to machine B (one-time)</p>
+    <p class="prose">dew never moves your key automatically — you provision it explicitly, over SSH, to a machine you control:</p>
+    <pre class="pipeline">dew key push you@machineB         <span class="comment"># from A, push your identity to B…</span>
+dew key pull you@machineA         <span class="comment"># …or run this ON B to pull it from A</span></pre>
+    <div class="callout warn">
+      ⚠️ <strong>Don't run <code>dew keygen</code> on machine B.</strong> That creates a
+      <em>different</em> identity that can't decrypt your images. Bring the existing one
+      over (above), or copy <code>~/.dew/identity.age.key</code> by hand — the
+      <code>.pub</code> is optional, since dew derives it.
+    </div>
+
+    <p class="subhead">On machine B (the target) — hydrate</p>
+    <pre class="pipeline">git clone &lt;repo&gt; &amp;&amp; cd my-app      <span class="comment"># 1. the clone already has .dew/manifest.yaml</span>
+dew remote set nas:/volume1/dew   <span class="comment"># 2. point at the same destination</span>
+dew sync pull                     <span class="comment"># 3. fetch the encrypted image</span>
+dew restore                       <span class="comment"># 4. write your local files into the repo</span>
+dew doctor                        <span class="comment"># 5. → Repository fully hydrated.</span></pre>
+    <p class="prose">Machine B now has the same working tree as A.</p>
+    <div class="callout">
+      <strong>If <code>dew restore</code> says "encrypted to a different identity":</strong>
+      the key on B doesn't match the one that packed the image. Bring machine A's
+      <code>~/.dew/identity.age.key</code> over (via <code>dew key push</code>/<code>pull</code>),
+      and don't <code>keygen</code> on B.
+    </div>
+  </section>
+
+  <!-- Scenario 3 -->
+  <section id="more" class="band">
+    <h2>Scenario 3 — More machines <span class="muted">(advanced)</span></h2>
+    <p class="prose"><strong>Goal:</strong> use dew across a few of <em>your own</em> trusted machines (laptop, desktop, a server).</p>
+    <p class="prose">Each new machine is just Scenario 2's bootstrap again — provision the identity, then <code>clone → remote set → sync pull → restore</code>:</p>
+    <pre class="pipeline">dew key push you@machine3         <span class="comment"># provision each new machine…</span>
+dew key push you@machine4
+dew key devices                   <span class="comment"># …and see where your identity has been sent/received</span></pre>
+    <pre class="pipeline">PEER             DIRECTION       FINGERPRINT   WHEN                  LABEL
+you@machine3     sent-to         age1xdde…     2026-06-03T00:06:31Z  -
+you@machine4     sent-to         age1xdde…     2026-06-03T00:10:02Z  -</pre>
+    <div class="callout warn">
+      ⚠️ <strong>Use with care — beyond dew's core scope.</strong> All your machines share
+      <strong>one</strong> identity, and dew has <strong>no revocation or key rotation</strong>: if a
+      machine is lost, that shared key is compromised everywhere, and
+      <code>dew key devices</code> is a best-effort <em>log</em>, not a way to revoke a machine.
+      Fine for a handful of machines you control; not for teams or disposable/untrusted
+      machines.
+    </div>
+  </section>
+
+  <!-- Quick reference -->
+  <section class="band">
+    <h2>Quick reference</h2>
+    <table>
+      <tr><th>Do this</th><th>Command</th></tr>
+      <tr><td>Create your identity (once per machine)</td><td><code>dew keygen</code></td></tr>
+      <tr><td>Set up a repo</td><td><code>dew init</code></td></tr>
+      <tr><td>See / choose local files to track</td><td><code>dew scan</code> · <code>dew add &lt;path&gt;</code> · <code>dew add .</code></td></tr>
+      <tr><td>Review what's tracked / why</td><td><code>dew list</code> · <code>dew rules</code></td></tr>
+      <tr><td>Build the encrypted image</td><td><code>dew pack</code> <span class="muted">(<code>--dry-run</code> to preview)</span></td></tr>
+      <tr><td>Set / check the sync destination</td><td><code>dew remote set &lt;dest&gt;</code> · <code>dew remote test</code></td></tr>
+      <tr><td>Push / fetch the image</td><td><code>dew sync</code> · <code>dew sync pull</code></td></tr>
+      <tr><td>Restore your local files</td><td><code>dew restore</code> <span class="muted">(alias <code>dew hydrate</code>)</span></td></tr>
+      <tr><td>Move your identity to another machine</td><td><code>dew key push &lt;user@host&gt;</code> · <code>dew key pull &lt;user@host&gt;</code></td></tr>
+      <tr><td>See where your identity has gone</td><td><code>dew key devices</code></td></tr>
+      <tr><td>Check health / next step</td><td><code>dew status</code> · <code>dew doctor</code></td></tr>
+      <tr><td>List images you manage</td><td><code>dew images</code> · <code>dew remote images</code></td></tr>
+    </table>
+  </section>
+
+  <!-- Troubleshooting -->
+  <section class="band">
+    <h2>Troubleshooting</h2>
+    <table>
+      <tr><th>Symptom</th><th>Fix</th></tr>
+      <tr><td><code>no identity found</code></td><td><code>dew keygen</code> (or bring your key over with <code>dew key push</code>/<code>pull</code>)</td></tr>
+      <tr><td><code>no manifest found</code></td><td><code>dew init</code></td></tr>
+      <tr><td><code>encrypted to a different identity</code></td><td>Bring the <em>same</em> key the image was packed with; don't <code>keygen</code> on a new machine</td></tr>
+      <tr><td><code>Hydration: Incomplete</code> / files missing</td><td><code>dew sync pull</code> then <code>dew restore</code></td></tr>
+      <tr><td><code>no destination configured</code></td><td><code>dew remote set &lt;dest&gt;</code></td></tr>
+      <tr><td><code>required tool "scp"/"ssh" not found</code></td><td>Install OpenSSH, or use a local/mounted destination</td></tr>
+    </table>
+    <p class="prose" style="margin-top:1.2rem">Run <strong><code>dew doctor</code></strong> first whenever a clone isn't working — it names the one thing to fix next. For the full reference, see the <a href="https://github.com/vedanta/dew/blob/main/docs/USER-MANUAL.md">user manual</a> and <a href="https://github.com/vedanta/dew/blob/main/docs/COMMANDS.md">command reference</a>.</p>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <img src="assets/dew.png" alt="" width="22" height="22">
+  <span>dew — the local half of your repo, restored after every clone.</span>
+  <span class="dot">·</span>
+  <a href="index.html">Home</a>
+  <span class="dot">·</span>
+  <a href="https://github.com/vedanta/dew">GitHub</a>
+</footer>
+
+</body>
+</html>
