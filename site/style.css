@@ -172,6 +172,19 @@ a.card:hover { border-color: var(--accent); text-decoration: none; }
 .callout.warn { border-left-color: #e0a23c; background: rgba(224, 162, 60, 0.12); }
 .subhead { font-size: 1.1rem; margin: 1.6rem 0 0.4rem; color: var(--text); }
 
+/* Command reference */
+.toc { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1rem; margin-top: 1.6rem; text-align: left; }
+.toc h4 { margin: 0 0 0.5rem; font-size: 0.9rem; color: var(--muted); font-weight: 600; }
+.toc ul { list-style: none; padding: 0; margin: 0; }
+.toc li { margin: 0.25rem 0; font-family: var(--mono); font-size: 0.85rem; }
+.cmdref .cmd { border-top: 1px solid var(--border); padding: 1.5rem 0 0.4rem; }
+.cmdref > .cmd:first-of-type, .cmdref .muted + .cmd { border-top: none; }
+.cmd h3 { font-family: var(--mono); font-size: 1.05rem; margin: 0 0 0.5rem; color: var(--text); scroll-margin-top: 72px; }
+.cmd .desc { color: var(--text); max-width: 78ch; margin: 0 0 0.7rem; }
+.cmd .meta { color: var(--muted); font-size: 0.9rem; margin: 0.5rem 0 0; }
+.cmd .callout { margin: 0.9rem 0 0; }
+.cmd table { margin: 0.4rem 0; }
+
 /* Tables (guide reference + troubleshooting) */
 table { border-collapse: collapse; width: 100%; margin-top: 1.2rem; font-size: 0.92rem; }
 th, td { text-align: left; padding: 0.5rem 0.7rem; border-bottom: 1px solid var(--border); vertical-align: top; }
