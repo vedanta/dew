@@ -180,6 +180,7 @@ dew doctor   # → Repository fully hydrated.
 ## Documentation
 
 - **[Website](https://vedanta.github.io/dew/)** — the product page (install, overview, demo).
+- **[Step-by-step guide](https://vedanta.github.io/dew/guide.html)** ([source](docs/GUIDE.md)) — scenario-based walkthroughs: one machine, two machines, more machines.
 - **[User manual](docs/USER-MANUAL.md)** — concepts, getting started, workflows, security, troubleshooting.
 - **[Command reference](docs/COMMANDS.md)** — every command and flag.
 - **[Design spec](docs/design.md)** — the MVP design and rationale.
