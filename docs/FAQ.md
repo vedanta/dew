@@ -31,7 +31,7 @@ docker compose up
 # ...and then something breaks because local files are missing
 ```
 
-dew solves the “fresh clone is not really runnable” problem by letting you package selected local-only files into an encrypted image and restore them later.
+dew solves the "fresh clone is not really runnable" problem by letting you package selected local-only files into an encrypted image and restore them later.
 
 ## Is dew a secrets manager?
 
@@ -49,7 +49,6 @@ It helps you preserve and restore files that already exist on your machine. Some
 - AWS Secrets Manager
 - Doppler
 - SOPS
-- Mozilla SOPS
 - Chamber
 - direnv
 - Kubernetes Secrets
@@ -71,11 +70,11 @@ dew creates one encrypted image per repo. That image can be synced somewhere els
 
 Think of dew as:
 
-> “The small missing local layer for this repo.”
+> "The small missing local layer for this repo."
 
 Not:
 
-> “A complete backup system for my computer.”
+> "A complete backup system for my computer."
 
 ## Is dew a cloud sync service?
 
@@ -129,13 +128,15 @@ dew keygen
 dew init
 dew add .env.local
 dew pack
+dew remote set <destination>
 dew sync
 ```
 
 On another machine:
 
 ```bash
-dew key pull <source-machine>
+dew key pull <user@host>
+dew remote set <destination>
 dew sync pull
 dew restore
 ```
@@ -188,7 +189,7 @@ The manifest is safe to commit because it contains file names and rules, not the
 
 ## Why is the manifest committed to Git?
 
-Because the manifest describes the repo’s expected local context.
+Because the manifest describes the repo's expected local context.
 
 A new clone needs to know:
 
@@ -213,9 +214,9 @@ That said, you still need to be careful. If you manually add secret files to Git
 
 `.gitignore` is useful input, but it is not the source of truth.
 
-dew’s source of truth is the manifest allow-list.
+dew's source of truth is the manifest allow-list.
 
-That means dew does not blindly pack “everything ignored by Git.” That would be dangerous and noisy.
+That means dew does not blindly pack "everything ignored by Git." That would be dangerous and noisy.
 
 Instead, you explicitly choose what dew manages:
 
@@ -356,7 +357,7 @@ Those tools are for runtime environments.
 
 dew is for local developer repo context.
 
-Docker secrets and Kubernetes secrets help applications access secrets while running. Dew helps a developer restore the local files needed before they can even run the app.
+Docker secrets and Kubernetes secrets help applications access secrets while running. dew helps a developer restore the local files needed before they can even run the app.
 
 ## Is dew for teams or solo developers?
 
@@ -384,7 +385,7 @@ The simplest model is one encrypted image per repo per identity.
 
 For personal use, that is straightforward.
 
-For a team, each developer may maintain their own image because their local values may differ. Dew is not currently a multi-user secret distribution system.
+For a team, each developer may maintain their own image because their local values may differ. dew is not a multi-user secret distribution system, and intentionally so.
 
 ## Where is my private key stored?
 
@@ -433,19 +434,19 @@ dew cannot recover encrypted images without the key.
 
 That is the point of encryption.
 
-You should keep a safe backup of your identity if the data matters. Until dew has a first-class `key backup` command, treat:
+You should keep a safe backup of your identity if the data matters. dew deliberately stays out of key management, so treat:
 
 ```text
 ~/.dew/identity.age.key
 ```
 
-as sensitive material and back it up carefully using a password manager, encrypted drive, or other secure storage.
+as sensitive material and back it up carefully yourself — a password manager, encrypted drive, or other secure storage.
 
 ## Can I rotate the key?
 
-Not yet as a first-class workflow.
+There is no built-in rotation command — key rotation is intentionally out of dew's scope.
 
-Today, dew uses one global identity for images. If you need to rotate manually, the safe path is:
+dew uses one global identity for images. If you need to rotate manually, the safe path is:
 
 1. restore files with the old key
 2. generate or install a new identity
@@ -453,13 +454,13 @@ Today, dew uses one global identity for images. If you need to rotate manually, 
 4. resync images
 5. update other machines carefully
 
-A formal `dew key rotate` workflow is a good future enhancement.
+If you need managed rotation, lease, and revocation, that is what a real secrets manager is for.
 
 ## Is the encrypted image safe to upload to cloud storage?
 
 The image is encrypted, so it is designed to be safe to store outside your machine.
 
-However, “encrypted” does not mean “careless.”
+However, "encrypted" does not mean "careless."
 
 A good security posture is:
 
@@ -474,9 +475,9 @@ dew protects image contents with encryption. It does not provide cloud access co
 
 ## Can I inspect what is inside an image?
 
-The current workflow focuses on packing, restoring, status, and doctor checks.
+dew keeps this simple by design: the workflow focuses on packing, restoring, status, and doctor checks rather than a separate image browser.
 
-A future `dew inspect` command would make this easier by showing image contents without restoring. Until then, use `dew restore --dry-run` to preview what restore would do.
+Use `dew restore --dry-run` to preview what a restore would write, change, or flag as a conflict — without touching the working tree.
 
 ## Does `dew restore` overwrite my local files?
 
@@ -500,7 +501,7 @@ dew restore --dry-run
 
 `dew hydrate` is an alias for `dew restore`.
 
-It exists because “hydrate a clone” is the product idea: take a fresh repo clone and restore the missing local context.
+It exists because "hydrate a clone" is the product idea: take a fresh repo clone and restore the missing local context.
 
 These are equivalent:
 
@@ -523,7 +524,7 @@ dew sync
 
 Think of `dew pack` as:
 
-> “Capture my current local repo context into the encrypted image.”
+> "Capture my current local repo context into the encrypted image."
 
 ## When should I run `dew sync`?
 
@@ -598,7 +599,7 @@ Use it when you want to see what dew has packed on this machine.
 
 ## What does `dew clean` do?
 
-`dew clean` removes dew’s footprint for the current repo.
+`dew clean` removes dew's footprint for the current repo.
 
 It can remove:
 
@@ -774,11 +775,11 @@ dew manages repo-specific local context.
 
 Dotfiles answer:
 
-> “How do I configure my shell/editor/system?”
+> "How do I configure my shell/editor/system?"
 
 dew answers:
 
-> “How do I make this cloned repo locally runnable again?”
+> "How do I make this cloned repo locally runnable again?"
 
 They are complementary.
 
@@ -797,7 +798,7 @@ dew gives you:
 - syncable images
 - status and doctor checks
 
-It turns “I think I copied the right files” into a repeatable workflow.
+It turns "I think I copied the right files" into a repeatable workflow.
 
 ## What is the simplest dew workflow?
 
@@ -821,7 +822,7 @@ On a new machine:
 ```bash
 git clone <repo>
 cd <repo>
-dew key pull <source-machine>
+dew key pull <user@host>
 dew remote set <destination>
 dew sync pull
 dew restore
@@ -882,13 +883,13 @@ If you are setting up a second machine, do not run `dew keygen` unless you inten
 Instead, use:
 
 ```bash
-dew key pull <machine-that-has-the-key>
+dew key pull <user@host>
 ```
 
 or:
 
 ```bash
-dew key push <new-machine>
+dew key push <user@host>
 ```
 
 ## Is my sync destination trusted?
@@ -903,24 +904,22 @@ Use `dew doctor` after pulling if something seems wrong.
 
 ## Can dew detect if my local files changed since the last pack?
 
-This is a planned operational improvement.
+dew does not compare the working tree against the image — image diffing is intentionally out of scope, and dew keeps no version history to diff against.
 
-A future `dew diff` command should compare the current local allow-listed files against the encrypted image and show what changed.
-
-Until then, the practical habit is:
+The practical habit is to repack whenever you touch a dew-managed file:
 
 ```bash
 dew pack
 dew sync
 ```
 
-after editing dew-managed files.
+`dew status` will also tell you whether the repo looks hydrated, and `dew restore --dry-run` previews how the image differs from what is on disk.
 
 ## Can I have different images for different environments?
 
 Currently, dew is centered around one image per repo/project.
 
-For more advanced environment-specific workflows, you can use different project names or manifests, but be careful. Dew is intentionally simple.
+For more advanced environment-specific workflows, you can use different project names or manifests, but be careful. dew is intentionally simple.
 
 If you need formal environment separation for dev/staging/prod secrets, use a real secrets manager.
 
@@ -932,7 +931,7 @@ By default, images are encrypted to your dew identity.
 
 Sharing images and keys should be done carefully. Anyone with the image and private key can read the contents.
 
-For teams, think carefully before sharing a single identity. Dew does not yet provide per-user access controls or revocation.
+For teams, think carefully before sharing a single identity. dew does not provide per-user access controls or revocation — for that, use a real secrets manager.
 
 ## What is the security model?
 
