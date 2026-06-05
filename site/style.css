@@ -198,11 +198,32 @@ th { color: var(--muted); font-weight: 600; }
 .footer img { image-rendering: pixelated; border-radius: 6px; }
 .footer .dot { color: var(--border); }
 
+/* FAQ */
+.faq-cats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem; margin-top: 1.6rem; text-align: left; }
+.faq-cats a { color: var(--muted); font-size: 0.92rem; padding: 0.55rem 0.85rem; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); }
+.faq-cats a:hover { border-color: var(--accent); color: var(--text); text-decoration: none; }
+.faq-q { border: 1px solid var(--border); border-radius: 10px; background: var(--surface); margin: 0.7rem 0; }
+.faq-q > summary {
+  cursor: pointer; padding: 0.9rem 2.6rem 0.9rem 1.1rem; font-weight: 600; color: var(--text);
+  list-style: none; position: relative;
+}
+.faq-q > summary::-webkit-details-marker { display: none; }
+.faq-q > summary::after { content: "+"; position: absolute; right: 1.1rem; top: 0.85rem; color: var(--accent); font-weight: 700; font-size: 1.1rem; }
+.faq-q[open] > summary::after { content: "\2212"; }
+.faq-q > summary:hover { color: var(--accent); }
+.faq-q .answer { padding: 0 1.1rem 1.1rem; }
+.faq-q .answer > :first-child { margin-top: 0; }
+.faq-q .answer p { max-width: 70ch; color: var(--text); margin: 0.8rem 0; }
+.faq-q .answer ul, .faq-q .answer ol { max-width: 70ch; color: var(--text); padding-left: 1.3rem; }
+.faq-q .answer li { margin: 0.25rem 0; }
+.faq-q .answer .pipeline { margin-top: 0.9rem; }
+.faq-q .answer .quote { border-left: 3px solid var(--accent); padding-left: 0.9rem; color: var(--muted); font-style: italic; }
+
 /* Responsive */
 @media (max-width: 720px) {
   .nav-links { gap: 0.8rem; font-size: 0.82rem; }
   .nav-links a:not(.ghost) { display: none; }
-  .two-col, .grid, .install-grid, .dev-links { grid-template-columns: 1fr; }
+  .two-col, .grid, .install-grid, .dev-links, .faq-cats { grid-template-columns: 1fr; }
   .hero-id { flex-direction: column; text-align: center; gap: 0.9rem; }
   .hero-id .lede { margin: 0 auto; }
 }
