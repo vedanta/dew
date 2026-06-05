@@ -105,7 +105,16 @@ func doPack(root string, p identity.Paths, force, dryRun bool, out io.Writer) er
 		return err
 	}
 
-	if err := writeImage(imagePath, p.ImagesDir, m.Image, root, m.Allow, st.PublicKey, skip); err != nil {
+	entries, err := archive.List(root, m.Allow, skip)
+	if err != nil {
+		return err
+	}
+	var total int64
+	for _, e := range entries {
+		total += e.Size
+	}
+
+	if err := writeImage(imagePath, p.ImagesDir, m.Image, root, m.Allow, st.PublicKey, skip, newPackProgress(total)); err != nil {
 		return err
 	}
 	if err := writeImageOwner(imagePath, m.ID); err != nil {
@@ -185,12 +194,14 @@ func writeImageOwner(imagePath, manifestID string) error {
 
 // writeImage builds the tar -> zstd -> age pipeline into a temp file, then
 // renames it into place so a failed pack never leaves a half-written image.
-func writeImage(imagePath, imagesDir, name, root string, allow []string, recipient string, skip func(rel string, isDir bool) bool) (err error) {
+func writeImage(imagePath, imagesDir, name, root string, allow []string, recipient string, skip func(rel string, isDir bool) bool, bar *progressBar) (err error) {
 	tmp, err := os.CreateTemp(imagesDir, name+".tmp-*")
 	if err != nil {
 		return fmt.Errorf("pack: create temp image: %w", err)
 	}
 	tmpName := tmp.Name()
+	// Clear the progress line before any stdout/stderr output (success or error).
+	defer bar.finish()
 	// Clean up the temp file on any failure path.
 	defer func() {
 		if err != nil {
@@ -207,7 +218,7 @@ func writeImage(imagePath, imagesDir, name, root string, allow []string, recipie
 	if err != nil {
 		return err
 	}
-	if err = archive.Build(zw, root, allow, skip); err != nil {
+	if err = archive.Build(bar.wrap(zw), root, allow, skip); err != nil {
 		return err
 	}
 	if err = zw.Close(); err != nil {
