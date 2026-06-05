@@ -114,6 +114,22 @@ dew init --project billing-svc
 dew init --from-gitignore
 ```
 
+### `dew clean`
+Tear down dew's footprint for the current repo — the inverse of `init` + `pack`. Removes the committed `.dew/` manifest **and** this repo's image (+ `.id` marker) from `~/.dew/images`, then drops the now-empty `.dew/` directory. **Local-only**: never touches your shared identity key or any copy synced to a remote/another machine. Removal is permanent (no version history), but the image is a repack of files still on disk and the manifest is normally committed to Git, so the common case is recoverable. Refuses to delete an image owned by a **different** repo unless `--force`. Asks for confirmation unless `--force`/`--yes`.
+
+| Flag | Description |
+|---|---|
+| `--force` | Remove without confirming, and override the image-owner guard. |
+| `-y, --yes` | Skip the confirmation prompt (still respects the owner guard). |
+| `--image-only` | Remove only the packed image; keep the manifest (e.g. to force a clean re-pack). |
+| `--manifest-only` | Remove only the manifest; keep the packed image. |
+
+```bash
+dew clean                  # remove manifest + image (asks first)
+dew clean --force          # remove both without confirming
+dew clean --image-only     # drop the image; keep tracking config
+```
+
 ---
 
 ## Discovery
@@ -230,6 +246,18 @@ Global inventory: list every image in `~/.dew/images` with project, size, last-p
 
 ```bash
 dew images
+```
+
+### `dew images rm <project>...` (alias `remove`)
+Delete one or more images from `~/.dew/images` by project name (the `PROJECT` column `dew images` prints; the trailing `.dew.age` is optional), along with each one's `.id` marker. Use it to garbage-collect images whose repo is gone. Local-only; never touches the identity key or remote copies, and leaves repo manifests alone (use `dew clean` to tear down the current repo). A project with no image is a harmless no-op; a name containing path separators or `..` is rejected.
+
+| Flag | Description |
+|---|---|
+| `-y, --yes` | Skip the confirmation prompt. |
+
+```bash
+dew images rm oldproject
+dew images rm a b c --yes
 ```
 
 ---
