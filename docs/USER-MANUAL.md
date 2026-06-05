@@ -244,6 +244,24 @@ dew hydrate              # same as restore (its own command)
 A plain `dew restore` with unresolved conflicts exits non-zero so you notice; a
 `--dry-run` always exits 0.
 
+**Tearing down.** `dew clean` is the inverse of `init` + `pack`: it removes the
+repo's `.dew/` manifest and this repo's image (+ `.id` marker), then drops the
+empty `.dew/` directory. It's **local-only** — it never touches your shared
+identity key or any copy you've synced to a remote/another machine — and it asks
+before deleting unless you pass `--force` (or `-y`/`--yes` to skip just the
+prompt). Narrow it with `--image-only` (drop the image, keep the manifest so the
+next `dew pack` rebuilds it) or `--manifest-only` (stop managing the repo, keep
+the image). Removal is permanent — dew keeps no history — but the image is just a
+repack of files still on disk and the manifest is normally committed to Git, so
+the usual case is recoverable. To delete a *different* repo's image, or one whose
+repo is already gone, use `dew images rm <project>` instead.
+
+```bash
+dew clean                  # remove manifest + image (asks first)
+dew clean --force          # remove both without confirming
+dew clean --image-only     # force a clean re-pack next time
+```
+
 ## 9. Syncing
 
 Sync copies the encrypted image to/from a single destination. Set the
@@ -290,6 +308,8 @@ directory must already exist.
   `Repository fully hydrated.` when healthy.
 - **`dew images`** — a global inventory of every image dew manages locally
   (project, size, last-packed time, owning repo id). Runs from anywhere.
+  **`dew images rm <project>...`** deletes images by name (with their `.id`
+  markers) — handy for garbage-collecting an image whose repo is gone.
 - **`dew remote images`** — the same view for the *sync destination*: what's
   actually stored there (confirms a push landed, or shows what a new machine can
   pull).

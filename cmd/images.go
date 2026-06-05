@@ -94,6 +94,80 @@ func doImages(imagesDir string, out io.Writer) error {
 	return werr
 }
 
+var imagesRmYes bool
+
+var imagesRmCmd = &cobra.Command{
+	Use:     "rm <project>...",
+	Aliases: []string{"remove"},
+	Short:   "Delete packed image(s) from ~/.dew/images by project name",
+	Long: `Delete one or more encrypted images from ~/.dew/images, named by project (the
+PROJECT column 'dew images' prints; the trailing .dew.age is optional). Use it to
+garbage-collect images whose repo is gone, or any image you no longer want — its
+.id owner marker is removed alongside it.
+
+This only deletes the local image file; it never touches your identity key or any
+copy synced elsewhere, and it leaves repo manifests alone (to tear down the
+current repo's manifest and image together, use 'dew clean'). You are asked to
+confirm unless you pass --yes. Naming a project with no image is a harmless no-op.`,
+	Example: `  dew images rm oldproject
+  dew images rm a b c --yes`,
+	Args: cobra.MinimumNArgs(1),
+	RunE: runImagesRemove,
+}
+
+func runImagesRemove(cmd *cobra.Command, args []string) error {
+	home, err := identity.DefaultHome()
+	if err != nil {
+		return fmt.Errorf("images rm: %w", err)
+	}
+	return doImagesRemove(identity.NewPaths(home).ImagesDir, args, imagesRmYes, cmd.InOrStdin(), cmd.OutOrStdout())
+}
+
+func doImagesRemove(imagesDir string, projects []string, assumeYes bool, in io.Reader, out io.Writer) error {
+	type target struct {
+		project string
+		path    string
+	}
+	var present []target
+	var b strings.Builder
+	for _, raw := range projects {
+		name := strings.TrimSuffix(raw, ".dew.age")
+		// Reject anything that isn't a bare project name — no path traversal out
+		// of ~/.dew/images.
+		if name == "" || strings.ContainsAny(name, `/\`) || strings.Contains(name, "..") {
+			return fmt.Errorf("images rm: invalid project name %q", raw)
+		}
+		path := filepath.Join(imagesDir, name+".dew.age")
+		if !fileExists(path) {
+			outf(out, "no image for %q\n", name)
+			continue
+		}
+		present = append(present, target{project: name, path: path})
+	}
+	if len(present) == 0 {
+		return nil
+	}
+
+	if !assumeYes {
+		outf(out, "This will permanently remove:\n")
+		for _, t := range present {
+			outf(out, "  - %s\n", t.path)
+		}
+		if !confirm(in, out, "Remove these image(s)?") {
+			return errors.New("images rm: cancelled")
+		}
+	}
+
+	for _, t := range present {
+		if _, err := removeImageFile(t.path); err != nil {
+			return fmt.Errorf("images rm: %w", err)
+		}
+		fmt.Fprintf(&b, "removed %s\n", t.path)
+	}
+	_, werr := io.WriteString(out, b.String())
+	return werr
+}
+
 func shortID(id string) string {
 	if id == "" {
 		return "-"
@@ -105,5 +179,7 @@ func shortID(id string) string {
 }
 
 func init() {
+	imagesRmCmd.Flags().BoolVarP(&imagesRmYes, "yes", "y", false, "skip the confirmation prompt")
+	imagesCmd.AddCommand(imagesRmCmd)
 	rootCmd.AddCommand(imagesCmd)
 }
