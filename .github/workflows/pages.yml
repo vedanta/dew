@@ -28,7 +28,7 @@ jobs:
       - name: Assemble site
         run: |
           mkdir -p _site/assets
-          cp site/index.html site/guide.html site/commands.html site/style.css site/terminal.js _site/
+          cp site/index.html site/guide.html site/commands.html site/faq.html site/style.css site/terminal.js _site/
           cp assets/comic.png assets/dew.png _site/assets/
 
       - uses: actions/upload-pages-artifact@v5
