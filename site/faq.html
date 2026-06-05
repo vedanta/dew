@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>dew — FAQ</title>
+<meta name="description" content="Frequently asked questions about dew: what it is (and isn't), how it compares to other tools, the everyday workflow, and the security model.">
+<meta property="og:title" content="dew — FAQ">
+<meta property="og:description" content="What dew is and isn't, how it compares to other tools, and the security model.">
+<meta property="og:image" content="assets/comic.png">
+<meta property="og:type" content="website">
+<link rel="icon" href="assets/dew.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="nav">
+  <a class="brand" href="index.html">
+    <img src="assets/dew.png" alt="dew" width="28" height="28">
+    <span>dew</span>
+  </a>
+  <nav class="nav-links">
+    <a href="index.html#how">How it works</a>
+    <a href="index.html#features">Features</a>
+    <a href="guide.html">Guide</a>
+    <a href="commands.html">Commands</a>
+    <a href="faq.html">FAQ</a>
+    <a href="index.html#install">Install</a>
+    <a class="ghost" href="https://github.com/vedanta/dew">GitHub ↗</a>
+  </nav>
+</header>
+
+<main id="top">
+
+  <!-- Intro -->
+  <section class="guide-intro">
+    <h1>Frequently asked questions</h1>
+    <p class="lede">
+      What dew is (and isn't), how it compares to other tools, the everyday
+      workflow, and the security model — short answers, expand any to read more.
+    </p>
+    <div class="faq-cats">
+      <a href="#basics">The basics</a>
+      <a href="#is-isnt">What dew is &amp; isn't</a>
+      <a href="#compare">Compared to other tools</a>
+      <a href="#keys">Keys &amp; identity</a>
+      <a href="#workflow">Everyday workflow</a>
+      <a href="#track">What to track</a>
+      <a href="#teams">Teams, sharing &amp; repos</a>
+      <a href="#safety">Safety &amp; security</a>
+      <a href="#compat">Compatibility &amp; status</a>
+      <a href="#about">About dew</a>
+    </div>
+  </section>
+
+  <!-- The basics -->
+  <section id="basics" class="band">
+    <h2>The basics</h2>
+
+    <details class="faq-q" open>
+      <summary>What is dew?</summary>
+      <div class="answer">
+        <p><strong>dew</strong> is a local-first CLI for the private, local files that make a cloned repository actually work — the files Git usually ignores on purpose. Examples include <code>.env.local</code>, development certificates, <code>docker-compose.override.yml</code>, private fixtures, local notes, machine-specific config, and sandbox credentials.</p>
+        <p>Git gives you the shared code. <strong>dew gives you the missing local context.</strong></p>
+      </div>
+    </details>
+
+    <details class="faq-q">
+      <summary>What problem does dew solve?</summary>
+      <div class="answer">
+        <p>A Git repo often does not contain everything needed to run the project locally. That is usually intentional — you do not want to commit secrets, private config, certificates, or machine-specific overrides. But the result is familiar:</p>
+        <pre class="pipeline">git clone &lt;repo&gt;
+cd &lt;repo&gt;
+npm install
+docker compose up
+<span class="comment"># ...and then something breaks because local files are missing</span></pre>
+        <p>dew solves the "fresh clone is not really runnable" problem by letting you package selected local-only files into an encrypted image and restore them later.</p>
+      </div>
+    </details>
+
+    <details class="faq-q">
+      <summary>How does dew work?</summary>
+      <div class="answer">
+        <p>dew uses a two-location model. In your repo it stores a committed manifest at <code>.dew/manifest.yaml</code> — metadata only, saying which local files dew should manage. In your home directory it stores private local state under <code>~/.dew/</code>:</p>
+        <pre class="pipeline">~/.dew/config.yaml
+~/.dew/identity.age.key
+~/.dew/identity.age.pub
+~/.dew/images/&lt;project&gt;.dew.age</pre>
+        <p>The basic flow is:</p>
+        <pre class="pipeline">dew keygen
+dew init
+dew add .env.local
+dew pack
+dew remote set &lt;destination&gt;
+dew sync</pre>
+        <p>On another machine:</p>
+        <pre class="pipeline">dew key pull &lt;user@host&gt;
+dew remote set &lt;destination&gt;
+dew sync pull
+dew restore</pre>
+      </div>
+    </details>
+
+    <details class="faq-q">
+      <summary>What is the encrypted image?</summary>
+      <div class="answer">
+        <p>The encrypted image is the packed form of your allow-listed local files. The pipeline is:</p>
+        <pre class="pipeline">allow-listed files -> tar -> zstd compression -> age encryption -> .dew.age image</pre>
+        <p>The result is stored locally under <code>~/.dew/images/&lt;project&gt;.dew.age</code>. This is the file that <code>dew sync</code> copies.</p>
+      </div>
+    </details>
+
+    <details class="faq-q">
+      <summary>What is the manifest?</summary>
+      <div class="answer">
+        <p>The manifest is the repo-level contract for dew. It lives at <code>.dew/manifest.yaml</code> and usually contains:</p>
+        <pre class="pipeline">version: 1
+project: myrepo
+image: myrepo.dew.age
+id: 1234567890abcdef1234567890abcdef
+allow:
+  - .env.local
+  - docker-compose.override.yml
+  - certs/
+deny:
+  - "*.log"
+  - tmp/</pre>
+        <p>The manifest is safe to commit because it contains file names and rules, not the file contents.</p>
+      </div>
+    </details>
+
+    <details class="faq-q">
+      <summary>Why is the manifest committed to Git?</summary>
+      <div class="answer">
+        <p>Because the manifest describes the repo's expected local context. A new clone needs to know what files are managed by dew, what image name to look for, what should be restored, and what should be ignored even inside allow-listed directories.</p>
+        <p>The manifest is shared project metadata. The actual private files are not.</p>
+      </div>
+    </details>
+
+    <details class="faq-q">
+      <summary>Does dew use <code>.gitignore</code>?</summary>
+      <div class="answer">
+        <p><code>.gitignore</code> is useful input, but it is not the source of truth — dew's source of truth is the manifest allow-list. dew does not blindly pack "everything ignored by Git." Instead, you explicitly choose what dew manages:</p>
+        <pre class="pipeline">dew add .env.local
+dew add docker-compose.override.yml
+dew add certs/</pre>
+        <p>The allow-list is authoritative.</p>
+      </div>
+    </details>
+
+    <details class="faq-q">
+      <summary>What is the deny list?</summary>
+      <div class="answer">
+        <p>The deny list prevents noisy or unsafe files from being packed, especially when you allow-list a directory. For example, after <code>dew add local/</code> you may still want to exclude <code>*.log</code>, <code>tmp/</code>, or <code>node_modules/</code>. dew uses three deny layers:</p>
+        <ol>
+          <li>built-in deny patterns</li>
+          <li>global deny rules in <code>~/.dew/config.yaml</code></li>
+          <li>repo deny rules in <code>.dew/manifest.yaml</code></li>
+        </ol>
+        <p>Inspect the effective rules with <code>dew rules</code>.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- What dew is and isn't -->
+  <section id="is-isnt" class="band">
+    <h2>What dew is &amp; isn't</h2>
+
+    <details class="faq-q">
+      <summary>Is dew a secrets manager?</summary>
+      <div class="answer">
+        <p>No. dew does not provide secret leasing, rotation, access policies, audit trails, approval workflows, cloud IAM integration, or per-environment secret distribution. It is closer to a <strong>repo-aware local context manager</strong>.</p>
+        <p>It helps you preserve and restore files that already exist on your machine. Some of those files may contain secrets, but dew is not trying to replace tools like 1Password, Bitwarden, Vault, AWS Secrets Manager, Doppler, SOPS, or direnv.</p>
+        <p>Use a real secrets manager when you need team-wide policy, rotation, centralized access control, audit, and production-grade governance. Use dew when you need your private local repo context to survive across clones and machines.</p>
+      </div>
+    </details>
+
+    <details class="faq-q">
+      <summary>Is dew a backup tool?</summary>
+      <div class="answer">
+        <p>No. dew only manages files that you explicitly allow-list in a repo manifest. It does not back up your whole home directory, your whole project, your Git history, your IDE, your database, or arbitrary machine state.</p>
+        <p>dew creates one encrypted image per repo. That image can be synced somewhere else, but dew does not replace a real backup strategy.</p>
+        <p class="quote">Think of dew as "the small missing local layer for this repo" — not "a complete backup system for my computer."</p>
+      </div>
+    </details>
+
+    <details class="faq-q">
+      <summary>Is dew a cloud sync service?</summary>
+      <div class="answer">
+        <p>No. dew can copy encrypted images to a configured destination, but it is not a cloud storage provider — it does not host your files, run a server, give you an account, or manage a hosted backend.</p>
+        <p>You choose where encrypted images go: a NAS, another machine over SSH, a mounted drive, or a shared local path. dew moves encrypted images. It does <strong>not</strong> move your private key during normal sync.</p>
+      </div>
+    </details>
+
+    <details class="faq-q">
+      <summary>Does dew commit my secrets?</summary>
+      <div class="answer">
+        <p>No. The only repo file dew commits is the manifest, which describes paths and rules. The file contents are packed into an encrypted image stored outside the repo under <code>~/.dew/images</code>.</p>
+        <p>That said, if you manually add secret files to Git, dew cannot protect you from that. Keep your <code>.gitignore</code> sane and review commits before pushing.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- Compared to other tools -->
+  <section id="compare" class="band">
+    <h2>Compared to other tools</h2>
+
+    <details class="faq-q">
+      <summary>Why not just commit <code>.env.example</code>?</summary>
+      <div class="answer">
+        <p>You should commit <code>.env.example</code> — but it does not solve the whole problem. An example file documents expected variables; it does not preserve your actual local values, dev credentials, certificates, private fixtures, or machine-specific overrides.</p>
+        <pre class="pipeline">.env.example     -> committed documentation
+.env.local       -> private local file managed by dew</pre>
+        <p>Use both.</p>
+      </div>
+    </details>
+
+    <details class="faq-q">
+      <summary>Why not git-crypt?</summary>
+      <div class="answer">
+        <p><code>git-crypt</code> is a good tool for a different workflow: encrypted secret files live inside the Git repo and are versioned in history. dew takes a different stance — Git tracks shared code and metadata, while dew manages private local files <em>outside</em> Git, with only the manifest in the repo.</p>
+        <p>Use <code>git-crypt</code> when you want encrypted files as part of repository history. Use dew when you want the repo to stay clean while still restoring local-only context after a clone.</p>
+      </div>
+    </details>
+
+    <details class="faq-q">
+      <summary>Why not SOPS?</summary>
+      <div class="answer">
+        <p>SOPS is excellent for encrypting structured secret files (YAML, JSON, ENV, Kubernetes workflows) that you want versioned, reviewed, and deployed as part of infrastructure. dew is not trying to replace it.</p>
+        <p>dew fits better for local-only repo files that should not live in Git at all, even encrypted: dev-only certificates, local Docker overrides, private fixtures, a personal <code>.env.local</code>, local notes, and machine-specific app config.</p>
+      </div>
+    </details>
+
+    <details class="faq-q">
+      <summary>Why not 1Password or Bitwarden?</summary>
+      <div class="answer">
+        <p>You should use a password manager for credentials — but password managers usually do not restore a full repo-local working state. They can store the value of <code>DATABASE_URL</code>, but they do not naturally restore files like <code>.env.local</code>, <code>docker-compose.override.yml</code>, <code>certs/dev.pem</code>, or private fixtures.</p>
+        <p>dew is file-oriented; password managers are secret-record-oriented. They work together: keep your most important credentials in a password manager, and use dew for local repo context files that need to exist on disk.</p>
+      </div>
+    </details>
+
+    <details class="faq-q">
+      <summary>Why not direnv?</summary>
+      <div class="answer">
+        <p><code>direnv</code> is great for loading environment variables when you enter a directory. dew solves a different problem: <code>direnv</code> activates local environment state, while dew preserves and restores local files. They complement each other:</p>
+        <pre class="pipeline">.envrc        -> committed or local direnv config
+.env.local    -> private values managed by dew</pre>
+      </div>
+    </details>
+
+    <details class="faq-q">
+      <summary>Why not Docker secrets or Kubernetes secrets?</summary>
+      <div class="answer">
+        <p>Those tools are for runtime environments — they help applications access secrets while running. dew is for local developer repo context: it helps a developer restore the local files needed before they can even run the app.</p>
+      </div>
+    </details>
+
+    <details class="faq-q">
+      <summary>How is dew different from Git LFS?</summary>
+      <div class="answer">
+        <p>Git LFS is for large files that still belong to the repository (assets, binaries, datasets that are part of the project). dew is for local-only files that should not be committed at all: private local config, secrets, dev certs, and local overrides intentionally ignored by Git.</p>
+      </div>
+    </details>
+
+    <details class="faq-q">
+      <summary>How is dew different from a dotfiles repo?</summary>
+      <div class="answer">
+        <p>A dotfiles repo manages user-level configuration across machines ("how do I configure my shell/editor/system?"). dew manages repo-specific local context ("how do I make this cloned repo locally runnable again?"). They are complementary.</p>
+      </div>
+    </details>
+
+    <details class="faq-q">
+      <summary>How is dew different from just copying files manually?</summary>
+      <div class="answer">
+        <p>Manual copying works until it does not — it is easy to forget, hard to audit, inconsistent across machines, and unclear to future-you. dew gives you an explicit allow-list, repeatable pack/restore commands, encryption, repo-aware metadata, syncable images, and status/doctor checks.</p>
+        <p>It turns "I think I copied the right files" into a repeatable workflow.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- Keys & identity -->
+  <section id="keys" class="band">
+    <h2>Keys &amp; identity</h2>
+
+    <details class="faq-q">
+      <summary>Where is my private key stored?</summary>
+      <div class="answer">
+        <p>dew stores the private age identity locally at <code>~/.dew/identity.age.key</code>, with the public key at <code>~/.dew/identity.age.pub</code>. The private key is what decrypts your images — protect it like any other private key.</p>
+      </div>
+    </details>
+
+    <details class="faq-q">
+      <summary>Does <code>dew sync</code> copy my private key?</summary>
+      <div class="answer">
+        <p>No. <code>dew sync</code> moves encrypted images only — it does not copy <code>~/.dew/identity.age.key</code>. That is intentional: if a remote destination is compromised, the attacker should only get encrypted images, not the key needed to decrypt them.</p>
+        <p>To move your identity to another machine, use the explicit key-transfer commands, which are deliberately separate from sync:</p>
+        <pre class="pipeline">dew key push &lt;user@host&gt;
+dew key pull &lt;user@host&gt;</pre>
+      </div>
+    </details>
+
+    <details class="faq-q">
+      <summary>What happens if I lose my key?</summary>
+      <div class="answer">
+        <p>If you lose the private key, you cannot decrypt images encrypted to that identity, and dew cannot recover them — that is the point of encryption.</p>
+        <p>dew deliberately stays out of key management, so treat <code>~/.dew/identity.age.key</code> as sensitive material and back it up carefully yourself — a password manager, encrypted drive, or other secure storage.</p>
+      </div>
+    </details>
+
+    <details class="faq-q">
+      <summary>Can I rotate the key?</summary>
+      <div class="answer">
+        <p>There is no built-in rotation command — key rotation is intentionally out of dew's scope. dew uses one global identity for images. If you need to rotate manually, the safe path is:</p>
+        <ol>
+          <li>restore files with the old key</li>
+          <li>generate or install a new identity</li>
+          <li>repack images with the new identity</li>
+          <li>resync images</li>
+          <li>update other machines carefully</li>
+        </ol>
+        <p>If you need managed rotation, lease, and revocation, that is what a real secrets manager is for.</p>
+      </div>
+    </details>
+
+    <details class="faq-q">
+      <summary>What if I run <code>dew keygen</code> on a new machine instead of copying my key?</summary>
+      <div class="answer">
+        <p>You will create a <em>different</em> identity that cannot decrypt images encrypted to your old identity. If you are setting up a second machine, do not run <code>dew keygen</code> unless you intentionally want a separate identity. Instead bring the existing key over:</p>
+        <pre class="pipeline">dew key pull &lt;user@host&gt;   <span class="comment"># on the new machine, from one that has the key</span>
+dew key push &lt;user@host&gt;   <span class="comment"># or push to the new machine from one that has it</span></pre>
+      </div>
+    </details>
+  </section>
+
+  <!-- Everyday workflow -->
+  <section id="workflow" class="band">
+    <h2>Everyday workflow</h2>
+
+    <details class="faq-q">
+      <summary>When should I run <code>dew pack</code>?</summary>
+      <div class="answer">
+        <p>Run <code>dew pack</code> after you create or change files that dew manages:</p>
+        <pre class="pipeline">vim .env.local
+dew pack
+dew sync</pre>
+        <p class="quote">Think of <code>dew pack</code> as "capture my current local repo context into the encrypted image."</p>
+      </div>
+    </details>
+
+    <details class="faq-q">
+      <summary>When should I run <code>dew sync</code>?</summary>
+      <div class="answer">
+        <p>Run <code>dew sync</code> after <code>dew pack</code> when you want to copy the encrypted image to your configured destination.</p>
+        <pre class="pipeline">dew pack          <span class="comment"># source machine</span>
+dew sync
+
+dew sync pull     <span class="comment"># new machine</span>
+dew restore</pre>
+      </div>
+    </details>
+
+    <details class="faq-q">
+      <summary>What is <code>dew hydrate</code>?</summary>
+      <div class="answer">
+        <p><code>dew hydrate</code> is an alias for <code>dew restore</code>. It exists because "hydrate a clone" is the product idea: take a fresh repo clone and restore the missing local context. These are equivalent:</p>
+        <pre class="pipeline">dew restore
+dew hydrate</pre>
+      </div>
+    </details>
+
+    <details class="faq-q">
+      <summary>Does <code>dew restore</code> overwrite my local files?</summary>
+      <div class="answer">
+        <p>Not by default. If a local file already exists and differs from the image, dew reports a conflict and leaves the local file untouched. To overwrite local differences you must pass <code>--force</code>; use <code>--dry-run</code> to preview first:</p>
+        <pre class="pipeline">dew restore --dry-run    <span class="comment"># preview — change nothing</span>
+dew restore --force      <span class="comment"># overwrite conflicting files</span></pre>
+      </div>
+    </details>
+
+    <details class="faq-q">
+      <summary>What does <code>dew doctor</code> do?</summary>
+      <div class="answer">
+        <p><code>dew doctor</code> checks the current repo and tells you what to fix next. It can detect a missing identity, missing or empty manifest, missing image, an image encrypted to a different identity, a corrupt/undecryptable image, and tracked files missing from the working tree. Use it when a clone does not work and you are not sure why.</p>
+      </div>
+    </details>
+
+    <details class="faq-q">
+      <summary>What does <code>dew status</code> do?</summary>
+      <div class="answer">
+        <p><code>dew status</code> gives a quick health summary for the current repo: whether you have an identity, a manifest, an image, tracked files, the hydration state, and a sync destination. Use <code>dew doctor</code> when you want diagnosis and next steps.</p>
+      </div>
+    </details>
+
+    <details class="faq-q">
+      <summary>What does <code>dew images</code> do?</summary>
+      <div class="answer">
+        <p><code>dew images</code> lists encrypted images managed by dew across all repos. It runs from anywhere because images live globally under <code>~/.dew/images</code>. Use it to see what dew has packed on this machine.</p>
+      </div>
+    </details>
+
+    <details class="faq-q">
+      <summary>What does <code>dew clean</code> do?</summary>
+      <div class="answer">
+        <p><code>dew clean</code> removes dew's footprint for the current repo — the manifest, the local encrypted image, or both:</p>
+        <pre class="pipeline">dew clean
+dew clean --image-only
+dew clean --manifest-only</pre>
+        <p>It does not remove your global identity key.</p>
+      </div>
+    </details>
+
+    <details class="faq-q">
+      <summary>Can dew detect if my local files changed since the last pack?</summary>
+      <div class="answer">
+        <p>dew does not compare the working tree against the image — image diffing is intentionally out of scope, and dew keeps no version history to diff against. The practical habit is to repack whenever you touch a dew-managed file:</p>
+        <pre class="pipeline">dew pack
+dew sync</pre>
+        <p><code>dew status</code> will also tell you whether the repo looks hydrated, and <code>dew restore --dry-run</code> previews how the image differs from what is on disk.</p>
+      </div>
+    </details>
+
+    <details class="faq-q">
+      <summary>What is the simplest dew workflow?</summary>
+      <div class="answer">
+        <p>On the machine where the repo already works:</p>
+        <pre class="pipeline">dew keygen
+dew init
+dew add .env.local
+dew add docker-compose.override.yml
+dew pack
+dew remote set &lt;destination&gt;
+dew sync
+git add .dew/manifest.yaml
+git commit -m "Add dew manifest"
+git push</pre>
+        <p>On a new machine:</p>
+        <pre class="pipeline">git clone &lt;repo&gt;
+cd &lt;repo&gt;
+dew key pull &lt;user@host&gt;
+dew remote set &lt;destination&gt;
+dew sync pull
+dew restore
+dew doctor</pre>
+      </div>
+    </details>
+  </section>
+
+  <!-- What to track -->
+  <section id="track" class="band">
+    <h2>What to track</h2>
+
+    <details class="faq-q">
+      <summary>What files should I manage with dew?</summary>
+      <div class="answer">
+        <p>Good candidates are local-only files needed to run the repo: <code>.env.local</code>, <code>.env.development.local</code>, <code>docker-compose.override.yml</code>, <code>certs/</code>, <code>.local/</code>, <code>fixtures/private/</code>, <code>sandbox-config.yaml</code>, dev notes.</p>
+        <p>Bad candidates: <code>node_modules/</code>, <code>dist/</code>, <code>build/</code>, <code>target/</code>, <code>.git/</code>, large database dumps, general downloads, files that should be in Git, and production secrets that belong in a secrets manager.</p>
+        <p class="quote">If the file is needed to make this repo work locally, should not be committed, and is small enough to carry, it may be a good dew candidate.</p>
+      </div>
+    </details>
+
+    <details class="faq-q">
+      <summary>Should I put production secrets in dew?</summary>
+      <div class="answer">
+        <p>Usually, no. dew is primarily for local developer context. Production secrets should live in production-grade secret management systems with access control, audit, rotation, and deployment integration. dew can technically package any allow-listed file, but that does not mean every secret belongs in dew.</p>
+      </div>
+    </details>
+
+    <details class="faq-q">
+      <summary>Can dew manage large files?</summary>
+      <div class="answer">
+        <p>It can, but be careful. dew compresses and encrypts images, but it is not designed as a large-artifact manager or general backup system. Avoid using dew for database dumps, videos, model files, build artifacts, dependency directories, or generated outputs — use Git LFS, artifact storage, object storage, or backups for those.</p>
+      </div>
+    </details>
+
+    <details class="faq-q">
+      <summary>Does dew preserve file permissions?</summary>
+      <div class="answer">
+        <p>dew packages files through a tar archive and restores regular files; file permissions are preserved where practical. It is not a full filesystem snapshot tool, though — it skips symlinks and special files by design. If a workflow depends on exact ownership, ACLs, extended attributes, or platform-specific metadata, dew may not be the right layer.</p>
+      </div>
+    </details>
+
+    <details class="faq-q">
+      <summary>Does dew follow symlinks?</summary>
+      <div class="answer">
+        <p>No. dew skips symlinks and special files when building the archive. This is intentional — symlinks can create confusing and unsafe restore behavior. dew is designed around regular files and directories.</p>
+      </div>
+    </details>
+
+    <details class="faq-q">
+      <summary>What should I commit?</summary>
+      <div class="answer">
+        <p>Commit the manifest:</p>
+        <pre class="pipeline">.dew/manifest.yaml</pre>
+        <p>Do not commit <code>~/.dew/</code>, the identity key, the encrypted images, or the actual private files (<code>.env.local</code>, private certs, local overrides). Your <code>.gitignore</code> should continue ignoring the real local files.</p>
+      </div>
+    </details>
+
+    <details class="faq-q">
+      <summary>Should <code>.dew/manifest.yaml</code> be in <code>.gitignore</code>?</summary>
+      <div class="answer">
+        <p>No. The manifest is meant to be committed. The local encrypted images and identity are stored outside the repo under <code>~/.dew/</code>, so they should not appear in normal repo status anyway.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- Teams, sharing & repos -->
+  <section id="teams" class="band">
+    <h2>Teams, sharing &amp; repos</h2>
+
+    <details class="faq-q">
+      <summary>Is dew for teams or solo developers?</summary>
+      <div class="answer">
+        <p>Both, but it is especially useful for solo developers and small teams. Solo developers use dew to move between laptops, desktops, dev boxes, and fresh clones. Small teams can commit a shared <code>.dew/manifest.yaml</code> so everyone agrees on which local files are needed, while each developer keeps their own encrypted image and identity.</p>
+        <p>For larger teams, use dew carefully — it does not replace enterprise secrets management, access control, or audit tooling.</p>
+      </div>
+    </details>
+
+    <details class="faq-q">
+      <summary>Can multiple developers use the same manifest?</summary>
+      <div class="answer">
+        <p>Yes. The manifest can be committed to Git and shared by the team. Each developer can have their own private local files and their own encrypted image — the manifest tells dew what types of files matter for the repo, while the actual contents remain private.</p>
+      </div>
+    </details>
+
+    <details class="faq-q">
+      <summary>Does every developer share the same encrypted image?</summary>
+      <div class="answer">
+        <p>Not necessarily. The simplest model is one encrypted image per repo per identity. For a team, each developer may maintain their own image because their local values may differ. dew is not a multi-user secret distribution system, and intentionally so.</p>
+      </div>
+    </details>
+
+    <details class="faq-q">
+      <summary>Can I share a dew image with someone else?</summary>
+      <div class="answer">
+        <p>Only if they also have the private key that can decrypt it. By default, images are encrypted to your dew identity, so anyone with the image <em>and</em> the private key can read the contents. For teams, think carefully before sharing a single identity — dew does not provide per-user access controls or revocation; for that, use a real secrets manager.</p>
+      </div>
+    </details>
+
+    <details class="faq-q">
+      <summary>Can I have different images for different environments?</summary>
+      <div class="answer">
+        <p>dew is centered around one image per repo/project. For more advanced environment-specific workflows you can use different project names or manifests, but be careful — dew is intentionally simple. If you need formal dev/staging/prod separation, use a real secrets manager.</p>
+      </div>
+    </details>
+
+    <details class="faq-q">
+      <summary>Can I use dew with private repositories?</summary>
+      <div class="answer">
+        <p>Yes. dew does not care whether the Git repo is public or private — the manifest can be committed to either, and the sensitive file contents live outside the repo in encrypted images.</p>
+      </div>
+    </details>
+
+    <details class="faq-q">
+      <summary>Can I use dew with public repositories?</summary>
+      <div class="answer">
+        <p>Yes, and that is one of the useful cases. A public repo can include a <code>.dew/manifest.yaml</code> that documents the local files needed for development without exposing the private contents:</p>
+        <pre class="pipeline">allow:
+  - .env.local
+  - docker-compose.override.yml</pre>
+        <p>The actual <code>.env.local</code> file remains private.</p>
+      </div>
+    </details>
+
+    <details class="faq-q">
+      <summary>Does everyone need dew installed to use the repo?</summary>
+      <div class="answer">
+        <p>No. If a repo has a <code>.dew/manifest.yaml</code>, developers who do not use dew can ignore it — the manifest is just metadata and does not affect normal Git usage. Developers who want automatic local-context restore can install dew.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- Safety & security -->
+  <section id="safety" class="band">
+    <h2>Safety &amp; security</h2>
+
+    <details class="faq-q">
+      <summary>Is the encrypted image safe to upload to cloud storage?</summary>
+      <div class="answer">
+        <p>The image is encrypted, so it is designed to be safe to store outside your machine. But "encrypted" does not mean "careless." A good posture: keep the private key off the remote, use trusted storage, restrict access where possible, avoid syncing files you do not need, and rotate credentials if you suspect exposure. dew protects image contents with encryption; it does not provide cloud access control, audit, or key management.</p>
+      </div>
+    </details>
+
+    <details class="faq-q">
+      <summary>Can I inspect what is inside an image?</summary>
+      <div class="answer">
+        <p>dew keeps this simple by design: the workflow focuses on packing, restoring, status, and doctor checks rather than a separate image browser. Use <code>dew restore --dry-run</code> to preview what a restore would write, change, or flag as a conflict — without touching the working tree.</p>
+      </div>
+    </details>
+
+    <details class="faq-q">
+      <summary>Can dew restore outside the repo?</summary>
+      <div class="answer">
+        <p>No. Archive extraction is designed to reject absolute paths and path traversal, so an image cannot write outside the target repo during restore. This is a core safety behavior.</p>
+      </div>
+    </details>
+
+    <details class="faq-q">
+      <summary>What happens if the image was packed from a different repo?</summary>
+      <div class="answer">
+        <p>dew uses image-ownership metadata to avoid accidental collisions. If two repos use the same project/image name, dew avoids overwriting an image created by a different repo unless you explicitly force the operation. If you see this warning, use a unique project name:</p>
+        <pre class="pipeline">dew init --project &lt;unique-name&gt;</pre>
+      </div>
+    </details>
+
+    <details class="faq-q">
+      <summary>Is my sync destination trusted?</summary>
+      <div class="answer">
+        <p>Treat the sync destination as storage for encrypted images — it does not need your private key, which is the important boundary. Still, use a destination you control or trust: an attacker who can tamper with images can cause denial-of-service or confusion, even if they cannot decrypt the contents. Run <code>dew doctor</code> after pulling if something seems wrong.</p>
+      </div>
+    </details>
+
+    <details class="faq-q">
+      <summary>What is the security model?</summary>
+      <div class="answer">
+        <p>The basic model:</p>
+        <ul>
+          <li>The repo manifest is public/shareable metadata.</li>
+          <li>The encrypted image contains private file contents.</li>
+          <li>The private key stays on machines you control.</li>
+          <li>Sync moves encrypted images, not keys.</li>
+          <li>Restore is local and explicit.</li>
+          <li>Key transfer is explicit and separate.</li>
+        </ul>
+        <p>dew protects against accidental Git commits of local context by keeping contents outside the repo, and protects synced images with encryption. It does <strong>not</strong> protect against malware on your machine, someone with access to your private key, secrets already committed to Git, weak remote access controls, lack of key rotation, or production secret-governance requirements.</p>
+      </div>
+    </details>
+
+    <details class="faq-q">
+      <summary>What should I do before using dew with sensitive files?</summary>
+      <div class="answer">
+        <p>Use this checklist:</p>
+        <pre class="pipeline">dew scan
+dew add &lt;specific-files&gt;
+dew rules
+dew pack --dry-run
+dew pack
+dew restore --dry-run
+dew doctor</pre>
+        <p>Also review <code>git status</code> and <code>git diff --cached</code> to make sure you are committing only the manifest, not the private files themselves.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- Compatibility & status -->
+  <section id="compat" class="band">
+    <h2>Compatibility &amp; status</h2>
+
+    <details class="faq-q">
+      <summary>Can I use dew in CI/CD?</summary>
+      <div class="answer">
+        <p>Usually dew is more useful for local development than CI/CD. CI/CD should use proper secret injection from the CI system, cloud secret manager, or deployment platform. Some internal workflows might use dew to hydrate test fixtures or local-like environments, but that should be done carefully and intentionally.</p>
+      </div>
+    </details>
+
+    <details class="faq-q">
+      <summary>Is dew cross-platform?</summary>
+      <div class="answer">
+        <p>dew is designed as a single binary for macOS, Linux, and Windows. Be aware that path handling, file permissions, SSH availability, and shell behavior can vary by platform — if your team is cross-platform, test your actual workflow on the platforms you support.</p>
+      </div>
+    </details>
+
+    <details class="faq-q">
+      <summary>Is dew production-ready?</summary>
+      <div class="answer">
+        <p>dew is useful today for local development workflows, especially for solo developers and small teams. For production secret management, enterprise access control, compliance, auditing, and key rotation, use specialized tools.</p>
+        <p class="quote">Production-grade idea for local developer context. Not a production secrets platform.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- About -->
+  <section id="about" class="band">
+    <h2>About dew</h2>
+
+    <details class="faq-q">
+      <summary>What is the philosophy behind dew?</summary>
+      <div class="answer">
+        <p>Git should hold the shared code and shared project truth. But every working repo also has a local half: private config, dev certs, local overrides, fixture data, and notes that make the clone usable. That local half is real — it just does not belong in Git.</p>
+        <p>dew gives that local half a clean, encrypted, repeatable home.</p>
+      </div>
+    </details>
+
+    <p class="prose" style="margin-top:1.6rem">
+      Still have a question? See the
+      <a href="https://github.com/vedanta/dew/blob/main/docs/USER-MANUAL.md">user manual</a>,
+      the <a href="commands.html">command reference</a>, or
+      <a href="https://github.com/vedanta/dew">open an issue on GitHub</a>.
+    </p>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <img src="assets/dew.png" alt="" width="22" height="22">
+  <span>dew — the local half of your repo, restored after every clone.</span>
+  <span class="dot">·</span>
+  <a href="index.html">Home</a>
+  <span class="dot">·</span>
+  <a href="https://github.com/vedanta/dew">GitHub</a>
+</footer>
+
+</body>
+</html>
