@@ -14,6 +14,10 @@ assert_file_exists "$REPO/.dew/manifest.yaml"
 grep -q "^project:" "$REPO/.dew/manifest.yaml" || fail "manifest missing project field"
 grep -q "^version:" "$REPO/.dew/manifest.yaml" || fail "manifest missing version field"
 
+# init also drops an explanatory README linking the dew repo.
+assert_file_exists "$REPO/.dew/README.md"
+grep -q "github.com/vedanta/dew" "$REPO/.dew/README.md" || fail "README missing dew repo link"
+
 # add appends a real file to the allow-list.
 echo "TOKEN=abc" >"$REPO/.env.local"
 run_dew add .env.local

@@ -33,6 +33,45 @@ func TestDoInitCreatesValidManifest(t *testing.T) {
 	}
 }
 
+func TestDoInitWritesReadme(t *testing.T) {
+	root := t.TempDir()
+	if err := doInit(root, "", false, "", &bytes.Buffer{}); err != nil {
+		t.Fatalf("doInit: %v", err)
+	}
+
+	b, err := os.ReadFile(manifest.ReadmePath(root))
+	if err != nil {
+		t.Fatalf("read .dew/README.md: %v", err)
+	}
+	body := string(b)
+	if !strings.Contains(body, "github.com/vedanta/dew") {
+		t.Errorf("README should link the dew repo, got:\n%s", body)
+	}
+	if !strings.Contains(body, "manifest.yaml") {
+		t.Errorf("README should explain manifest.yaml, got:\n%s", body)
+	}
+}
+
+// A user may edit (or delete and re-create) the README; init must not clobber an
+// existing one. init refuses when the manifest exists, so exercise the helper.
+func TestWriteManifestReadmePreservesExisting(t *testing.T) {
+	root := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(root, manifest.Dir), 0o750); err != nil {
+		t.Fatal(err)
+	}
+	custom := "my own notes\n"
+	if err := os.WriteFile(manifest.ReadmePath(root), []byte(custom), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := writeManifestReadme(root); err != nil {
+		t.Fatalf("writeManifestReadme: %v", err)
+	}
+	got, _ := os.ReadFile(manifest.ReadmePath(root))
+	if string(got) != custom {
+		t.Errorf("existing README was overwritten: %q", string(got))
+	}
+}
+
 func TestDoInitRefusesOverwrite(t *testing.T) {
 	root := t.TempDir()
 	var out bytes.Buffer
