@@ -51,6 +51,9 @@ changelog:
       - "^docs:"
       - "^test:"
       - "^chore:"
+      - "^site:"
+      - "^ci:"
+      - "^ci\\("
 
 release:
   github:
