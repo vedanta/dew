@@ -20,6 +20,9 @@ const (
 	Dir = ".dew"
 	// File is the manifest filename inside Dir.
 	File = "manifest.yaml"
+	// Readme is the explanatory file dew writes alongside the manifest so anyone
+	// browsing the repo knows what .dew/ is. Committed; holds no secrets.
+	Readme = "README.md"
 	// maxProjectNameLen bounds the project name so the derived image filename
 	// stays well within filesystem limits.
 	maxProjectNameLen = 64
@@ -70,6 +73,12 @@ func NewID() (string, error) {
 // Path returns the manifest path for a repo rooted at repoRoot.
 func Path(repoRoot string) string {
 	return filepath.Join(repoRoot, Dir, File)
+}
+
+// ReadmePath returns the path of the explanatory README in Dir for a repo
+// rooted at repoRoot.
+func ReadmePath(repoRoot string) string {
+	return filepath.Join(repoRoot, Dir, Readme)
 }
 
 // New returns a manifest for project with sensible defaults: the current schema

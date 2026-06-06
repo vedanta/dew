@@ -74,7 +74,8 @@ need nothing. Encryption and compression are built in (no external `age`/`zstd`)
 - **In the repo (committed to Git):** `.dew/manifest.yaml` — the contract. It
   declares the project name, image name, the **allow-list** of files to manage,
   and an optional **deny-list**. It never contains secrets, file contents, or
-  keys.
+  keys. `dew init` also drops a short `.dew/README.md` explaining the directory
+  to anyone browsing the repo (GitHub renders it in the folder listing).
 - **In your home (never committed):** `~/.dew/` holds `config.yaml`, the global
   age keypair (`identity.age.key` / `.pub`), and `images/<project>.dew.age` —
   the encrypted shadow images.

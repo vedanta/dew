@@ -99,7 +99,7 @@ dew key devices
 ## Repository setup
 
 ### `dew init`
-Create `.dew/manifest.yaml` in the current directory. Refuses to overwrite an existing manifest.
+Create `.dew/manifest.yaml` in the current directory, plus a short `.dew/README.md` that explains the directory (and links the dew repo) to anyone browsing the repo. Refuses to overwrite an existing manifest; an existing `README.md` is left untouched.
 
 | Flag | Description |
 |---|---|

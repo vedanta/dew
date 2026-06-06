@@ -151,12 +151,16 @@ func removeImageFile(imagePath string) (existed bool, err error) {
 	return existed, nil
 }
 
-// removeManifestDir deletes the manifest file and, if it leaves the .dew
-// directory empty, removes that too. A non-empty .dew (unexpected, but possible)
-// is left in place.
+// removeManifestDir deletes the manifest file and the explanatory README dew
+// wrote beside it, then removes the .dew directory if that leaves it empty. A
+// .dew holding other files (unexpected, but possible) is left in place.
 func removeManifestDir(manifestPath string) error {
 	if err := os.Remove(manifestPath); err != nil && !errors.Is(err, os.ErrNotExist) {
 		return fmt.Errorf("remove manifest: %w", err)
+	}
+	readme := filepath.Join(filepath.Dir(manifestPath), manifest.Readme)
+	if err := os.Remove(readme); err != nil && !errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("remove manifest readme: %w", err)
 	}
 	// Best-effort: os.Remove on a directory only succeeds when it is empty.
 	_ = os.Remove(filepath.Dir(manifestPath))
