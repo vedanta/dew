@@ -142,7 +142,7 @@ dew scan
 ```
 
 ### `dew rules`
-Show the effective allow-list and the three deny layers, by source: **built-in**, **global** (`~/.dew/config.yaml`), and **repo** (`.dew/manifest.yaml`).
+Show the effective allow-list and the three deny layers, by source: **built-in**, **global** (`~/.dew/config.yaml`), and **repo** (`.dew/manifest.yaml`). Deny lines use gitignore syntax including `!` negation; layers are evaluated built-in → global → repo with the last matching rule winning, so a repo rule can override a global or built-in one.
 
 ```bash
 dew rules

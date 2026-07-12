@@ -199,8 +199,24 @@ There are three layers, all visible via **`dew rules`**:
    ```yaml
    deny:
      - "*.tmp"
-     - ".gradle/"
+     - "fixtures-huge/"
    ```
+
+**Overriding a rule (`!` negation).** Deny lines use gitignore syntax, including
+negation — and layers are evaluated in order **built-in → global → repo**, with
+the last matching rule winning. So a repo manifest can rescue anything a
+broader layer denies:
+
+```yaml
+deny:
+  - "!keep.log"    # un-deny one file caught by the built-in *.log
+  - "!.next/"      # un-deny a built-in directory rule, for this repo only
+```
+
+Two caveats, both matching git's own semantics: a negation can't re-include
+files under a directory the walk has pruned (`!Pods/keep.txt` alone does
+nothing — `!Pods/` is the unit of rescue), and within one list a later line
+beats an earlier one.
 
 Deny patterns use `.gitignore` syntax. They apply to discovery (`scan`,
 `add .`, `init --from-gitignore`) and to `pack` (so an allow-listed directory

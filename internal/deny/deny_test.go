@@ -73,3 +73,55 @@ func TestExtraPatterns(t *testing.T) {
 		t.Error("keep.txt should not be denied")
 	}
 }
+
+func TestNegationOverridesBuiltin(t *testing.T) {
+	m := New([]string{"!.next/", "!keep.log"})
+	cases := []struct {
+		path  string
+		isDir bool
+		want  bool
+	}{
+		{".next", true, false}, // rescued from built-in
+		{"apps/web/.next", true, false},
+		{".nuxt", true, true},      // other built-ins untouched
+		{"keep.log", false, false}, // rescued from built-in *.log
+		{"other.log", false, true},
+	}
+	for _, c := range cases {
+		if got := m.Match(c.path, c.isDir); got != c.want {
+			t.Errorf("Match(%q, dir=%v) = %v, want %v", c.path, c.isDir, got, c.want)
+		}
+	}
+}
+
+func TestNegationLastMatchWins(t *testing.T) {
+	// Within/across layers: the last matching rule decides.
+	m := New([]string{"*.tmp", "!keep.tmp"})
+	if m.Match("keep.tmp", false) {
+		t.Error("!keep.tmp should rescue keep.tmp from *.tmp")
+	}
+	if !m.Match("scratch.tmp", false) {
+		t.Error("*.tmp should still deny scratch.tmp")
+	}
+
+	// A later layer can re-deny what an earlier one rescued (global "!Pods/",
+	// repo "Pods/").
+	redeny := New([]string{"!Pods/", "Pods/"})
+	if !redeny.Match("Pods", true) {
+		t.Error("later Pods/ should re-deny after !Pods/")
+	}
+	rescue := New([]string{"Pods/", "!Pods/"})
+	if rescue.Match("Pods", true) {
+		t.Error("later !Pods/ should rescue after Pods/")
+	}
+}
+
+func TestNegationIgnoresBlankAndComments(t *testing.T) {
+	m := New([]string{"", "  ", "# comment", "*.tmp"})
+	if !m.Match("a.tmp", false) {
+		t.Error("*.tmp should survive blank/comment lines")
+	}
+	if m.Match("readme.md", false) {
+		t.Error("blank/comment lines must not deny anything")
+	}
+}
