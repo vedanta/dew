@@ -16,6 +16,7 @@ import (
 var builtinDirNames = []string{
 	"node_modules", "dist", "build", "target", ".venv", "__pycache__",
 	".next", ".nuxt", "coverage", ".cache", ".turbo", ".parcel-cache",
+	"Pods", "DerivedData", ".gradle", ".cxx", ".expo",
 }
 
 var builtinDirs = func() map[string]bool {
@@ -26,19 +27,23 @@ var builtinDirs = func() map[string]bool {
 	return m
 }()
 
-const (
-	builtinDSStore = ".DS_Store"
-	builtinLogGlob = "*.log"
-)
+const builtinDSStore = ".DS_Store"
+
+// builtinFileSuffixes are file-name suffixes always treated as noise.
+var builtinFileSuffixes = []string{".log", ".tsbuildinfo"}
 
 // Builtin returns the built-in deny patterns in display form (directories with
 // a trailing slash). It is the single source of truth shared with Match.
 func Builtin() []string {
-	out := make([]string, 0, len(builtinDirNames)+2)
+	out := make([]string, 0, len(builtinDirNames)+len(builtinFileSuffixes)+1)
 	for _, d := range builtinDirNames {
 		out = append(out, d+"/")
 	}
-	return append(out, builtinDSStore, builtinLogGlob)
+	out = append(out, builtinDSStore)
+	for _, s := range builtinFileSuffixes {
+		out = append(out, "*"+s)
+	}
+	return out
 }
 
 // Matcher tests repo-relative slash paths against the built-in rules plus any
@@ -64,10 +69,23 @@ func (m *Matcher) Match(slashPath string, isDir bool) bool {
 	switch {
 	case isDir && builtinDirs[base]:
 		return true
-	case !isDir && (base == builtinDSStore || strings.HasSuffix(base, ".log")):
+	case !isDir && deniedFile(base):
 		return true
 	case m.extra != nil && m.extra.MatchesPath(slashPath):
 		return true
+	}
+	return false
+}
+
+// deniedFile reports whether a file base name matches the built-in file rules.
+func deniedFile(base string) bool {
+	if base == builtinDSStore {
+		return true
+	}
+	for _, s := range builtinFileSuffixes {
+		if strings.HasSuffix(base, s) {
+			return true
+		}
 	}
 	return false
 }

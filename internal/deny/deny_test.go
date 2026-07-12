@@ -18,6 +18,14 @@ func TestBuiltinRules(t *testing.T) {
 		{"packages/ui/.turbo", true, true},
 		{".parcel-cache", true, true},
 		{"coverage", false, false},
+		{"ios/Pods", true, true},
+		{"DerivedData", true, true},
+		{"android/.gradle", true, true},
+		{"android/app/.cxx", true, true},
+		{".expo", true, true},
+		{"Pods", false, false},
+		{"tsconfig.tsbuildinfo", false, true},
+		{"packages/web/app.tsbuildinfo", false, true},
 		{".DS_Store", false, true},
 		{"logs/app.log", false, true},
 		{".env.local", false, false},
@@ -38,7 +46,9 @@ func TestBuiltinListMatchesRules(t *testing.T) {
 		"target/": true, ".venv/": true, "__pycache__/": true,
 		".next/": true, ".nuxt/": true, "coverage/": true,
 		".cache/": true, ".turbo/": true, ".parcel-cache/": true,
-		".DS_Store": true, "*.log": true,
+		"Pods/": true, "DerivedData/": true, ".gradle/": true,
+		".cxx/": true, ".expo/": true,
+		".DS_Store": true, "*.log": true, "*.tsbuildinfo": true,
 	}
 	if len(got) != len(want) {
 		t.Fatalf("Builtin() = %v, want %d entries", got, len(want))
