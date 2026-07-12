@@ -13,7 +13,10 @@ import (
 
 // builtinDirNames are directory names always treated as noise, even when an
 // allow-listed directory would otherwise sweep them in.
-var builtinDirNames = []string{"node_modules", "dist", "build", "target", ".venv", "__pycache__"}
+var builtinDirNames = []string{
+	"node_modules", "dist", "build", "target", ".venv", "__pycache__",
+	".next", ".nuxt", "coverage", ".cache", ".turbo", ".parcel-cache",
+}
 
 var builtinDirs = func() map[string]bool {
 	m := make(map[string]bool, len(builtinDirNames))
@@ -45,7 +48,7 @@ type Matcher struct {
 }
 
 // New builds a matcher with the built-in rules plus extra patterns in
-// .gitignore syntax (e.g. "*.tmp", ".next/").
+// .gitignore syntax (e.g. "*.tmp", ".gradle/").
 func New(extra []string) *Matcher {
 	m := &Matcher{}
 	if len(extra) > 0 {
