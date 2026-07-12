@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>dew — step-by-step guide</title>
-<meta name="description" content="A task-first, scenario-based guide to dew: set up on one machine, hydrate a second machine, and work across a few of your own machines.">
+<meta name="description" content="A task-first, scenario-based guide to dew: set up on one machine, hydrate a second machine, work across a few of your own machines, or carry an image by hand.">
 <meta property="og:title" content="dew — step-by-step guide">
 <meta property="og:description" content="Scenario-based walkthroughs: one machine, two machines, more machines.">
 <meta property="og:image" content="assets/comic.png">
@@ -51,6 +51,7 @@
       <a class="card" href="#one"><h3>1 · One machine</h3><span>Track &amp; snapshot your local files.</span></a>
       <a class="card" href="#two"><h3>2 · Two machines</h3><span>Set your files up on a second machine.</span></a>
       <a class="card" href="#more"><h3>3 · More machines</h3><span>A few of your own machines (advanced).</span></a>
+      <a class="card" href="#carry"><h3>4 · Carry by hand</h3><span>No sync destination — copy the image file yourself.</span></a>
     </div>
   </section>
 
@@ -153,6 +154,31 @@ you@machine4     sent-to         age1xdde…     2026-06-03T00:10:02Z  -</pre>
     </div>
   </section>
 
+  <!-- Scenario 4 -->
+  <section id="carry" class="band">
+    <h2>Scenario 4 — Carry an image by hand <span class="muted">(no sync destination)</span></h2>
+    <p class="prose"><strong>Goal:</strong> move a repo's local files from machine <strong>A</strong> to machine <strong>B</strong> without configuring any sync destination — copy the encrypted image yourself (scp, USB stick, a shared drive) and restore straight from the file.</p>
+    <h3>On machine A — pack and copy</h3>
+    <pre class="pipeline">dew pack                          <span class="comment"># 1. build the image as usual</span>
+dew images                        <span class="comment"># 2. shows the path: ~/.dew/images/my-app.dew.age</span>
+scp ~/.dew/images/my-app.dew.age you@machineB:~/   <span class="comment"># 3. move it any way you like</span></pre>
+    <p class="prose">The image is age-encrypted end to end — safe to carry through untrusted channels; only your identity can open it.</p>
+    <h3>On machine B — restore from the file</h3>
+    <p class="prose">Your identity must be on B first (Scenario 2's bootstrap: <code>dew key push</code>/<code>pull</code> — and don't <code>keygen</code> on B):</p>
+    <pre class="pipeline">git clone &lt;repo&gt; &amp;&amp; cd my-app     <span class="comment"># 1. same repo, freshly cloned</span>
+dew restore --image ~/my-app.dew.age --dry-run     <span class="comment"># 2. preview what lands where</span>
+dew restore --image ~/my-app.dew.age               <span class="comment"># 3. hydrate from the carried file</span></pre>
+    <p class="prose"><code>--image</code> needs no manifest and no sync destination — the file defines what it holds, and the usual safety rules apply (staged writes, conflicts left untouched without <code>--force</code>). If B becomes a daily driver for this repo, move the file into place instead — <code>mv ~/my-app.dew.age ~/.dew/images/</code> — and plain <code>restore</code>/<code>pack</code>/<code>sync</code> work from then on.</p>
+    <h3>Variant — carry the <em>whole</em> working copy</h3>
+    <p class="prose"><code>dew pack --all</code> sweeps <strong>every</strong> file in the repo (tracked by Git or not) into the image for that one run — the allow-list and manifest are untouched, the deny-list still drops generated noise (<code>node_modules/</code>, <code>.next/</code>, <code>coverage/</code>, …), and <code>.git/</code> is never included:</p>
+    <pre class="pipeline">dew pack --all --dry-run          <span class="comment"># preview the full file list first</span>
+dew pack --all                    <span class="comment"># then copy + restore on B exactly as above</span></pre>
+    <div class="callout">
+      Because a project has one image, <code>pack --all</code> overwrites the curated image
+      until your next plain <code>dew pack</code> — use it for relocating, not as the daily flow.
+    </div>
+  </section>
+
   <!-- Quick reference -->
   <section class="band">
     <h2>Quick reference</h2>
@@ -163,9 +189,11 @@ you@machine4     sent-to         age1xdde…     2026-06-03T00:10:02Z  -</pre>
       <tr><td>See / choose local files to track</td><td><code>dew scan</code> · <code>dew add &lt;path&gt;</code> · <code>dew add .</code></td></tr>
       <tr><td>Review what's tracked / why</td><td><code>dew list</code> · <code>dew rules</code></td></tr>
       <tr><td>Build the encrypted image</td><td><code>dew pack</code> <span class="muted">(<code>--dry-run</code> to preview)</span></td></tr>
+      <tr><td>Pack the whole repo, one-shot</td><td><code>dew pack --all</code> <span class="muted">(deny-list still applies)</span></td></tr>
       <tr><td>Set / check the sync destination</td><td><code>dew remote set &lt;dest&gt;</code> · <code>dew remote test</code></td></tr>
       <tr><td>Push / fetch the image</td><td><code>dew sync</code> · <code>dew sync pull</code></td></tr>
       <tr><td>Restore your local files</td><td><code>dew restore</code> <span class="muted">(alias <code>dew hydrate</code>)</span></td></tr>
+      <tr><td>Restore from a hand-carried file</td><td><code>dew restore --image &lt;file.dew.age&gt;</code></td></tr>
       <tr><td>Move your identity to another machine</td><td><code>dew key push &lt;user@host&gt;</code> · <code>dew key pull &lt;user@host&gt;</code></td></tr>
       <tr><td>See where your identity has gone</td><td><code>dew key devices</code></td></tr>
       <tr><td>Check health / next step</td><td><code>dew status</code> · <code>dew doctor</code></td></tr>

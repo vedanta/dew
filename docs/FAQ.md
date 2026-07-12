@@ -62,9 +62,9 @@ Use dew when you need your private local repo context to survive across clones a
 
 No.
 
-dew is not a general backup tool. It only manages files that you explicitly allow-list in a repo manifest.
+dew is not a general backup tool. By default it only manages files that you explicitly allow-list in a repo manifest.
 
-It does not back up your whole home directory, your whole project, your Git history, your IDE, your database, or arbitrary machine state.
+It does not back up your whole home directory, your Git history, your IDE, your database, or arbitrary machine state. (`dew pack --all` can sweep one repo's *working copy* into an image as a one-shot — for relocating to another machine, not as a backup strategy.)
 
 dew creates one encrypted image per repo. That image can be synced somewhere else, but dew does not replace a real backup strategy.
 
@@ -226,7 +226,9 @@ dew add docker-compose.override.yml
 dew add certs/
 ```
 
-The allow-list is authoritative.
+The allow-list is authoritative. (The one deliberate exception is `dew pack
+--all`, which packs the whole repo for that single run — the deny list still
+applies, and the manifest is untouched.)
 
 ## What is the deny list?
 
@@ -472,6 +474,25 @@ A good security posture is:
 - do not treat dew as a compliance system
 
 dew protects image contents with encryption. It does not provide cloud access control, audit, or key management.
+
+## Can I move an image by hand instead of using `dew sync`?
+
+Yes. The image is one encrypted file — copy it however you like (scp, USB
+stick, a shared drive), then restore straight from it on the other machine:
+
+```bash
+# machine A
+dew pack
+scp ~/.dew/images/my-app.dew.age you@machineB:~/
+
+# machine B (in the cloned repo; your identity already there)
+dew restore --image ~/my-app.dew.age
+```
+
+`--image` needs no manifest and no sync destination; the usual non-destructive
+restore rules apply. If the machine will keep using dew for that repo, move the
+file into `~/.dew/images/` instead so plain `restore`/`pack`/`sync` work from
+then on.
 
 ## Can I inspect what is inside an image?
 

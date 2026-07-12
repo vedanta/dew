@@ -225,6 +225,38 @@ cat .env.local        # → API_KEY=dev-123   (now overwritten)
 
 ---
 
+## 7b. Whole-repo pack & explicit-image restore (v0.6.0)
+
+**`pack --all` sweeps everything except deny/structural dirs, without touching the manifest:**
+
+```bash
+mkdir -p node_modules/pkg && echo noise > node_modules/pkg/x.js
+echo hello > tracked-src.txt                # a file Git would track — not allow-listed
+dew pack --all --dry-run
+```
+✅ **Check:** the listing includes `tracked-src.txt` and `.env.local`, but nothing
+under `node_modules/`, `.git/`, or `.dew/`.
+
+```bash
+dew pack --all        # → "Packed entire repo, N file(s) → …"
+dew list              # allow-list unchanged (--all is one-shot)
+```
+
+**`restore --image` hydrates from an explicit file, no manifest needed:**
+
+```bash
+cp ~/.dew/images/<project>.dew.age /tmp/carried.dew.age
+mkdir /tmp/fresh-target && cd /tmp/fresh-target      # no .dew/ here
+dew restore --image /tmp/carried.dew.age --dry-run   # preview
+dew restore --image /tmp/carried.dew.age
+```
+✅ **Check:** files land in the empty directory; a bogus path
+(`dew restore --image /tmp/nope.dew.age`) fails with a message pointing at
+`--image`. Re-run the plain-`pack` flow afterwards so the curated image is
+rebuilt (`--all` overwrote it).
+
+---
+
 ## 8. Security & safety checks
 
 **Path safety — can't add outside the repo:**

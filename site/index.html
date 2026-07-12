@@ -203,7 +203,8 @@ dew pack                           <span class="comment"># build the encrypted i
 dew remote set nas:/volume1/dew    <span class="comment"># where images sync (once)</span>
 dew sync                           <span class="comment"># push it to your destination</span>
 <span class="comment"># on a fresh clone:</span>
-dew sync pull &amp;&amp; dew restore        <span class="comment"># hydrate</span></pre>
+dew sync pull &amp;&amp; dew restore        <span class="comment"># hydrate</span>
+<span class="comment"># no destination? carry the file: dew pack --all → copy → dew restore --image &lt;file&gt;</span></pre>
   </section>
 
   <!-- Docs & source -->
