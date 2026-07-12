@@ -13,6 +13,7 @@ step is a command you can copy, with a one-line note on what it does.
 1. [One machine](#scenario-1--one-machine) — track and snapshot your local files.
 2. [Two machines](#scenario-2--two-machines) — set your local files up on a second machine.
 3. [More machines](#scenario-3--more-machines-advanced) — a few of your own machines (advanced).
+4. [Carry an image by hand](#scenario-4--carry-an-image-by-hand-no-sync-destination) — no sync destination; copy the file yourself (and optionally pack the *whole* repo).
 
 For the full reference see the [user manual](USER-MANUAL.md) and
 [command reference](COMMANDS.md).
@@ -157,6 +158,62 @@ you@machine4     sent-to         age1xdde…          2026-06-03T00:10:02Z  -
 
 ---
 
+## Scenario 4 — Carry an image by hand (no sync destination)
+
+**Goal:** move a repo's local files from machine **A** to machine **B** without
+configuring any sync destination — copy the encrypted image yourself (scp, USB
+stick, AirDrop, a shared drive) and restore straight from the file.
+
+### On machine A — pack and copy
+
+```bash
+cd my-app
+dew pack                              # 1. build the image as usual
+dew images                            # 2. shows the image path: ~/.dew/images/my-app.dew.age
+scp ~/.dew/images/my-app.dew.age you@machineB:~/   # 3. move it any way you like
+```
+
+The image is age-encrypted end to end — it's safe to carry through untrusted
+channels; only your identity can open it.
+
+### On machine B — restore from the file
+
+Your identity must be on B first (Scenario 2's bootstrap: `dew key push`/`pull`
+— and don't `keygen` on B):
+
+```bash
+git clone <repo> && cd my-app         # 1. same repo, freshly cloned
+dew restore --image ~/my-app.dew.age --dry-run   # 2. preview what lands where
+dew restore --image ~/my-app.dew.age  # 3. hydrate straight from the carried file
+```
+
+`--image` needs no manifest and no sync destination — the file defines what it
+holds, and the usual safety rules apply (staged writes, conflicts left
+untouched without `--force`).
+
+> **If machine B becomes a daily driver for this repo:** move the file into
+> place instead — `mv ~/my-app.dew.age ~/.dew/images/` — and plain
+> `dew restore`, `dew pack`, and `dew sync` all work against it from then on.
+
+### Variant — carry the *whole* working copy
+
+`dew pack --all` sweeps **every** file in the repo (tracked by Git or not) into
+the image for that one run — the allow-list and manifest are untouched, the
+deny-list still drops generated noise (`node_modules/`, `.next/`, `coverage/`,
+…), and `.git/` is never included:
+
+```bash
+dew pack --all --dry-run              # preview the full file list first
+dew pack --all
+# …copy the image and restore on B exactly as above
+```
+
+Because a project has one image, `pack --all` overwrites the curated image
+until your next plain `dew pack` — use it for relocating, not as the daily
+flow.
+
+---
+
 ## Quick reference
 
 | Do this | Command |
@@ -166,9 +223,11 @@ you@machine4     sent-to         age1xdde…          2026-06-03T00:10:02Z  -
 | See / choose local files to track | `dew scan` · `dew add <path>` · `dew add .` |
 | Review what's tracked / why | `dew list` · `dew rules` |
 | Build the encrypted image | `dew pack` (`--dry-run` to preview) |
+| Pack the whole repo, one-shot | `dew pack --all` (deny-list still applies) |
 | Set / check the sync destination | `dew remote set <dest>` · `dew remote test` |
 | Push / fetch the image | `dew sync` · `dew sync pull` |
 | Restore your local files | `dew restore` (alias `dew hydrate`; `--dry-run` to preview) |
+| Restore from a hand-carried file | `dew restore --image <path/to/file.dew.age>` |
 | Move your identity to another machine | `dew key push <user@host>` · `dew key pull <user@host>` |
 | See where your identity has gone | `dew key devices` |
 | Check health / next step | `dew status` · `dew doctor` |

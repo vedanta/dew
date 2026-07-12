@@ -136,6 +136,8 @@ dew remove <path> | list        # edit / view the allow-list
 dew pack | restore              # build / extract the encrypted image
                                 #   --dry-run on either to preview without writing
                                 #   'dew hydrate' is an alias for restore
+dew pack --all                  # one-shot: pack the whole repo (deny-filtered, manifest untouched)
+dew restore --image <file>      # restore from an explicit .dew.age file (no manifest needed)
 
 # Health
 dew status | doctor             # validate hydration state (current repo)
@@ -176,6 +178,12 @@ dew sync pull
 dew restore
 dew doctor   # → Repository fully hydrated.
 ```
+
+No sync destination? Carry the image by hand: copy
+`~/.dew/images/myrepo.dew.age` over any way you like, then
+`dew restore --image ~/myrepo.dew.age` in the clone. And `dew pack --all`
+packs the *entire* working copy (deny-filtered) when you're relocating, not
+just the tracked local files.
 
 ## Documentation
 

@@ -144,7 +144,7 @@ deny:
         <pre class="pipeline">dew add .env.local
 dew add docker-compose.override.yml
 dew add certs/</pre>
-        <p>The allow-list is authoritative.</p>
+        <p>The allow-list is authoritative. (The one deliberate exception is <code>dew pack --all</code>, which packs the whole repo for that single run — the deny list still applies, and the manifest is untouched.)</p>
       </div>
     </details>
 
@@ -178,7 +178,7 @@ dew add certs/</pre>
     <details class="faq-q">
       <summary>Is dew a backup tool?</summary>
       <div class="answer">
-        <p>No. dew only manages files that you explicitly allow-list in a repo manifest. It does not back up your whole home directory, your whole project, your Git history, your IDE, your database, or arbitrary machine state.</p>
+        <p>No. By default dew only manages files that you explicitly allow-list in a repo manifest. It does not back up your whole home directory, your Git history, your IDE, your database, or arbitrary machine state. (<code>dew pack --all</code> can sweep one repo's <em>working copy</em> into an image as a one-shot — for relocating to another machine, not as a backup strategy.)</p>
         <p>dew creates one encrypted image per repo. That image can be synced somewhere else, but dew does not replace a real backup strategy.</p>
         <p class="quote">Think of dew as "the small missing local layer for this repo" — not "a complete backup system for my computer."</p>
       </div>
@@ -577,6 +577,20 @@ dew doctor</pre>
       <summary>Is the encrypted image safe to upload to cloud storage?</summary>
       <div class="answer">
         <p>The image is encrypted, so it is designed to be safe to store outside your machine. But "encrypted" does not mean "careless." A good posture: keep the private key off the remote, use trusted storage, restrict access where possible, avoid syncing files you do not need, and rotate credentials if you suspect exposure. dew protects image contents with encryption; it does not provide cloud access control, audit, or key management.</p>
+      </div>
+    </details>
+
+    <details class="faq-q">
+      <summary>Can I move an image by hand instead of using <code>dew sync</code>?</summary>
+      <div class="answer">
+        <p>Yes. The image is one encrypted file — copy it however you like (scp, USB stick, a shared drive), then restore straight from it on the other machine:</p>
+        <pre class="pipeline"><span class="comment"># machine A</span>
+dew pack
+scp ~/.dew/images/my-app.dew.age you@machineB:~/
+
+<span class="comment"># machine B (in the cloned repo; your identity already there)</span>
+dew restore --image ~/my-app.dew.age</pre>
+        <p><code>--image</code> needs no manifest and no sync destination; the usual non-destructive restore rules apply. If the machine will keep using dew for that repo, move the file into <code>~/.dew/images/</code> instead so plain <code>restore</code>/<code>pack</code>/<code>sync</code> work from then on.</p>
       </div>
     </details>
 

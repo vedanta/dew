@@ -209,11 +209,13 @@ dew add . --yes                     <span class="comment"># add all discovered c
       <p class="desc">Encrypt the tracked files into <code>~/.dew/images/&lt;project&gt;.dew.age</code> (written atomically). Run it after you add or change a tracked file — pack always uses the current contents, so you declare files once and never re-add. The deny-list keeps noise out even from allow-listed directories.</p>
       <pre class="pipeline">dew pack
 dew pack --dry-run                  <span class="comment"># preview what would be included; write nothing</span>
-dew pack --force                    <span class="comment"># overwrite an image created by a different repo</span></pre>
+dew pack --force                    <span class="comment"># overwrite an image created by a different repo</span>
+dew pack --all --dry-run            <span class="comment"># preview a whole-repo image, then: dew pack --all</span></pre>
       <table>
         <tr><th>Flag</th><th>Description</th></tr>
         <tr><td><code>--dry-run</code></td><td>List what would be packed (files + sizes); write nothing. Needs no identity.</td></tr>
         <tr><td><code>--force</code></td><td>Overwrite an image created by a different repo.</td></tr>
+        <tr><td><code>--all</code></td><td>One-shot: pack <strong>every</strong> file in the repo — tracked by Git or not — ignoring the allow-list for this run. The manifest is untouched, the deny-list still applies, and <code>.git/</code>/<code>.dew/</code> are never included. For carrying a complete working copy.</td></tr>
       </table>
       <div class="callout">Each image is bound to the repo that created it; <code>pack</code> refuses to overwrite a different repo's image without <code>--force</code>.</div>
     </div>
@@ -223,18 +225,20 @@ dew pack --force                    <span class="comment"># overwrite an image c
       <p class="desc">Hydrate the working tree from this repo's image — decrypt, decompress, and write the tracked files back. This is what makes a fresh clone runnable; pair it with <code>dew sync pull</code> on a new machine.</p>
       <pre class="pipeline">dew restore
 dew restore --dry-run               <span class="comment"># preview new / unchanged / conflicts; change nothing</span>
-dew restore --force                 <span class="comment"># overwrite local files that differ from the image</span></pre>
+dew restore --force                 <span class="comment"># overwrite local files that differ from the image</span>
+dew restore --image ~/my-app.dew.age <span class="comment"># restore from an explicit, hand-carried file</span></pre>
       <table>
         <tr><th>Flag</th><th>Description</th></tr>
         <tr><td><code>--dry-run</code></td><td>Preview the written / unchanged / conflict classification; change nothing.</td></tr>
         <tr><td><code>--force</code></td><td>Overwrite local files that differ from the image.</td></tr>
+        <tr><td><code>--image &lt;path&gt;</code></td><td>Restore from an explicit <code>.dew.age</code> file instead of the default under <code>~/.dew/images</code> — copied by hand or pulled from a backup. Needs no manifest; the same identity and safety rules apply.</td></tr>
       </table>
       <div class="callout">Safe by default: files are staged first, and any local file that differs from the image is reported as a conflict and left untouched unless you pass <code>--force</code> — there's no version history, so a careless restore can't lose your edits.</div>
     </div>
 
     <div class="cmd">
       <h3 id="hydrate">dew hydrate</h3>
-      <p class="desc">The same operation as <a href="#restore">restore</a>, with the same flags — dew's signature verb, surfaced as its own command.</p>
+      <p class="desc">The same operation as <a href="#restore">restore</a>, with the same flags (<code>--dry-run</code>, <code>--force</code>, <code>--image</code>) — dew's signature verb, surfaced as its own command.</p>
       <pre class="pipeline">dew hydrate
 dew hydrate --dry-run</pre>
     </div>
