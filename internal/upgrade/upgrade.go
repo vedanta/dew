@@ -252,6 +252,7 @@ func ReplaceExecutable(exePath string, newBin []byte) error {
 		if err := os.Rename(exePath, old); err != nil {
 			return fmt.Errorf("upgrade: park running binary: %w", err)
 		}
+		defer func() { _ = os.Remove(old) }() // best-effort; fails (harmlessly) while it's the running image
 	}
 	if err := os.Rename(tmpName, exePath); err != nil {
 		return fmt.Errorf("upgrade: install new binary: %w", err)
