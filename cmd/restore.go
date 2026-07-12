@@ -20,6 +20,7 @@ import (
 var (
 	restoreForce  bool
 	restoreDryRun bool
+	restoreImage  string
 )
 
 var restoreCmd = &cobra.Command{
@@ -33,10 +34,15 @@ runnable — pair it with 'dew sync pull' on a new machine.
 Safe by default: files are staged first, and any local file that differs from the
 image is reported as a conflict and left untouched, so you won't lose local edits
 unless you pass --force. --dry-run shows exactly what would change, touching
-nothing. ('dew hydrate' is the same command.)`,
+nothing. ('dew hydrate' is the same command.)
+
+By default the image comes from ~/.dew/images; --image restores from an explicit
+.dew.age file instead — one copied over by hand or pulled from a backup. The same
+safety rules apply, and no manifest is needed: the image defines what it holds.`,
 	Example: `  dew restore             # write the tracked files back into the repo
   dew restore --dry-run   # preview new / unchanged / conflicts; change nothing
-  dew restore --force     # overwrite local files that differ from the image`,
+  dew restore --force     # overwrite local files that differ from the image
+  dew restore --image ~/backups/my-app.dew.age   # restore from an explicit file`,
 	Args: cobra.NoArgs,
 	RunE: runRestore,
 }
@@ -48,8 +54,8 @@ var hydrateCmd = &cobra.Command{
 	GroupID: groupImage,
 	Short:   "Bring your local files back from the image (same as restore)",
 	Long: `Hydrate the working tree from this repo's encrypted image — identical to
-'dew restore', with the same --force and --dry-run flags. dew's signature verb;
-use whichever name you reach for first.`,
+'dew restore', with the same --force, --dry-run, and --image flags. dew's
+signature verb; use whichever name you reach for first.`,
 	Example: "  dew hydrate\n  dew hydrate --dry-run",
 	Args:    cobra.NoArgs,
 	RunE:    runRestore,
@@ -64,16 +70,22 @@ func runRestore(cmd *cobra.Command, _ []string) error {
 	if err != nil {
 		return fmt.Errorf("restore: %w", err)
 	}
-	return doRestore(root, identity.NewPaths(home), restoreForce, restoreDryRun, cmd.OutOrStdout())
+	return doRestore(root, identity.NewPaths(home), restoreForce, restoreDryRun, restoreImage, cmd.OutOrStdout())
 }
 
-func doRestore(root string, p identity.Paths, force, dryRun bool, out io.Writer) error {
-	m, err := manifest.Load(manifest.Path(root))
-	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			return errors.New("restore: no manifest found — run 'dew init' first")
+func doRestore(root string, p identity.Paths, force, dryRun bool, imageOverride string, out io.Writer) error {
+	imagePath := imageOverride
+	if imagePath == "" {
+		// The manifest's only role here is naming the default image; with an
+		// explicit --image the file itself defines what is restored.
+		m, err := manifest.Load(manifest.Path(root))
+		if err != nil {
+			if errors.Is(err, os.ErrNotExist) {
+				return errors.New("restore: no manifest found — run 'dew init' first")
+			}
+			return err
 		}
-		return err
+		imagePath = filepath.Join(p.ImagesDir, m.Image)
 	}
 
 	st, err := identity.Inspect(p)
@@ -84,10 +96,12 @@ func doRestore(root string, p identity.Paths, force, dryRun bool, out io.Writer)
 		return errors.New("restore: no identity found — run 'dew keygen' first")
 	}
 
-	imagePath := filepath.Join(p.ImagesDir, m.Image)
-	f, err := os.Open(imagePath) //nolint:gosec // G304: image path is dew-home-local
+	f, err := os.Open(imagePath) //nolint:gosec // G304: dew-home-local or a user-given --image path
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
+			if imageOverride != "" {
+				return fmt.Errorf("restore: no image at %s — check the --image path", imagePath)
+			}
 			return fmt.Errorf("restore: no image at %s — run 'dew pack' (or 'dew sync pull')", imagePath)
 		}
 		return fmt.Errorf("restore: open image: %w", err)
@@ -156,6 +170,7 @@ func reportRestore(out io.Writer, res restore.Result, dryRun bool) error {
 func addRestoreFlags(c *cobra.Command) {
 	c.Flags().BoolVar(&restoreForce, "force", false, "overwrite local files that differ from the image")
 	c.Flags().BoolVar(&restoreDryRun, "dry-run", false, "preview what would change; touch nothing")
+	c.Flags().StringVar(&restoreImage, "image", "", "restore from this .dew.age file instead of the default under ~/.dew/images")
 }
 
 func init() {
