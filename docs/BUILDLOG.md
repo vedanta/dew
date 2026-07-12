@@ -205,6 +205,21 @@ Release history:
   re-entry doc). No breaking changes — pack's allow-list-authoritative default
   is untouched; `--all` is an explicit, one-shot exception.
 
+- **v0.6.1** — deny-list control + self-update, driven by real `pack --all`
+  usage on a React Native monorepo (a 1,078 MiB dry-run, 984 MiB of it
+  `Pods/`). Four changes: (1) **mobile-toolchain deny built-ins** — `Pods/`,
+  `DerivedData/`, `.gradle/`, `.cxx/`, `.expo/`, `*.tsbuildinfo` (#164);
+  (2) **`!` negation in deny configs** with precedence repo > global >
+  built-in, last match wins — the deny system can now *override*, not just
+  add (#167); (3) **explicit file adds beat the deny-list** and `add` reports
+  the interplay, fixing the accepted-then-silently-dropped `dew add debug.log`
+  bug (#168); (4) **`dew upgrade`** — self-update to the latest release or an
+  exact `--version` tag, checksum-verified, with brew-managed installs
+  detected and redirected to `brew upgrade --cask dew` (#170). Versioning
+  note: shipped as a *patch* by owner's choice — the batch reads as
+  deny-tuning plus tooling hygiene — a deliberate bend of the
+  "minor = new command surface" convention recorded in `DEVELOPMENT.md`.
+
 Remaining backlog is tracked in GitHub issues (e.g. `dew images` repo-locations,
 discover+pack convenience, and the ops/identity batch #136–#145). Lane B
 (multiple recipients / per-device keys) from #122 is parked.
