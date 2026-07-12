@@ -312,6 +312,20 @@ dew remote unset                  <span class="comment"># clear it</span></pre>
       <p class="desc">Print the version, commit, build date, and Go toolchain — handy when reporting a bug. (Also available as <code>dew --version</code>.)</p>
       <pre class="pipeline">dew version</pre>
     </div>
+
+    <div class="cmd">
+      <h3 id="upgrade">dew upgrade</h3>
+      <p class="desc">Update dew itself: resolve the latest release (or an exact tag with <code>--version</code>), download the build for this platform, <strong>verify it against the release's checksums</strong>, and swap the binary in atomically. Homebrew installs are refused with a pointer to <code>brew upgrade --cask dew</code>; <code>--check</code> is always allowed and changes nothing.</p>
+      <pre class="pipeline">dew upgrade --check                 <span class="comment"># what would happen; changes nothing</span>
+dew upgrade                         <span class="comment"># → the latest release</span>
+dew upgrade --version v0.6.0        <span class="comment"># → that exact release</span></pre>
+      <table>
+        <tr><th>Flag</th><th>Description</th></tr>
+        <tr><td><code>--check</code></td><td>Report current and available versions; change nothing.</td></tr>
+        <tr><td><code>--version &lt;tag&gt;</code></td><td>Install this exact release tag instead of the latest (downgrades too).</td></tr>
+        <tr><td><code>--force</code></td><td>Reinstall even if current, or replace a brew-managed binary.</td></tr>
+      </table>
+    </div>
   </section>
 
   <!-- Global notes -->

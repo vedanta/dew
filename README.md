@@ -224,6 +224,11 @@ Then check it works:
 dew version
 ```
 
+**Updating:** `dew upgrade` fetches the latest release, verifies its checksum,
+and swaps the binary in place (`--check` to preview, `--version <tag>` for an
+exact release). Homebrew installs update with `brew upgrade --cask dew` — dew
+detects that case and points you there.
+
 ## Status
 
 **The MVP is complete and working.** Every command above is implemented and tested — Go unit tests plus binary-level acceptance tests, gated on a cross-platform (Linux/macOS/Windows) CI matrix.

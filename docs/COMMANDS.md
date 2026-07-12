@@ -27,6 +27,21 @@ Print the version, commit, build date, Go version, and OS/arch — the same deta
 dew version
 ```
 
+### `dew upgrade`
+Update dew itself: resolve the latest GitHub release (or an exact tag), download the build for this platform, **verify it against the release's `checksums.txt`**, and swap the binary in atomically. Homebrew-managed installs are refused with a pointer to `brew upgrade --cask dew` (`--force` overrides); `--check` is always allowed and changes nothing.
+
+| Flag | Description |
+|---|---|
+| `--check` | Report the current and available versions; change nothing. |
+| `--version <tag>` | Install this exact release tag (e.g. `v0.6.0`) instead of the latest — works for downgrades too. |
+| `--force` | Reinstall even if current, or replace a brew-managed binary. |
+
+```bash
+dew upgrade --check
+dew upgrade
+dew upgrade --version v0.6.0
+```
+
 Environment:
 - **`DEW_HOME`** — overrides the dew home directory (default `~/.dew`). Useful for testing or isolating multiple identities.
 

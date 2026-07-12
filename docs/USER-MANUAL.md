@@ -52,15 +52,22 @@ When in doubt, `dew doctor` diagnoses the repo and names the next command to run
 
 ## 2. Installing
 
-dew is a single self-contained Go binary. Until release binaries are published,
-build from source (**Go 1.26+**):
+dew is a single self-contained Go binary.
 
 ```bash
-git clone https://github.com/vedanta/dew && cd dew
-go build -o dew .          # or: make build
-sudo mv dew /usr/local/bin/   # optional: put it on your PATH
-dew --version
+# Homebrew (macOS/Linux)
+brew install --cask vedanta/dew/dew
+
+# or a binary from https://github.com/vedanta/dew/releases/latest
+# or with Go 1.26+:
+go install github.com/vedanta/dew@latest
 ```
+
+**Updating:** `dew upgrade` fetches the latest release (or an exact tag with
+`--version v0.6.0`), verifies it against the release checksums, and swaps the
+binary in place — `--check` previews without changing anything. Homebrew
+installs update with `brew upgrade --cask dew` instead (dew detects this and
+tells you).
 
 The only external runtime dependencies are OpenSSH's `scp` (syncing to a remote
 `host:path`) and `ssh` (`dew remote test`/`images` against a remote) — both ship
