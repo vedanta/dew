@@ -351,3 +351,35 @@ func TestDoPackAllDryRun(t *testing.T) {
 		t.Error("dry-run wrote an image")
 	}
 }
+
+func TestDoPackExplicitFileAllowBeatsDeny(t *testing.T) {
+	root := t.TempDir()
+	p := mustIdentityPaths(t)
+	mustInit(t, root)
+
+	// An explicitly added .log file, and a directory whose .log content is
+	// swept in only via the dir entry.
+	writeRepoContent(t, root, "keep.log", "explicit")
+	writeRepoContent(t, root, "data/app.log", "swept")
+	writeRepoContent(t, root, "data/config.yaml", "real")
+
+	var discard bytes.Buffer
+	if err := doAdd(root, []string{"keep.log", "data"}, &discard); err != nil {
+		t.Fatal(err)
+	}
+	if err := doPack(root, p, false, false, false, &discard); err != nil {
+		t.Fatalf("doPack: %v", err)
+	}
+
+	m, _ := manifest.Load(manifest.Path(root))
+	names := imageNames(t, filepath.Join(p.ImagesDir, m.Image), p.KeyFile)
+	if !slices.Contains(names, "keep.log") {
+		t.Errorf("explicitly added keep.log missing from image %v", names)
+	}
+	if !slices.Contains(names, "data/config.yaml") {
+		t.Errorf("data/config.yaml missing from image %v", names)
+	}
+	if slices.Contains(names, "data/app.log") {
+		t.Errorf("dir-swept data/app.log should stay deny-filtered, image %v", names)
+	}
+}

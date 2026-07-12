@@ -218,6 +218,12 @@ files under a directory the walk has pruned (`!Pods/keep.txt` alone does
 nothing — `!Pods/` is the unit of rescue), and within one list a later line
 beats an earlier one.
 
+**Explicit file adds also win.** A file you `dew add` *by name* is always
+packed, even if the deny-list matches it — naming an exact file is stronger
+intent than any pattern (`add` prints a note when this happens). Directory
+entries stay deny-filtered, and `add` warns if the directory itself is
+deny-listed.
+
 Deny patterns use `.gitignore` syntax. They apply to discovery (`scan`,
 `add .`, `init --from-gitignore`) and to `pack` (so an allow-listed directory
 never sweeps in denied files).

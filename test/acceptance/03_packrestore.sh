@@ -126,4 +126,20 @@ assert_failure
 assert_contains "--image"
 cd "$REPO"
 
-echo "  pack/restore round-trip + ownership guard + pack --all + restore --image ok"
+# Explicitly added files beat the deny-list (and add says so); dir-swept
+# noise stays filtered.
+echo keepme >"$REPO/keep.log"
+run_dew add keep.log
+assert_success
+assert_contains "the explicit add overrides it"
+run_dew pack --dry-run
+assert_success
+assert_contains "keep.log"
+mkdir -p "$REPO/node_modules"
+run_dew add node_modules
+assert_success
+assert_contains "deny-listed"
+run_dew remove node_modules          # keep the allow-list clean for later scripts
+assert_success
+
+echo "  pack/restore round-trip + ownership guard + pack --all + restore --image + deny interplay ok"
