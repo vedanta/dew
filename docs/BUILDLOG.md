@@ -176,9 +176,38 @@ Release history:
   (lane A: carry the key, over multiple-recipients); children #123–#125. No
   breaking changes — a new command surface.
 
+- **v0.5.0** — lifecycle & orientation: **`dew clean`** (the inverse of
+  `init` + `pack`: remove the repo's manifest, image, and ownership marker,
+  with `--image-only`/`--manifest-only` partial modes) and **`dew images rm`**
+  (delete a named image from the global store) close the create→discard loop
+  (#135). `pack` gained a progress bar for large images (#134). `init` now
+  writes an explanatory `.dew/README.md` so a teammate hitting the committed
+  directory learns what it is (#150). Docs: a product FAQ (what dew is/isn't,
+  comparisons, security model, #146) published to the site, plus a scenario
+  guide page, a command-reference page, and hero polish. No breaking changes.
+  (This entry was backfilled at v0.6.0 time — the release shipped without its
+  BUILDLOG note.)
+
+- **v0.6.0** — whole-repo carrying: **`dew pack --all`** packs every file in
+  the repo (tracked by Git or not) in one shot, ignoring the allow-list for
+  that run — the manifest is untouched, the deny layers still apply, and
+  `.git/`/`.dew/` are now excluded structurally at pack time (previously only
+  the scanner knew about them, so an allow-listed directory could sweep in a
+  nested `.git`). **`dew restore --image <path>`** hydrates from an explicit
+  `.dew.age` file — carried by hand or pulled from a backup — with no manifest
+  required; identity, path-sanitization, and non-destructive rules unchanged.
+  Together they make "carry a complete working copy" a two-command flow:
+  `pack --all` on one machine, `restore --image` on the other. Supporting
+  change: six generated-artifact dirs (`.next/`, `.nuxt/`, `coverage/`,
+  `.cache/`, `.turbo/`, `.parcel-cache/`) joined the built-in deny list, which
+  whole-repo packing made pressing. Batch #155–#157 (PRs #158–#160), the first
+  release planned via `docs/DEVELOPMENT.md` (also new: the process/history
+  re-entry doc). No breaking changes — pack's allow-list-authoritative default
+  is untouched; `--all` is an explicit, one-shot exception.
+
 Remaining backlog is tracked in GitHub issues (e.g. `dew images` repo-locations,
-discover+pack convenience). Lane B (multiple recipients / per-device keys) from
-#122 is parked.
+discover+pack convenience, and the ops/identity batch #136–#145). Lane B
+(multiple recipients / per-device keys) from #122 is parked.
 
 Full docs set: [`design.md`](design.md) (spec), [`build-plan.md`](build-plan.md)
 (plan), this log, [`USER-MANUAL.md`](USER-MANUAL.md), [`COMMANDS.md`](COMMANDS.md),

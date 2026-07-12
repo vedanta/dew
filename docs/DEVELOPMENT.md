@@ -5,7 +5,7 @@ This is the re-entry document: read it (plus the tail of
 how development actually flows — GitHub issues, batches, PRs, releases,
 versioning — what has shipped so far, and where the project currently sits.
 
-The history here is a snapshot (**last updated: 2026-07-12, at v0.5.0**). The
+The history here is a snapshot (**last updated: 2026-07-12, at v0.6.0**). The
 live sources of truth are always:
 
 ```bash
@@ -17,13 +17,13 @@ git log --oneline -20         # what happened most recently
 ## Where things stand
 
 - **The product is complete and shipped.** The MVP works end-to-end across
-  machines, plus five tagged releases of hardening and new command surfaces.
-- `main` is one commit past `v0.5.0` (a release-changelog CI tweak, #151).
-  Working tree clean, CI green.
+  machines, plus six tagged releases of hardening and new command surfaces.
+- `main` is at `v0.6.0` (whole-repo carrying: `pack --all` +
+  `restore --image`). Working tree clean, CI green.
 - **12 open issues**, all enhancements, no bugs — see
-  [the backlog map](#the-backlog-as-of-v050) below. Eight of them were filed
+  [the backlog map](#the-backlog-as-of-v060) below. Eight of them were filed
   together as a deliberate "ops" batch and read as the raw material for a
-  v0.6.0.
+  v0.7.0.
 - One design thread is deliberately **parked**: lane B of #122 (multiple
   recipients / per-device keys). v0.4.0 shipped lane A (carry the key) instead.
 
@@ -80,8 +80,9 @@ of that structure.
    rhythm of the project:
    - #108–#110 under umbrella #111 (`dew remote` family) → **v0.3.0**
    - #122 (design issue with lanes A/B; implementation PRs #123–#125) → **v0.4.0**
+   - #155–#157 (whole-repo carrying, PRs #158–#160) → **v0.6.0**
    - #136–#145 (the "ops" + "identity" batch) → *filed, unimplemented — the
-     likely v0.6.0*
+     likely v0.7.0*
 2. **Umbrella / part-split issues.** A larger idea gets a parent issue holding
    the design decision, with children (issues or PRs) doing the work. When only
    half ships, the remainder gets its own follow-up (e.g. #71 Part A shipped
@@ -96,7 +97,7 @@ post-MVP batches lean on `ops` and `identity`.
 Cutting a release is **one command** — everything downstream is automated:
 
 ```bash
-git tag v0.6.0 && git push origin v0.6.0
+git tag v0.7.0 && git push origin v0.7.0
 ```
 
 That triggers `.github/workflows/release.yml` → GoReleaser
@@ -132,7 +133,8 @@ timeline
     2026-06-02 : v0.2.0 — hydrate promoted, CLI help v2 : v0.3.0 — dew remote family (set/test/images)
     2026-06-03 : v0.4.0 — dew key push/pull/devices (identity bootstrap over SSH)
     2026-06-05 : Ops backlog filed (#136–#145) : v0.5.0 tagged — clean, images rm, pack progress, FAQ, site polish
-    2026-06-06 : v0.5.0 released — current state
+    2026-06-06 : v0.5.0 released
+    2026-07-12 : Dev resumes — DEVELOPMENT.md written, deps bumped : v0.6.0 — pack --all + restore --image (whole-repo carrying)
 ```
 
 | Release | Date | Theme | Trail |
@@ -142,18 +144,19 @@ timeline
 | v0.3.0 | 2026-06-02 | `dew remote` family: CLI-managed sync destination + `test`/`images` | #111 (#108–#110) |
 | v0.4.0 | 2026-06-03 | `dew key push`/`pull`/`devices`: guarded identity bootstrap over SSH | #122 (PRs #123–#125) |
 | v0.5.0 | 2026-06-06 | Lifecycle & UX: `dew clean`, `images rm`, pack progress bar, FAQ, site | #135, #134, #146 |
+| v0.6.0 | 2026-07-12 | Whole-repo carrying: `pack --all`, `restore --image`, deny built-ins extended | #155–#157 (PRs #158–#160) |
 
 For the full narrative — what was decided and why at each step — read
 [`BUILDLOG.md`](BUILDLOG.md) top to bottom; it was written as the work
 happened.
 
-## The backlog (as of v0.5.0)
+## The backlog (as of v0.6.0)
 
 Twelve open issues in three clusters:
 
 ```mermaid
 flowchart TD
-    subgraph ops["Ops batch — filed 2026-06-05, likely v0.6.0"]
+    subgraph ops["Ops batch — filed 2026-06-05, likely v0.7.0"]
         i138["#138 dew inspect<br/>list image contents, no restore"]
         i137["#137 dew diff<br/>working-tree → image drift"]
         i136["#136 dew verify<br/>full preflight validation"]
@@ -182,7 +185,7 @@ Notes for whoever picks this up (probably you):
 - Within the ops batch, **#138 `inspect` is the natural first ticket** — #136
   `verify` and #137 `diff` both need to read image contents without restoring.
   #136/#137/#138/#139 share one theme: *"what's in my image and is it
-  current?"* — a coherent v0.6.0.
+  current?"* — a coherent v0.7.0.
 - **#143 `images prune` partially overlaps `dew images rm`** (shipped in
   v0.5.0, after the issue was filed) — trim its scope before starting.
 - **#141 `key rotate` implies a scope decision**, not just code: rotation is
