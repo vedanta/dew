@@ -46,35 +46,56 @@ func Builtin() []string {
 	return out
 }
 
+// rule is one extra deny line: a compiled gitignore pattern plus whether it
+// was negated ("!pattern" — un-deny). Compiled per line so a lone negation can
+// still override the built-ins; the library's own negation handling only works
+// against earlier positives in the same list.
+type rule struct {
+	negate  bool
+	matcher *gitignore.GitIgnore
+}
+
 // Matcher tests repo-relative slash paths against the built-in rules plus any
-// extra per-manifest patterns.
+// extra patterns, in layer order.
 type Matcher struct {
-	extra *gitignore.GitIgnore // nil when there are no extra patterns
+	rules []rule
 }
 
 // New builds a matcher with the built-in rules plus extra patterns in
-// .gitignore syntax (e.g. "*.tmp", ".gradle/").
+// .gitignore syntax (e.g. "*.tmp", ".gradle/", "!keep.log"). Pass the layers
+// in precedence order — global first, then per-manifest — the last matching
+// rule wins (git semantics), and the built-ins are the base verdict, so a
+// repo rule overrides a global rule overrides a built-in.
 func New(extra []string) *Matcher {
 	m := &Matcher{}
-	if len(extra) > 0 {
-		m.extra = gitignore.CompileIgnoreLines(extra...)
+	for _, line := range extra {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		negate := strings.HasPrefix(line, "!")
+		m.rules = append(m.rules, rule{
+			negate:  negate,
+			matcher: gitignore.CompileIgnoreLines(strings.TrimPrefix(line, "!")),
+		})
 	}
 	return m
 }
 
 // Match reports whether the repo-relative slash path is denied. isDir indicates
-// the path is a directory (so directory-only rules apply).
+// the path is a directory (so directory-only rules apply). Like git, a negation
+// cannot re-include a file under a directory the walk has already pruned —
+// "!Pods/" is the unit of rescue, not "!Pods/keep.txt".
 func (m *Matcher) Match(slashPath string, isDir bool) bool {
 	base := path.Base(slashPath)
-	switch {
-	case isDir && builtinDirs[base]:
-		return true
-	case !isDir && deniedFile(base):
-		return true
-	case m.extra != nil && m.extra.MatchesPath(slashPath):
-		return true
+	denied := (isDir && builtinDirs[base]) || (!isDir && deniedFile(base))
+	for _, r := range m.rules {
+		// Directories also match trailing-slash ("dir/") patterns.
+		if r.matcher.MatchesPath(slashPath) || (isDir && r.matcher.MatchesPath(slashPath+"/")) {
+			denied = !r.negate
+		}
 	}
-	return false
+	return denied
 }
 
 // deniedFile reports whether a file base name matches the built-in file rules.
