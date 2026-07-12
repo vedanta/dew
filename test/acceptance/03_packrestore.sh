@@ -111,4 +111,19 @@ assert_failure
 assert_contains "nothing to pack"
 cd "$REPO"
 
-echo "  pack/restore round-trip + ownership guard + pack --all ok"
+# restore --image hydrates from an explicit file — no manifest required.
+carried="$SANDBOX/carried.dew.age"
+cp "$HOME/.dew/images/all-repo.dew.age" "$carried"
+fresh="$SANDBOX/fresh-clone"
+mkdir -p "$fresh"
+cd "$fresh"
+run_dew restore --image "$carried"
+assert_success
+assert_file_exists "$fresh/src/main.txt"
+[ "$(cat "$fresh/.env.local")" = "SECRET=1" ] || fail "restore --image did not carry .env.local content"
+run_dew restore --image "$SANDBOX/no-such.dew.age"
+assert_failure
+assert_contains "--image"
+cd "$REPO"
+
+echo "  pack/restore round-trip + ownership guard + pack --all + restore --image ok"

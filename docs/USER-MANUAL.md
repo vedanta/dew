@@ -258,6 +258,16 @@ dew hydrate              # same as restore (its own command)
 A plain `dew restore` with unresolved conflicts exits non-zero so you notice; a
 `--dry-run` always exits 0.
 
+By default restore reads this repo's image from `~/.dew/images`. **`--image`**
+restores from an explicit `.dew.age` file instead — one copied over by hand,
+pulled from a backup, or made with `pack --all` elsewhere. No manifest is
+needed (the image defines what it holds); your identity and the same
+non-destructive rules apply:
+
+```bash
+dew restore --image ~/backups/my-app.dew.age --dry-run
+```
+
 **Tearing down.** `dew clean` is the inverse of `init` + `pack`: it removes the
 repo's `.dew/` manifest and this repo's image (+ `.id` marker), then drops the
 empty `.dew/` directory. It's **local-only** — it never touches your shared

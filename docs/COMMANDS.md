@@ -210,11 +210,13 @@ Extract the image back into the repo: age decrypt → zstd decompress → tar ex
 |---|---|
 | `--dry-run` | Preview the written / unchanged / conflict / overwrite classification without changing the working tree. |
 | `--force` | Overwrite local files that differ from the image. |
+| `--image <path>` | Restore from an explicit `.dew.age` file instead of the default under `~/.dew/images` — e.g. one copied over by hand or pulled from a backup. Needs no manifest; the same identity and safety rules apply. |
 
 ```bash
 dew restore
 dew restore --dry-run
 dew restore --force
+dew restore --image ~/backups/my-app.dew.age
 ```
 
 ### `dew hydrate`

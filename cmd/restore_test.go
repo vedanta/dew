@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/vedanta/dew/internal/identity"
+	"github.com/vedanta/dew/internal/manifest"
 )
 
 func TestPackRestoreRoundTrip(t *testing.T) {
@@ -19,7 +20,7 @@ func TestPackRestoreRoundTrip(t *testing.T) {
 	}
 
 	var out bytes.Buffer
-	if err := doRestore(root, p, false, false, &out); err != nil {
+	if err := doRestore(root, p, false, false, "", &out); err != nil {
 		t.Fatalf("doRestore: %v", err)
 	}
 	assertRepoContent(t, root, ".env.local", "TOKEN=roundtrip")
@@ -35,7 +36,7 @@ func TestDoRestoreConflictRequiresForce(t *testing.T) {
 	writeRepoContent(t, root, ".env.local", "FROM=local")
 
 	var out bytes.Buffer
-	err := doRestore(root, p, false, false, &out)
+	err := doRestore(root, p, false, false, "", &out)
 	if err == nil || !strings.Contains(err.Error(), "differ") {
 		t.Fatalf("expected conflict error, got %v", err)
 	}
@@ -47,7 +48,7 @@ func TestDoRestoreConflictRequiresForce(t *testing.T) {
 
 	// --force overwrites with the image content.
 	var out2 bytes.Buffer
-	if err := doRestore(root, p, true, false, &out2); err != nil {
+	if err := doRestore(root, p, true, false, "", &out2); err != nil {
 		t.Fatalf("doRestore --force: %v", err)
 	}
 	assertRepoContent(t, root, ".env.local", "FROM=image")
@@ -59,7 +60,7 @@ func TestDoRestoreDryRun(t *testing.T) {
 	writeRepoContent(t, root, ".env.local", "LOCAL")
 
 	var out bytes.Buffer
-	if err := doRestore(root, p, false, true, &out); err != nil {
+	if err := doRestore(root, p, false, true, "", &out); err != nil {
 		t.Fatalf("dry-run should not error on conflicts, got %v", err)
 	}
 	if !strings.Contains(out.String(), "Dry run") || !strings.Contains(out.String(), "conflict") {
@@ -93,7 +94,7 @@ func TestDoRestoreNoImage(t *testing.T) {
 	mustInit(t, root)
 
 	var out bytes.Buffer
-	err := doRestore(root, p, false, false, &out)
+	err := doRestore(root, p, false, false, "", &out)
 	if err == nil || !strings.Contains(err.Error(), "no image") {
 		t.Fatalf("expected no-image error, got %v", err)
 	}
@@ -137,5 +138,41 @@ func assertRepoContent(t *testing.T, root, rel, want string) {
 	}
 	if string(got) != want {
 		t.Errorf("%s = %q, want %q", rel, got, want)
+	}
+}
+
+func TestDoRestoreImageOverride(t *testing.T) {
+	root, p := packedFixture(t, "TOKEN=explicit")
+
+	m, err := manifest.Load(manifest.Path(root))
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Move the image out of ~/.dew/images, as if carried over by hand.
+	carried := filepath.Join(t.TempDir(), "carried.dew.age")
+	data, err := os.ReadFile(filepath.Join(p.ImagesDir, m.Image))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(carried, data, 0o600); err != nil { //nolint:gosec // G703: test-local path under t.TempDir()
+		t.Fatal(err)
+	}
+
+	// A fresh target with no manifest: --image needs none.
+	target := t.TempDir()
+	var out bytes.Buffer
+	if err := doRestore(target, p, false, false, carried, &out); err != nil {
+		t.Fatalf("doRestore --image: %v", err)
+	}
+	assertRepoContent(t, target, ".env.local", "TOKEN=explicit")
+}
+
+func TestDoRestoreImageOverrideMissing(t *testing.T) {
+	root, p := packedFixture(t, "TOKEN=abc")
+
+	var out bytes.Buffer
+	err := doRestore(root, p, false, false, filepath.Join(t.TempDir(), "gone.dew.age"), &out)
+	if err == nil || !strings.Contains(err.Error(), "--image") {
+		t.Fatalf("expected a missing --image error, got %v", err)
 	}
 }
