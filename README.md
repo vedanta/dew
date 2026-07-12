@@ -186,6 +186,7 @@ dew doctor   # → Repository fully hydrated.
 - **[Command reference](https://vedanta.github.io/dew/commands.html)** ([source](docs/COMMANDS.md)) — every command, grouped by purpose, with flags and caveats.
 - **[Design spec](docs/design.md)** — the MVP design and rationale.
 - **[Build plan](docs/build-plan.md)** & **[build log](docs/BUILDLOG.md)** — how it was planned and built.
+- **[Development](docs/DEVELOPMENT.md)** — the dev process (issues → batches → releases), release history, versioning, and current state.
 - **[Manual test plan](docs/manual-test-plan.md)** — end-to-end verification walkthrough.
 
 ## Install
