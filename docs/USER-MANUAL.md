@@ -220,6 +220,18 @@ dew pack --dry-run    # preview the file list + sizes; write nothing
 > edit a tracked file. (`dew init --from-gitignore` can seed the allow-list at
 > setup, so you can skip the explicit `add` on the first run.)
 
+**`pack --all` is the one-shot exception** to allow-list-authoritative packing:
+it sweeps *every* file in the repo — tracked by Git or not — into the image,
+ignoring the allow-list for that run. The manifest is untouched (your declared
+set stays as-is), the deny-list still keeps generated noise out, and `.git/`
+and `.dew/` are never included. Use it to carry a complete working copy to
+another machine:
+
+```bash
+dew pack --all --dry-run   # preview the full file list first
+dew pack --all
+```
+
 dew binds each image to the repo that created it. If a *different* repo would
 overwrite an image of the same name, `pack` refuses:
 

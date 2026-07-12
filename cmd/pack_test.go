@@ -31,7 +31,7 @@ func TestDoPackProducesDecryptableImage(t *testing.T) {
 	}
 
 	var out bytes.Buffer
-	if err := doPack(root, p, false, false, &out); err != nil {
+	if err := doPack(root, p, false, false, false, &out); err != nil {
 		t.Fatalf("doPack: %v", err)
 	}
 	if !strings.Contains(out.String(), "Packed") {
@@ -73,7 +73,7 @@ func TestDoPackHonorsDeny(t *testing.T) {
 	}
 
 	var out bytes.Buffer
-	if err := doPack(root, p, false, false, &out); err != nil {
+	if err := doPack(root, p, false, false, false, &out); err != nil {
 		t.Fatalf("doPack: %v", err)
 	}
 
@@ -100,7 +100,7 @@ func TestDoPackDryRun(t *testing.T) {
 	}
 
 	var out bytes.Buffer
-	if err := doPack(root, p, false, true, &out); err != nil {
+	if err := doPack(root, p, false, true, false, &out); err != nil {
 		t.Fatalf("doPack --dry-run: %v", err)
 	}
 	if !strings.Contains(out.String(), "Dry run") || !strings.Contains(out.String(), ".env.local") {
@@ -123,7 +123,7 @@ func TestDoPackDryRunNeedsNoIdentity(t *testing.T) {
 	// Identity never generated — dry-run should still work.
 	p := identity.NewPaths(filepath.Join(t.TempDir(), ".dew"))
 	var out bytes.Buffer
-	if err := doPack(root, p, false, true, &out); err != nil {
+	if err := doPack(root, p, false, true, false, &out); err != nil {
 		t.Fatalf("dry-run should not require an identity, got %v", err)
 	}
 }
@@ -131,7 +131,7 @@ func TestDoPackDryRunNeedsNoIdentity(t *testing.T) {
 func TestDoPackNoManifest(t *testing.T) {
 	root := t.TempDir()
 	var out bytes.Buffer
-	err := doPack(root, mustIdentityPaths(t), false, false, &out)
+	err := doPack(root, mustIdentityPaths(t), false, false, false, &out)
 	if err == nil || !strings.Contains(err.Error(), "dew init") {
 		t.Fatalf("expected init hint, got %v", err)
 	}
@@ -147,7 +147,7 @@ func TestDoPackNoIdentity(t *testing.T) {
 	// Identity paths that were never generated.
 	p := identity.NewPaths(filepath.Join(t.TempDir(), ".dew"))
 	var out bytes.Buffer
-	err := doPack(root, p, false, false, &out)
+	err := doPack(root, p, false, false, false, &out)
 	if err == nil || !strings.Contains(err.Error(), "dew keygen") {
 		t.Fatalf("expected keygen hint, got %v", err)
 	}
@@ -157,7 +157,7 @@ func TestDoPackEmptyAllowList(t *testing.T) {
 	root := t.TempDir()
 	mustInit(t, root)
 	var out bytes.Buffer
-	err := doPack(root, mustIdentityPaths(t), false, false, &out)
+	err := doPack(root, mustIdentityPaths(t), false, false, false, &out)
 	if err == nil || !strings.Contains(err.Error(), "nothing to pack") {
 		t.Fatalf("expected empty-allow error, got %v", err)
 	}
@@ -171,7 +171,7 @@ func TestDoPackMissingTrackedFile(t *testing.T) {
 	_ = doAdd(root, []string{"ghost.env"}, &discard)
 
 	var out bytes.Buffer
-	err := doPack(root, mustIdentityPaths(t), false, false, &out)
+	err := doPack(root, mustIdentityPaths(t), false, false, false, &out)
 	if err == nil || !strings.Contains(err.Error(), "not found") {
 		t.Fatalf("expected not-found error, got %v", err)
 	}
@@ -180,7 +180,7 @@ func TestDoPackMissingTrackedFile(t *testing.T) {
 func TestDoPackSameRepoRepackAllowed(t *testing.T) {
 	root, p := packedFixture(t, "TOKEN=abc") // packed once already
 	// Re-packing the same repo is fine — it owns the image.
-	if err := doPack(root, p, false, false, &bytes.Buffer{}); err != nil {
+	if err := doPack(root, p, false, false, false, &bytes.Buffer{}); err != nil {
 		t.Fatalf("re-pack same repo should be allowed, got %v", err)
 	}
 }
@@ -190,7 +190,7 @@ func TestDoPackRefusesCrossRepoOverwrite(t *testing.T) {
 
 	rootA := t.TempDir()
 	setupSharedRepo(t, rootA, "shared", "AAA")
-	if err := doPack(rootA, p, false, false, &bytes.Buffer{}); err != nil {
+	if err := doPack(rootA, p, false, false, false, &bytes.Buffer{}); err != nil {
 		t.Fatalf("pack A: %v", err)
 	}
 
@@ -198,13 +198,13 @@ func TestDoPackRefusesCrossRepoOverwrite(t *testing.T) {
 	rootB := t.TempDir()
 	setupSharedRepo(t, rootB, "shared", "BBB")
 
-	err := doPack(rootB, p, false, false, &bytes.Buffer{})
+	err := doPack(rootB, p, false, false, false, &bytes.Buffer{})
 	if err == nil || !strings.Contains(err.Error(), "different repo") {
 		t.Fatalf("expected cross-repo refusal, got %v", err)
 	}
 
 	// --force lets B overwrite anyway.
-	if err := doPack(rootB, p, true, false, &bytes.Buffer{}); err != nil {
+	if err := doPack(rootB, p, true, false, false, &bytes.Buffer{}); err != nil {
 		t.Fatalf("pack B --force: %v", err)
 	}
 }
@@ -285,4 +285,69 @@ func unpackEntry(t *testing.T, imagePath, keyFile, name string) string {
 	}
 	t.Fatalf("entry %q not found in image", name)
 	return ""
+}
+
+func TestDoPackAll(t *testing.T) {
+	root := t.TempDir()
+	p := mustIdentityPaths(t)
+	mustInit(t, root)
+
+	// A whole working copy: tracked source, private state (never allow-listed),
+	// deny-listed noise, and Git's own store.
+	writeRepoContent(t, root, "src/main.go", "package main")
+	writeRepoContent(t, root, ".env.local", "TOKEN=xyz")
+	writeRepoContent(t, root, "node_modules/pkg/index.js", "noise")
+	writeRepoContent(t, root, ".git/config", "[core]")
+	writeRepoContent(t, root, "vendor/thirdparty/.git/config", "[core]")
+
+	var out bytes.Buffer
+	if err := doPack(root, p, false, false, true, &out); err != nil {
+		t.Fatalf("doPack --all: %v", err)
+	}
+	if !strings.Contains(out.String(), "entire repo") {
+		t.Errorf("output = %q, want 'entire repo'", out.String())
+	}
+
+	m, err := manifest.Load(manifest.Path(root))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(m.Allow) != 0 {
+		t.Errorf("--all must not touch the allow-list, got %v", m.Allow)
+	}
+
+	names := imageNames(t, filepath.Join(p.ImagesDir, m.Image), p.KeyFile)
+	for _, want := range []string{"src/main.go", ".env.local"} {
+		if !slices.Contains(names, want) {
+			t.Errorf("image %v should contain %s", names, want)
+		}
+	}
+	for _, n := range names {
+		if strings.HasPrefix(n, "node_modules/") || strings.Contains(n, ".git/") || strings.HasPrefix(n, ".dew/") {
+			t.Errorf("image must not contain %q (names %v)", n, names)
+		}
+	}
+}
+
+func TestDoPackAllDryRun(t *testing.T) {
+	root := t.TempDir()
+	mustInit(t, root)
+	writeRepoContent(t, root, "src/main.go", "package main")
+	writeRepoContent(t, root, ".env.local", "TOKEN=xyz")
+
+	// Allow-list empty: fine with --all, and dry-run needs no identity.
+	p := identity.NewPaths(filepath.Join(t.TempDir(), ".dew"))
+	var out bytes.Buffer
+	if err := doPack(root, p, false, true, true, &out); err != nil {
+		t.Fatalf("doPack --all --dry-run: %v", err)
+	}
+	for _, want := range []string{"Dry run", "src/main.go", ".env.local"} {
+		if !strings.Contains(out.String(), want) {
+			t.Errorf("dry-run output %q should mention %s", out.String(), want)
+		}
+	}
+	m, _ := manifest.Load(manifest.Path(root))
+	if _, err := os.Stat(filepath.Join(p.ImagesDir, m.Image)); err == nil {
+		t.Error("dry-run wrote an image")
+	}
 }
