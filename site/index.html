@@ -91,9 +91,32 @@
     </p>
   </section>
 
-  <!-- Terminal demo -->
+  <!-- Quickstart demo: the fastest path — no sync destination, carry the file -->
   <section class="demo">
-    <h2>One command to save it. One to get it back.</h2>
+    <h2>Quickstart — hydrated in five commands.</h2>
+    <div class="terminal" id="demo-quick" aria-label="dew quickstart demo">
+      <div class="term-bar"><span></span><span></span><span></span><span class="term-title">~/acme-api — quickstart</span></div>
+      <pre class="term-body" data-lines='[
+        {"p":"$ ","t":"dew keygen && dew init","c":"cmd"},
+        {"t":"Created identity  ·  Created .dew/manifest.yaml","c":"out"},
+        {"p":"$ ","t":"dew add .env.local","c":"cmd"},
+        {"t":"added .env.local","c":"out"},
+        {"p":"$ ","t":"dew pack","c":"cmd"},
+        {"t":"Packed 1 tracked path → ~/.dew/images/acme-api.dew.age","c":"out"},
+        {"t":"","c":"gap"},
+        {"t":"# copy that one encrypted file anywhere — scp, USB, shared drive …","c":"comment"},
+        {"t":"","c":"gap"},
+        {"t":"# … then, in the clone on another machine","c":"comment"},
+        {"p":"$ ","t":"dew restore --image ~/acme-api.dew.age","c":"cmd"},
+        {"t":"Restored: 1 written","c":"ok"}
+      ]'></pre>
+    </div>
+    <p class="demo-note">The fastest path: no sync setup — pack, carry the file, restore from it. Replay · <button class="replay" data-replay="demo-quick" type="button">↻ run again</button></p>
+  </section>
+
+  <!-- Terminal demo: the full sync workflow -->
+  <section class="demo">
+    <h2>The full workflow — set a destination once, then sync.</h2>
     <div class="terminal" id="demo" aria-label="dew workflow demo">
       <div class="term-bar"><span></span><span></span><span></span><span class="term-title">~/acme-api — dew</span></div>
       <pre class="term-body" data-lines='[
@@ -114,7 +137,7 @@
         {"t":"Repository fully hydrated.","c":"ok"}
       ]'></pre>
     </div>
-    <p class="demo-note">Replay · <button class="replay" id="replay" type="button">↻ run again</button></p>
+    <p class="demo-note">Replay · <button class="replay" data-replay="demo" type="button">↻ run again</button></p>
   </section>
 
   <!-- When to use it -->

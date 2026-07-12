@@ -229,3 +229,6 @@ th { color: var(--muted); font-weight: 600; }
   .hero-id { flex-direction: column; text-align: center; gap: 0.9rem; }
   .hero-id .lede { margin: 0 auto; }
 }
+
+/* Version badge for newly added commands/flags on the reference pages. */
+.ver { font-family: var(--mono); font-size: 0.68rem; color: var(--accent); background: var(--accent-soft); border: 1px solid var(--accent); border-radius: 999px; padding: 0.05rem 0.5rem; margin-left: 0.5rem; vertical-align: middle; white-space: nowrap; }
