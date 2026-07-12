@@ -2,32 +2,34 @@
 (function () {
   "use strict";
 
-  var body = document.querySelector("#demo .term-body");
-  var replayBtn = document.getElementById("replay");
-  if (!body) return;
-
-  var lines;
-  try {
-    lines = JSON.parse(body.getAttribute("data-lines"));
-  } catch (e) {
-    return;
-  }
-  body.removeAttribute("data-lines");
-
   var TYPE_MS = 28; // per character for command lines
   var LINE_PAUSE = 360; // after an output line
   var CMD_PAUSE = 520; // after a typed command, before its output
-  var timers = [];
 
-  function clearTimers() {
-    timers.forEach(clearTimeout);
-    timers = [];
-  }
-  function at(ms, fn) {
-    timers.push(setTimeout(fn, ms));
-  }
+  // Each .terminal with a data-lines term-body is an independent replayable
+  // demo; a [data-replay="<terminal id>"] button replays it.
+  function initTerminal(term) {
+    var body = term.querySelector(".term-body");
+    if (!body || !body.getAttribute("data-lines")) return;
 
-  function run() {
+    var lines;
+    try {
+      lines = JSON.parse(body.getAttribute("data-lines"));
+    } catch (e) {
+      return;
+    }
+    body.removeAttribute("data-lines");
+
+    var timers = [];
+    function clearTimers() {
+      timers.forEach(clearTimeout);
+      timers = [];
+    }
+    function at(ms, fn) {
+      timers.push(setTimeout(fn, ms));
+    }
+
+    function run() {
     clearTimers();
     body.textContent = "";
     var t = 200;
@@ -79,25 +81,41 @@
       t += LINE_PAUSE;
     });
 
-    // blinking cursor at the end.
-    at(t, function () {
-      var cur = document.createElement("span");
-      cur.className = "cursor";
-      cur.textContent = "▍";
-      body.appendChild(cur);
-      blink(cur);
-    });
+      // blinking cursor at the end.
+      at(t, function () {
+        var cur = document.createElement("span");
+        cur.className = "cursor";
+        cur.textContent = "▍";
+        body.appendChild(cur);
+        blink(cur);
+      });
+    }
+
+    function blink(el) {
+      var on = true;
+      timers.push(setInterval(function () {
+        on = !on;
+        el.style.visibility = on ? "visible" : "hidden";
+      }, 530));
+    }
+
+    var replayBtn = document.querySelector('[data-replay="' + term.id + '"]');
+    if (replayBtn) replayBtn.addEventListener("click", run);
+
+    // Run once when the terminal scrolls into view (or immediately as a fallback).
+    if ("IntersectionObserver" in window) {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+          if (en.isIntersecting) { run(); io.disconnect(); }
+        });
+      }, { threshold: 0.4 });
+      io.observe(term);
+    } else {
+      run();
+    }
   }
 
-  function blink(el) {
-    var on = true;
-    timers.push(setInterval(function () {
-      on = !on;
-      el.style.visibility = on ? "visible" : "hidden";
-    }, 530));
-  }
-
-  if (replayBtn) replayBtn.addEventListener("click", run);
+  document.querySelectorAll(".terminal").forEach(initTerminal);
 
   // Copy-to-clipboard for the install banner (and any [data-copy] button).
   document.querySelectorAll("[data-copy]").forEach(function (btn) {
@@ -131,17 +149,5 @@
         }
       })
       .catch(function () {});
-  }
-
-  // Run once when the terminal scrolls into view (or immediately as a fallback).
-  if ("IntersectionObserver" in window) {
-    var io = new IntersectionObserver(function (entries) {
-      entries.forEach(function (en) {
-        if (en.isIntersecting) { run(); io.disconnect(); }
-      });
-    }, { threshold: 0.4 });
-    io.observe(document.getElementById("demo"));
-  } else {
-    run();
   }
 })();

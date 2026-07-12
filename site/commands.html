@@ -60,6 +60,7 @@
           <li><a href="#remove">remove</a></li>
           <li><a href="#list">list</a></li>
           <li><a href="#rules">rules</a></li>
+          <li><a href="#clean">clean</a></li>
         </ul>
       </div>
       <div>
@@ -87,6 +88,7 @@
           <li><a href="#doctor">doctor</a></li>
           <li><a href="#images">images</a></li>
           <li><a href="#version">version</a></li>
+          <li><a href="#upgrade">upgrade</a></li>
         </ul>
       </div>
     </div>
@@ -168,7 +170,7 @@ dew init --from-gitignore           <span class="comment"># seed the allow-list 
 
     <div class="cmd">
       <h3 id="add">dew add &lt;path&gt;...</h3>
-      <p class="desc">Track one or more files or directories — a one-time declaration recorded in the manifest; <code>dew pack</code> then always uses their current contents. Paths outside the repo are rejected. A file added <strong>by name</strong> is always packed even if the deny-list matches it (explicit intent wins; <code>add</code> prints a note); adding a deny-listed <em>directory</em> warns that packs will skip it.</p>
+      <p class="desc">Track one or more files or directories — a one-time declaration recorded in the manifest; <code>dew pack</code> then always uses their current contents. Paths outside the repo are rejected. <span class="ver">new in v0.6.1</span> A file added <strong>by name</strong> is always packed even if the deny-list matches it (explicit intent wins; <code>add</code> prints a note); adding a deny-listed <em>directory</em> warns that packs will skip it.</p>
       <pre class="pipeline">dew add .env.local certs/dev.pem    <span class="comment"># track specific paths</span>
 dew add .                           <span class="comment"># interactively add discovered candidates</span>
 dew add . --yes                     <span class="comment"># add all discovered candidates</span></pre>
@@ -194,8 +196,23 @@ dew add . --yes                     <span class="comment"># add all discovered c
 
     <div class="cmd">
       <h3 id="rules">dew rules</h3>
-      <p class="desc">Show the effective rules: the allow-list plus the three deny layers that keep noise out — built-in patterns, your global <code>~/.dew/config.yaml</code>, and the repo's manifest. Use it to understand why a path is included or skipped.</p>
+      <p class="desc">Show the effective rules: the allow-list plus the three deny layers that keep noise out — built-in patterns, your global <code>~/.dew/config.yaml</code>, and the repo's manifest. Use it to understand why a path is included or skipped. <span class="ver">new in v0.6.1</span> deny lines support gitignore-style <code>!</code> negation, evaluated built-in → global → repo with the last match winning — a repo rule can override any broader layer.</p>
       <pre class="pipeline">dew rules</pre>
+    </div>
+
+    <div class="cmd">
+      <h3 id="clean">dew clean <span class="ver">v0.5.0</span></h3>
+      <p class="desc">Tear down what dew keeps for this repo — the committed <code>.dew/</code> manifest and this repo's encrypted image. The inverse of <code>init</code> + <code>pack</code>; local-only, never touches your identity or synced copies, and asks first unless <code>--force</code>. For an image whose repo is already gone, use <a href="#images">images rm</a>.</p>
+      <pre class="pipeline">dew clean                  <span class="comment"># remove manifest + image (asks first)</span>
+dew clean --image-only     <span class="comment"># drop the image; keep tracking config</span>
+dew clean --manifest-only  <span class="comment"># stop managing the repo; keep the image</span></pre>
+      <table>
+        <tr><th>Flag</th><th>Description</th></tr>
+        <tr><td><code>--image-only</code></td><td>Remove only the image (+ ownership marker); the next <code>pack</code> rebuilds it.</td></tr>
+        <tr><td><code>--manifest-only</code></td><td>Remove only the repo's <code>.dew/</code> manifest.</td></tr>
+        <tr><td><code>-y, --yes</code></td><td>Skip the confirmation prompt (still respects the image-owner guard).</td></tr>
+        <tr><td><code>--force</code></td><td>Remove without confirming <em>and</em> override the image-owner guard.</td></tr>
+      </table>
     </div>
   </section>
 
@@ -215,7 +232,7 @@ dew pack --all --dry-run            <span class="comment"># preview a whole-repo
         <tr><th>Flag</th><th>Description</th></tr>
         <tr><td><code>--dry-run</code></td><td>List what would be packed (files + sizes); write nothing. Needs no identity.</td></tr>
         <tr><td><code>--force</code></td><td>Overwrite an image created by a different repo.</td></tr>
-        <tr><td><code>--all</code></td><td>One-shot: pack <strong>every</strong> file in the repo — tracked by Git or not — ignoring the allow-list for this run. The manifest is untouched, the deny-list still applies, and <code>.git/</code>/<code>.dew/</code> are never included. For carrying a complete working copy.</td></tr>
+        <tr><td><code>--all</code> <span class="ver">v0.6.0</span></td><td>One-shot: pack <strong>every</strong> file in the repo — tracked by Git or not — ignoring the allow-list for this run. The manifest is untouched, the deny-list still applies, and <code>.git/</code>/<code>.dew/</code> are never included. For carrying a complete working copy.</td></tr>
       </table>
       <div class="callout">Each image is bound to the repo that created it; <code>pack</code> refuses to overwrite a different repo's image without <code>--force</code>.</div>
     </div>
@@ -231,7 +248,7 @@ dew restore --image ~/my-app.dew.age <span class="comment"># restore from an exp
         <tr><th>Flag</th><th>Description</th></tr>
         <tr><td><code>--dry-run</code></td><td>Preview the written / unchanged / conflict classification; change nothing.</td></tr>
         <tr><td><code>--force</code></td><td>Overwrite local files that differ from the image.</td></tr>
-        <tr><td><code>--image &lt;path&gt;</code></td><td>Restore from an explicit <code>.dew.age</code> file instead of the default under <code>~/.dew/images</code> — copied by hand or pulled from a backup. Needs no manifest; the same identity and safety rules apply.</td></tr>
+        <tr><td><code>--image &lt;path&gt;</code> <span class="ver">v0.6.0</span></td><td>Restore from an explicit <code>.dew.age</code> file instead of the default under <code>~/.dew/images</code> — copied by hand or pulled from a backup. Needs no manifest; the same identity and safety rules apply.</td></tr>
       </table>
       <div class="callout">Safe by default: files are staged first, and any local file that differs from the image is reported as a conflict and left untouched unless you pass <code>--force</code> — there's no version history, so a careless restore can't lose your edits.</div>
     </div>
@@ -303,8 +320,9 @@ dew remote unset                  <span class="comment"># clear it</span></pre>
 
     <div class="cmd">
       <h3 id="images">dew images</h3>
-      <p class="desc">A global inventory of every image dew manages in <code>~/.dew/images</code> — project, size, when it was last packed, and which repo owns it. Runs from anywhere.</p>
-      <pre class="pipeline">dew images</pre>
+      <p class="desc">A global inventory of every image dew manages in <code>~/.dew/images</code> — project, size, when it was last packed, and which repo owns it. Runs from anywhere. <span class="ver">v0.5.0</span> <code>dew images rm &lt;project&gt;</code> deletes a packed image by project name — the garbage collector for images whose repo is already gone (asks first; <code>--force</code> skips).</p>
+      <pre class="pipeline">dew images
+dew images rm old-project           <span class="comment"># delete a packed image by name</span></pre>
     </div>
 
     <div class="cmd">
@@ -314,7 +332,7 @@ dew remote unset                  <span class="comment"># clear it</span></pre>
     </div>
 
     <div class="cmd">
-      <h3 id="upgrade">dew upgrade</h3>
+      <h3 id="upgrade">dew upgrade <span class="ver">new in v0.6.1</span></h3>
       <p class="desc">Update dew itself: resolve the latest release (or an exact tag with <code>--version</code>), download the build for this platform, <strong>verify it against the release's checksums</strong>, and swap the binary in atomically. Homebrew installs are refused with a pointer to <code>brew upgrade --cask dew</code>; <code>--check</code> is always allowed and changes nothing.</p>
       <pre class="pipeline">dew upgrade --check                 <span class="comment"># what would happen; changes nothing</span>
 dew upgrade                         <span class="comment"># → the latest release</span>
