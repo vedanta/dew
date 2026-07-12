@@ -184,7 +184,8 @@ The deny-list guarantees noise stays out, even when you add a whole directory.
 There are three layers, all visible via **`dew rules`**:
 
 1. **Built-in** — universal noise shipped with dew: `node_modules/`, `dist/`,
-   `build/`, `target/`, `.venv/`, `__pycache__/`, `.DS_Store`, `*.log`.
+   `build/`, `target/`, `.venv/`, `__pycache__/`, `.next/`, `.nuxt/`,
+   `coverage/`, `.cache/`, `.turbo/`, `.parcel-cache/`, `.DS_Store`, `*.log`.
 2. **Global** — your per-user noise, applied to *every* repo. Add a `deny:` list
    to `~/.dew/config.yaml`:
    ```yaml
@@ -196,7 +197,7 @@ There are three layers, all visible via **`dew rules`**:
    ```yaml
    deny:
      - "*.tmp"
-     - ".next/"
+     - ".gradle/"
    ```
 
 Deny patterns use `.gitignore` syntax. They apply to discovery (`scan`,
