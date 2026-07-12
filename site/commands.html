@@ -168,7 +168,7 @@ dew init --from-gitignore           <span class="comment"># seed the allow-list 
 
     <div class="cmd">
       <h3 id="add">dew add &lt;path&gt;...</h3>
-      <p class="desc">Track one or more files or directories — a one-time declaration recorded in the manifest; <code>dew pack</code> then always uses their current contents. Paths outside the repo are rejected.</p>
+      <p class="desc">Track one or more files or directories — a one-time declaration recorded in the manifest; <code>dew pack</code> then always uses their current contents. Paths outside the repo are rejected. A file added <strong>by name</strong> is always packed even if the deny-list matches it (explicit intent wins; <code>add</code> prints a note); adding a deny-listed <em>directory</em> warns that packs will skip it.</p>
       <pre class="pipeline">dew add .env.local certs/dev.pem    <span class="comment"># track specific paths</span>
 dew add .                           <span class="comment"># interactively add discovered candidates</span>
 dew add . --yes                     <span class="comment"># add all discovered candidates</span></pre>

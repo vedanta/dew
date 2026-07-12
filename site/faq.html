@@ -157,7 +157,7 @@ dew add certs/</pre>
           <li>global deny rules in <code>~/.dew/config.yaml</code></li>
           <li>repo deny rules in <code>.dew/manifest.yaml</code></li>
         </ol>
-        <p>Inspect the effective rules with <code>dew rules</code>.</p>
+        <p>Layers are evaluated built-in → global → repo with the last matching rule winning, and lines support gitignore-style <code>!</code> negation — so a repo can override a global or built-in rule (e.g. <code>deny: ["!keep.log"]</code>). A file you <code>dew add</code> by name is always packed regardless. Inspect the effective rules with <code>dew rules</code>.</p>
       </div>
     </details>
   </section>

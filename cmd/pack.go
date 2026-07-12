@@ -38,8 +38,9 @@ contents of the allow-list, so you declare files once with 'dew add' and never
 re-add. The image is what 'dew sync' ships and 'dew restore' restores — packing
 is how your local state becomes portable. Next: 'dew sync' to push it.
 
-The deny-list keeps noise out even from allow-listed directories, and pack won't
-overwrite an image created by a different repo unless you pass --force.
+The deny-list keeps noise out even from allow-listed directories — though a file
+you added by name is always packed; explicit intent wins. pack won't overwrite
+an image created by a different repo unless you pass --force.
 
 --all is the one-shot exception: it packs every file in the repo — tracked by
 Git or not — ignoring the allow-list for this run (the manifest is untouched).
@@ -78,6 +79,9 @@ func doPack(root string, p identity.Paths, force, dryRun, all bool, out io.Write
 	}
 
 	roots := m.Allow
+	// Files named exactly in the allow-list beat the deny-list: naming a file
+	// is stronger intent than any pattern. Directory entries stay deny-filtered.
+	allowFiles := make(map[string]bool)
 	if all {
 		roots = []string{"."}
 	} else {
@@ -85,8 +89,12 @@ func doPack(root string, p identity.Paths, force, dryRun, all bool, out io.Write
 			return errors.New("pack: nothing to pack — add files with 'dew add <path>' (or pack the whole repo with --all)")
 		}
 		for _, rel := range m.Allow {
-			if _, statErr := os.Stat(filepath.Join(root, filepath.FromSlash(rel))); statErr != nil {
+			info, statErr := os.Stat(filepath.Join(root, filepath.FromSlash(rel)))
+			if statErr != nil {
 				return fmt.Errorf("pack: allow-listed path %q not found: %w", rel, statErr)
+			}
+			if info.Mode().IsRegular() {
+				allowFiles[rel] = true
 			}
 		}
 	}
@@ -100,6 +108,8 @@ func doPack(root string, p identity.Paths, force, dryRun, all bool, out io.Write
 			case ".git", ".dew":
 				return true
 			}
+		} else if allowFiles[rel] {
+			return false
 		}
 		return denied.Match(rel, isDir)
 	}

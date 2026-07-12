@@ -11,6 +11,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/vedanta/dew/internal/deny"
 	"github.com/vedanta/dew/internal/manifest"
 	"github.com/vedanta/dew/internal/scanner"
 )
@@ -26,9 +27,11 @@ var addCmd = &cobra.Command{
 committed manifest; 'dew pack' then always uses the files' current contents, so
 you never re-add after editing.
 
-Adding a directory includes its files (minus deny-listed noise); paths outside
-the repo are rejected. 'dew add .' is special — it adds the candidates 'dew scan'
-found, prompting Y/n each, not every file in the repo. Next: 'dew pack'.`,
+Adding a directory includes its files (minus deny-listed noise); a file you add
+by name is always packed, even if the deny-list matches it — explicit intent
+wins. Paths outside the repo are rejected. 'dew add .' is special — it adds the
+candidates 'dew scan' found, prompting Y/n each, not every file in the repo.
+Next: 'dew pack'.`,
 	Example: `  dew add .env.local certs/dev.pem   # track specific paths
   dew add .                          # interactively add discovered candidates
   dew add . --yes                    # add all discovered candidates`,
@@ -41,11 +44,12 @@ func runAdd(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("add: %w", err)
 	}
+	// The global deny layer feeds both discovery and the deny-shadow report.
+	if err := loadGlobalDeny(); err != nil {
+		return fmt.Errorf("add: %w", err)
+	}
 	// 'dew add .' means "add discovered candidates" — not every file in the repo.
 	if len(args) == 1 && args[0] == "." {
-		if err := loadGlobalDeny(); err != nil {
-			return fmt.Errorf("add: %w", err)
-		}
 		return doAddDiscovered(root, cmd.InOrStdin(), cmd.OutOrStdout(), addYes)
 	}
 	return doAdd(root, args, cmd.OutOrStdout())
@@ -142,6 +146,7 @@ func doAdd(root string, args []string, out io.Writer) error {
 		return err
 	}
 
+	denied := deny.New(mergeDeny(globalDenyPatterns, m.Deny))
 	var b strings.Builder
 	changed := false
 	for _, arg := range args {
@@ -149,7 +154,8 @@ func doAdd(root string, args []string, out io.Writer) error {
 		if relErr != nil {
 			return fmt.Errorf("add: %w", relErr)
 		}
-		if _, statErr := os.Stat(filepath.Join(root, rel)); errors.Is(statErr, os.ErrNotExist) {
+		info, statErr := os.Stat(filepath.Join(root, rel))
+		if errors.Is(statErr, os.ErrNotExist) {
 			fmt.Fprintf(&b, "warning: %s does not exist yet\n", rel)
 		}
 		if m.AddAllow(rel) {
@@ -157,6 +163,16 @@ func doAdd(root string, args []string, out io.Writer) error {
 			changed = true
 		} else {
 			fmt.Fprintf(&b, "already tracked: %s\n", rel)
+		}
+		// Surface the deny-list interplay instead of failing silently at pack
+		// time: a denied directory packs nothing; a denied file is overridden
+		// by the explicit add.
+		if statErr == nil {
+			if info.IsDir() && denied.Match(filepath.ToSlash(rel), true) {
+				fmt.Fprintf(&b, "warning: %s is deny-listed — packs will skip it (see 'dew rules')\n", rel)
+			} else if info.Mode().IsRegular() && denied.Match(filepath.ToSlash(rel), false) {
+				fmt.Fprintf(&b, "note: %s matches the deny-list; the explicit add overrides it\n", rel)
+			}
 		}
 	}
 

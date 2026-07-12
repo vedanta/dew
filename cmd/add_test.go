@@ -114,3 +114,22 @@ func allowList(t *testing.T, root string) []string {
 	}
 	return m.Allow
 }
+
+func TestDoAddReportsDenyInterplay(t *testing.T) {
+	root := t.TempDir()
+	mustInit(t, root)
+	writeRepoContent(t, root, "keep.log", "x")
+	writeRepoContent(t, root, "node_modules/pkg/a.js", "x")
+
+	var out bytes.Buffer
+	if err := doAdd(root, []string{"keep.log", "node_modules"}, &out); err != nil {
+		t.Fatal(err)
+	}
+	got := out.String()
+	if !strings.Contains(got, "note: keep.log matches the deny-list") {
+		t.Errorf("expected override note for keep.log, got %q", got)
+	}
+	if !strings.Contains(got, "warning: node_modules is deny-listed") {
+		t.Errorf("expected deny warning for node_modules, got %q", got)
+	}
+}

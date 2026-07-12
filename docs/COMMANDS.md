@@ -153,7 +153,7 @@ dew rules
 ## Manifest editing
 
 ### `dew add <path>...`
-Add one or more paths to the manifest allow-list (deduped). Rejects paths outside the repo and the repo root itself.
+Add one or more paths to the manifest allow-list (deduped). Rejects paths outside the repo and the repo root itself. A file added **by name** is always packed even if the deny-list matches it (explicit intent wins; `add` prints a note); adding a deny-listed *directory* warns that packs will skip it.
 
 `dew add .` is special: it adds **discovered candidates** (from `scan`), prompting `Y/n` per file — not every file in the repo.
 
