@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -21,6 +22,7 @@ import (
 var (
 	packForce  bool
 	packDryRun bool
+	packAll    bool
 )
 
 var packCmd = &cobra.Command{
@@ -37,10 +39,16 @@ re-add. The image is what 'dew sync' ships and 'dew restore' restores — packin
 is how your local state becomes portable. Next: 'dew sync' to push it.
 
 The deny-list keeps noise out even from allow-listed directories, and pack won't
-overwrite an image created by a different repo unless you pass --force.`,
+overwrite an image created by a different repo unless you pass --force.
+
+--all is the one-shot exception: it packs every file in the repo — tracked by
+Git or not — ignoring the allow-list for this run (the manifest is untouched).
+The deny-list still applies, and .git/ and .dew/ are never included. Use it to
+carry a complete working copy to another machine; preview with --dry-run first.`,
 	Example: `  dew pack              # encrypt the tracked files into the image
   dew pack --dry-run    # preview what would be included; write nothing
-  dew pack --force      # overwrite an image created by a different repo`,
+  dew pack --force      # overwrite an image created by a different repo
+  dew pack --all        # one-shot: pack the whole repo (deny-list still applies)`,
 	Args: cobra.NoArgs,
 	RunE: runPack,
 }
@@ -57,10 +65,10 @@ func runPack(cmd *cobra.Command, _ []string) error {
 	if err := loadGlobalDeny(); err != nil {
 		return fmt.Errorf("pack: %w", err)
 	}
-	return doPack(root, identity.NewPaths(home), packForce, packDryRun, cmd.OutOrStdout())
+	return doPack(root, identity.NewPaths(home), packForce, packDryRun, packAll, cmd.OutOrStdout())
 }
 
-func doPack(root string, p identity.Paths, force, dryRun bool, out io.Writer) error {
+func doPack(root string, p identity.Paths, force, dryRun, all bool, out io.Writer) error {
 	m, err := manifest.Load(manifest.Path(root))
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
@@ -69,20 +77,35 @@ func doPack(root string, p identity.Paths, force, dryRun bool, out io.Writer) er
 		return err
 	}
 
-	if len(m.Allow) == 0 {
-		return errors.New("pack: nothing to pack — add files with 'dew add <path>'")
-	}
-	for _, rel := range m.Allow {
-		if _, statErr := os.Stat(filepath.Join(root, filepath.FromSlash(rel))); statErr != nil {
-			return fmt.Errorf("pack: allow-listed path %q not found: %w", rel, statErr)
+	roots := m.Allow
+	if all {
+		roots = []string{"."}
+	} else {
+		if len(m.Allow) == 0 {
+			return errors.New("pack: nothing to pack — add files with 'dew add <path>' (or pack the whole repo with --all)")
+		}
+		for _, rel := range m.Allow {
+			if _, statErr := os.Stat(filepath.Join(root, filepath.FromSlash(rel))); statErr != nil {
+				return fmt.Errorf("pack: allow-listed path %q not found: %w", rel, statErr)
+			}
 		}
 	}
 
 	denied := deny.New(mergeDeny(globalDenyPatterns, m.Deny))
-	skip := func(rel string, isDir bool) bool { return denied.Match(rel, isDir) }
+	// .git and .dew are structural, not noise: an image must never carry Git's
+	// object store or dew's own manifest dir, whatever the allow-list says.
+	skip := func(rel string, isDir bool) bool {
+		if isDir {
+			switch path.Base(rel) {
+			case ".git", ".dew":
+				return true
+			}
+		}
+		return denied.Match(rel, isDir)
+	}
 
 	if dryRun {
-		entries, listErr := archive.List(root, m.Allow, skip)
+		entries, listErr := archive.List(root, roots, skip)
 		if listErr != nil {
 			return listErr
 		}
@@ -105,7 +128,7 @@ func doPack(root string, p identity.Paths, force, dryRun bool, out io.Writer) er
 		return err
 	}
 
-	entries, err := archive.List(root, m.Allow, skip)
+	entries, err := archive.List(root, roots, skip)
 	if err != nil {
 		return err
 	}
@@ -114,14 +137,18 @@ func doPack(root string, p identity.Paths, force, dryRun bool, out io.Writer) er
 		total += e.Size
 	}
 
-	if err := writeImage(imagePath, p.ImagesDir, m.Image, root, m.Allow, st.PublicKey, skip, newPackProgress(total)); err != nil {
+	if err := writeImage(imagePath, p.ImagesDir, m.Image, root, roots, st.PublicKey, skip, newPackProgress(total)); err != nil {
 		return err
 	}
 	if err := writeImageOwner(imagePath, m.ID); err != nil {
 		return err
 	}
 
-	_, err = fmt.Fprintf(out, "Packed %d tracked path(s) → %s\n", len(m.Allow), imagePath)
+	if all {
+		_, err = fmt.Fprintf(out, "Packed entire repo, %d file(s) → %s\n", len(entries), imagePath)
+	} else {
+		_, err = fmt.Fprintf(out, "Packed %d tracked path(s) → %s\n", len(m.Allow), imagePath)
+	}
 	return err
 }
 
@@ -239,5 +266,6 @@ func writeImage(imagePath, imagesDir, name, root string, allow []string, recipie
 func init() {
 	packCmd.Flags().BoolVar(&packForce, "force", false, "overwrite an image created by a different repo")
 	packCmd.Flags().BoolVar(&packDryRun, "dry-run", false, "preview what would be packed; write nothing")
+	packCmd.Flags().BoolVar(&packAll, "all", false, "one-shot: pack every repo file (deny-list still applies); allow-list ignored, manifest untouched")
 	rootCmd.AddCommand(packCmd)
 }

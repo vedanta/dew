@@ -108,7 +108,7 @@ func TestDoCleanRefusesCrossRepoImage(t *testing.T) {
 	// Repo A packs the shared image name and owns it.
 	rootA := t.TempDir()
 	setupSharedRepo(t, rootA, "shared", "AAA")
-	if err := doPack(rootA, p, false, false, &bytes.Buffer{}); err != nil {
+	if err := doPack(rootA, p, false, false, false, &bytes.Buffer{}); err != nil {
 		t.Fatalf("pack A: %v", err)
 	}
 
