@@ -5,7 +5,7 @@ This is the re-entry document: read it (plus the tail of
 how development actually flows — GitHub issues, batches, PRs, releases,
 versioning — what has shipped so far, and where the project currently sits.
 
-The history here is a snapshot (**last updated: 2026-07-12, at v0.6.0**). The
+The history here is a snapshot (**last updated: 2026-07-12, at v0.6.1**). The
 live sources of truth are always:
 
 ```bash
@@ -17,9 +17,10 @@ git log --oneline -20         # what happened most recently
 ## Where things stand
 
 - **The product is complete and shipped.** The MVP works end-to-end across
-  machines, plus six tagged releases of hardening and new command surfaces.
-- `main` is at `v0.6.0` (whole-repo carrying: `pack --all` +
-  `restore --image`). Working tree clean, CI green.
+  machines, plus seven tagged releases of hardening and new command surfaces.
+- `main` is at `v0.6.1` (deny-list control: new built-ins, `!` negation,
+  explicit-add-wins; plus `dew upgrade` self-update). Working tree clean,
+  CI green.
 - **12 open issues**, all enhancements, no bugs — see
   [the backlog map](#the-backlog-as-of-v060) below. Eight of them were filed
   together as a deliberate "ops" batch and read as the raw material for a
@@ -81,6 +82,7 @@ of that structure.
    - #108–#110 under umbrella #111 (`dew remote` family) → **v0.3.0**
    - #122 (design issue with lanes A/B; implementation PRs #123–#125) → **v0.4.0**
    - #155–#157 (whole-repo carrying, PRs #158–#160) → **v0.6.0**
+   - #163–#166, #169 (deny control + self-update, PRs #164/#167/#168/#170) → **v0.6.1**
    - #136–#145 (the "ops" + "identity" batch) → *filed, unimplemented — the
      likely v0.7.0*
 2. **Umbrella / part-split issues.** A larger idea gets a parent issue holding
@@ -110,10 +112,13 @@ with `goreleaser release --snapshot --clean`.
 
 Versioning conventions (as practiced so far):
 
-- **SemVer, pre-1.0.** Every release to date is a **minor** bump.
+- **SemVer, pre-1.0.** Releases through v0.6.0 were all **minor** bumps.
 - **A minor = a completed batch** — typically a new command surface or a
   coherent set of UX/hardening changes. No breaking changes have shipped.
-- **Patch releases are unused so far**; they'd be for a bug fix outside a batch.
+- **Patch releases** are for fixes — plus, by a deliberate owner call at
+  v0.6.1, batches that read as *tuning* (deny defaults, a bug fix, tooling
+  hygiene like `dew upgrade`) even when a command is added. Judgment call,
+  made at tag time.
 - By convention, each release also gets a narrative entry in the
   [`BUILDLOG.md`](BUILDLOG.md) "Releases & distribution" section — that entry
   is the changelog with reasoning attached, and it's what future-you reads
@@ -134,7 +139,7 @@ timeline
     2026-06-03 : v0.4.0 — dew key push/pull/devices (identity bootstrap over SSH)
     2026-06-05 : Ops backlog filed (#136–#145) : v0.5.0 tagged — clean, images rm, pack progress, FAQ, site polish
     2026-06-06 : v0.5.0 released
-    2026-07-12 : Dev resumes — DEVELOPMENT.md written, deps bumped : v0.6.0 — pack --all + restore --image (whole-repo carrying)
+    2026-07-12 : Dev resumes — DEVELOPMENT.md written, deps bumped : v0.6.0 — pack --all + restore --image (whole-repo carrying) : v0.6.1 — deny control (! negation, explicit-add-wins, mobile built-ins) + dew upgrade
 ```
 
 | Release | Date | Theme | Trail |
@@ -145,6 +150,7 @@ timeline
 | v0.4.0 | 2026-06-03 | `dew key push`/`pull`/`devices`: guarded identity bootstrap over SSH | #122 (PRs #123–#125) |
 | v0.5.0 | 2026-06-06 | Lifecycle & UX: `dew clean`, `images rm`, pack progress bar, FAQ, site | #135, #134, #146 |
 | v0.6.0 | 2026-07-12 | Whole-repo carrying: `pack --all`, `restore --image`, deny built-ins extended | #155–#157 (PRs #158–#160) |
+| v0.6.1 | 2026-07-12 | Deny control (mobile built-ins, `!` negation, explicit-add-wins) + `dew upgrade` | #163–#166, #169 (PRs #164/#167/#168/#170) |
 
 For the full narrative — what was decided and why at each step — read
 [`BUILDLOG.md`](BUILDLOG.md) top to bottom; it was written as the work
