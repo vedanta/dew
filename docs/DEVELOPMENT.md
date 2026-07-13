@@ -5,7 +5,7 @@ This is the re-entry document: read it (plus the tail of
 how development actually flows — GitHub issues, batches, PRs, releases,
 versioning — what has shipped so far, and where the project currently sits.
 
-The history here is a snapshot (**last updated: 2026-07-12, at v0.6.1**). The
+The history here is a snapshot (**last updated: 2026-07-12, at v0.7.0**). The
 live sources of truth are always:
 
 ```bash
@@ -17,10 +17,9 @@ git log --oneline -20         # what happened most recently
 ## Where things stand
 
 - **The product is complete and shipped.** The MVP works end-to-end across
-  machines, plus seven tagged releases of hardening and new command surfaces.
-- `main` is at `v0.6.1` (deny-list control: new built-ins, `!` negation,
-  explicit-add-wins; plus `dew upgrade` self-update). Working tree clean,
-  CI green.
+  machines, plus eight tagged releases of hardening and new command surfaces.
+- `main` is at `v0.7.0` (`pack --all` redefined to the local half — everything
+  Git doesn't carry, via `git ls-files`). Working tree clean, CI green.
 - **12 open issues**, all enhancements, no bugs — see
   [the backlog map](#the-backlog-as-of-v060) below. Eight of them were filed
   together as a deliberate "ops" batch and read as the raw material for a
@@ -83,6 +82,7 @@ of that structure.
    - #122 (design issue with lanes A/B; implementation PRs #123–#125) → **v0.4.0**
    - #155–#157 (whole-repo carrying, PRs #158–#160) → **v0.6.0**
    - #163–#166, #169 (deny control + self-update, PRs #164/#167/#168/#170) → **v0.6.1**
+   - #173 (pack --all → local half, PR #174) → **v0.7.0**
    - #136–#145 (the "ops" + "identity" batch) → *filed, unimplemented — the
      likely v0.7.0*
 2. **Umbrella / part-split issues.** A larger idea gets a parent issue holding
@@ -139,7 +139,7 @@ timeline
     2026-06-03 : v0.4.0 — dew key push/pull/devices (identity bootstrap over SSH)
     2026-06-05 : Ops backlog filed (#136–#145) : v0.5.0 tagged — clean, images rm, pack progress, FAQ, site polish
     2026-06-06 : v0.5.0 released
-    2026-07-12 : Dev resumes — DEVELOPMENT.md written, deps bumped : v0.6.0 — pack --all + restore --image (whole-repo carrying) : v0.6.1 — deny control (! negation, explicit-add-wins, mobile built-ins) + dew upgrade
+    2026-07-12 : Dev resumes — DEVELOPMENT.md written, deps bumped : v0.6.0 — pack --all + restore --image (whole-repo carrying) : v0.6.1 — deny control (! negation, explicit-add-wins, mobile built-ins) + dew upgrade : v0.7.0 — pack --all redefined to the local half (git-aware, breaking)
 ```
 
 | Release | Date | Theme | Trail |
@@ -151,6 +151,7 @@ timeline
 | v0.5.0 | 2026-06-06 | Lifecycle & UX: `dew clean`, `images rm`, pack progress bar, FAQ, site | #135, #134, #146 |
 | v0.6.0 | 2026-07-12 | Whole-repo carrying: `pack --all`, `restore --image`, deny built-ins extended | #155–#157 (PRs #158–#160) |
 | v0.6.1 | 2026-07-12 | Deny control (mobile built-ins, `!` negation, explicit-add-wins) + `dew upgrade` | #163–#166, #169 (PRs #164/#167/#168/#170) |
+| v0.7.0 | 2026-07-12 | `pack --all` redefined: the local half only (git-aware, breaking) | #173 (PR #174) |
 
 For the full narrative — what was decided and why at each step — read
 [`BUILDLOG.md`](BUILDLOG.md) top to bottom; it was written as the work
