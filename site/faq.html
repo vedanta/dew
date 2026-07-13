@@ -157,7 +157,19 @@ dew add certs/</pre>
           <li>global deny rules in <code>~/.dew/config.yaml</code></li>
           <li>repo deny rules in <code>.dew/manifest.yaml</code></li>
         </ol>
-        <p>Layers are evaluated built-in → global → repo with the last matching rule winning, and lines support gitignore-style <code>!</code> negation — so a repo can override a global or built-in rule (e.g. <code>deny: ["!keep.log"]</code>). A file you <code>dew add</code> by name is always packed regardless. Inspect the effective rules with <code>dew rules</code>.</p>
+        <p>Layers are evaluated built-in → global → repo with the last matching rule winning, and lines support gitignore-style <code>!</code> negation — so a repo can override a global or built-in rule (e.g. <code>deny: ["!keep.log"]</code>). A file you <code>dew add</code> by name is always packed regardless. The built-in layer is deliberately minimal — universal noise only; project-specific exclusions go in a repo deny (below). Inspect the effective rules with <code>dew rules</code>.</p>
+      </div>
+    </details>
+
+    <details class="faq-q">
+      <summary>Why isn't my framework's generated directory (e.g. Expo's <code>ios/</code>/<code>android/</code>) in the built-in deny list?</summary>
+      <div class="answer">
+        <p>Because it isn't universal. dew's built-in deny list only covers paths regenerated in <em>essentially every</em> project that has them — <code>node_modules/</code>, <code>Pods/</code>, <code>.gradle/</code>, and so on. A directory that's throwaway output in one project is hand-written source in another: an Expo app regenerates <code>ios/</code> and <code>android/</code> with <code>expo prebuild</code>, but a bare React Native app keeps real source there. dew can't tell them apart (Git shows both as untracked), and guessing wrong would silently drop someone's source.</p>
+        <p>So exclude project-specific generated files with a <strong>repo deny</strong> in <code>.dew/manifest.yaml</code>:</p>
+        <pre class="pipeline">deny:
+  - "packages/mobile/ios/"
+  - "packages/mobile/android/"</pre>
+        <p>This keeps the built-in list small and predictable and puts project knowledge in the repo. <code>dew pack --all --dry-run</code> shows exactly what an image would include, so you can see what to trim.</p>
       </div>
     </details>
   </section>

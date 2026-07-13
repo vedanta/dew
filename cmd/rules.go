@@ -52,7 +52,13 @@ var rulesCmd = &cobra.Command{
 	Long: `Show the effective rules for this repo: the allow-list (what dew manages) and
 the three deny layers that keep noise out — built-in patterns, your global
 ~/.dew/config.yaml, and the repo's .dew/manifest.yaml. Use it to understand why a
-path is included or skipped.`,
+path is included or skipped.
+
+The built-in layer is deliberately minimal: only noise that's regenerated in
+essentially every project that has it (node_modules/, Pods/, .gradle/, …).
+Exclude project-specific generated files — an Expo app's ios/ and android/, say,
+which are hand-written source in other projects — with a deny: entry in
+.dew/manifest.yaml. Deny lines are gitignore syntax and support ! to un-deny.`,
 	Example: "  dew rules",
 	Args:    cobra.NoArgs,
 	RunE:    runRules,

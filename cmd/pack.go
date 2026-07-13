@@ -47,7 +47,9 @@ an image created by a different repo unless you pass --force.
 file — everything Git doesn't carry, ignored and not-yet-committed alike (it
 asks 'git ls-files', so it needs Git and a git repo). The manifest is untouched,
 the deny-list still filters generated noise, and .git/ and .dew/ are never
-included. Use it to carry a repo's complete local half; preview with --dry-run.`,
+included. Use it to carry a repo's complete local half; preview with --dry-run.
+If --dry-run shows project-specific generated files (e.g. an Expo app's ios/ and
+android/), exclude them with a deny: entry in .dew/manifest.yaml — see 'dew rules'.`,
 	Example: `  dew pack              # encrypt the tracked files into the image
   dew pack --dry-run    # preview what would be included; write nothing
   dew pack --force      # overwrite an image created by a different repo
