@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -287,25 +288,46 @@ func unpackEntry(t *testing.T, imagePath, keyFile, name string) string {
 	return ""
 }
 
-func TestDoPackAll(t *testing.T) {
+// mustGitRepo turns root into a git repository, committing the given paths
+// (which must already exist). Skips the test when git isn't on PATH.
+func mustGitRepo(t *testing.T, root string, commitPaths ...string) {
+	t.Helper()
+	if _, err := exec.LookPath("git"); err != nil {
+		t.Skip("git not on PATH")
+	}
+	run := func(args ...string) {
+		cmd := exec.Command("git", append([]string{"-C", root}, args...)...) //nolint:gosec // G204: test-local git invocation under t.TempDir
+		if out, err := cmd.CombinedOutput(); err != nil {
+			t.Fatalf("git %v: %v\n%s", args, err, out)
+		}
+	}
+	run("init", "-q")
+	if len(commitPaths) > 0 {
+		run(append([]string{"add", "--"}, commitPaths...)...)
+		run("-c", "user.email=test@dew", "-c", "user.name=dew test", "commit", "-qm", "seed")
+	}
+}
+
+func TestDoPackAllPacksOnlyTheLocalHalf(t *testing.T) {
 	root := t.TempDir()
 	p := mustIdentityPaths(t)
 	mustInit(t, root)
 
-	// A whole working copy: tracked source, private state (never allow-listed),
-	// deny-listed noise, and Git's own store.
+	// Tracked source (Git carries it), private state, deny-listed noise, and
+	// a vendored nested .git.
 	writeRepoContent(t, root, "src/main.go", "package main")
+	writeRepoContent(t, root, "wip-notes.md", "not committed yet")
 	writeRepoContent(t, root, ".env.local", "TOKEN=xyz")
 	writeRepoContent(t, root, "node_modules/pkg/index.js", "noise")
-	writeRepoContent(t, root, ".git/config", "[core]")
 	writeRepoContent(t, root, "vendor/thirdparty/.git/config", "[core]")
+	mustGitRepo(t, root, "src/main.go")
 
 	var out bytes.Buffer
 	if err := doPack(root, p, false, false, true, &out); err != nil {
 		t.Fatalf("doPack --all: %v", err)
 	}
-	if !strings.Contains(out.String(), "entire repo") {
-		t.Errorf("output = %q, want 'entire repo'", out.String())
+	if !strings.Contains(out.String(), "local file") {
+		t.Errorf("output = %q, want 'local file'", out.String())
 	}
 
 	m, err := manifest.Load(manifest.Path(root))
@@ -317,10 +339,13 @@ func TestDoPackAll(t *testing.T) {
 	}
 
 	names := imageNames(t, filepath.Join(p.ImagesDir, m.Image), p.KeyFile)
-	for _, want := range []string{"src/main.go", ".env.local"} {
+	for _, want := range []string{".env.local", "wip-notes.md"} {
 		if !slices.Contains(names, want) {
 			t.Errorf("image %v should contain %s", names, want)
 		}
+	}
+	if slices.Contains(names, "src/main.go") {
+		t.Errorf("tracked src/main.go must not be packed (Git carries it), image %v", names)
 	}
 	for _, n := range names {
 		if strings.HasPrefix(n, "node_modules/") || strings.Contains(n, ".git/") || strings.HasPrefix(n, ".dew/") {
@@ -329,11 +354,43 @@ func TestDoPackAll(t *testing.T) {
 	}
 }
 
+func TestDoPackAllRequiresGitRepo(t *testing.T) {
+	root := t.TempDir()
+	p := mustIdentityPaths(t)
+	mustInit(t, root)
+	writeRepoContent(t, root, ".env.local", "TOKEN=xyz")
+	if _, err := exec.LookPath("git"); err != nil {
+		t.Skip("git not on PATH")
+	}
+
+	var out bytes.Buffer
+	err := doPack(root, p, false, false, true, &out)
+	if err == nil || !strings.Contains(err.Error(), "not a git repository") {
+		t.Fatalf("expected not-a-git-repository error, got %v", err)
+	}
+}
+
+func TestDoPackAllRefusesWhenNothingLocal(t *testing.T) {
+	root := t.TempDir()
+	p := mustIdentityPaths(t)
+	mustInit(t, root)
+	writeRepoContent(t, root, "src/main.go", "package main")
+	mustGitRepo(t, root, "src/main.go")
+
+	var out bytes.Buffer
+	err := doPack(root, p, false, false, true, &out)
+	if err == nil || !strings.Contains(err.Error(), "no local files") {
+		t.Fatalf("expected no-local-files error, got %v", err)
+	}
+}
+
 func TestDoPackAllDryRun(t *testing.T) {
 	root := t.TempDir()
 	mustInit(t, root)
 	writeRepoContent(t, root, "src/main.go", "package main")
 	writeRepoContent(t, root, ".env.local", "TOKEN=xyz")
+	// Fresh repo, nothing committed: both files are still local.
+	mustGitRepo(t, root)
 
 	// Allow-list empty: fine with --all, and dry-run needs no identity.
 	p := identity.NewPaths(filepath.Join(t.TempDir(), ".dew"))

@@ -64,7 +64,7 @@ No.
 
 dew is not a general backup tool. By default it only manages files that you explicitly allow-list in a repo manifest.
 
-It does not back up your whole home directory, your Git history, your IDE, your database, or arbitrary machine state. (`dew pack --all` can sweep one repo's *working copy* into an image as a one-shot — for relocating to another machine, not as a backup strategy.)
+It does not back up your whole home directory, your Git history, your IDE, your database, or arbitrary machine state — and it never packs content Git already carries. (`dew pack --all` can sweep one repo's *entire local half* — everything Git doesn't carry — into an image as a one-shot, for moving machines; that's still not a backup strategy.)
 
 dew creates one encrypted image per repo. That image can be synced somewhere else, but dew does not replace a real backup strategy.
 
@@ -227,8 +227,8 @@ dew add certs/
 ```
 
 The allow-list is authoritative. (The one deliberate exception is `dew pack
---all`, which packs the whole repo for that single run — the deny list still
-applies, and the manifest is untouched.)
+--all`, which packs *all* local files — everything Git doesn't carry — for
+that single run; the deny list still applies, and the manifest is untouched.)
 
 ## What is the deny list?
 

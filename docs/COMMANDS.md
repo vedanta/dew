@@ -209,13 +209,13 @@ Requires the manifest, an identity, and that allow-listed paths exist. Refuses t
 |---|---|
 | `--dry-run` | List what would be packed (files + sizes + total); write nothing. Needs no identity. |
 | `--force` | Overwrite an image created by a different repo. |
-| `--all` | One-shot: pack **every** file in the repo — tracked by Git or not — ignoring the allow-list for this run. The manifest is untouched, the deny-list still applies, and `.git/`/`.dew/` are never included. For carrying a complete working copy; combine with `--dry-run` to preview. |
+| `--all` | One-shot: pack every **local** file — everything Git doesn't carry (ignored *and* not-yet-committed), ignoring the allow-list for this run. Asks `git ls-files`, so it needs Git and a git repo. The manifest is untouched, the deny-list still filters generated noise, and `.git/`/`.dew/` are never included. For carrying a repo's complete local half; combine with `--dry-run` to preview. |
 
 ```bash
 dew pack
 dew pack --dry-run
 dew pack --force
-dew pack --all --dry-run   # preview a whole-repo image, then: dew pack --all
+dew pack --all --dry-run   # preview the local-half image, then: dew pack --all
 ```
 
 ### `dew restore`

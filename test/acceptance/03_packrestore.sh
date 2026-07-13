@@ -80,30 +80,48 @@ run_dew pack --force               # explicit override succeeds
 assert_success
 cd "$REPO"
 
-# pack --all sweeps the whole repo (deny-filtered, .git/.dew excluded) while
-# leaving the allow-list untouched.
+# pack --all packs the LOCAL half (what Git doesn't carry), deny-filtered,
+# .git/.dew excluded, allow-list untouched.
 allrepo="$SANDBOX/all-repo"
-mkdir -p "$allrepo/src" "$allrepo/node_modules/pkg" "$allrepo/.git"
+mkdir -p "$allrepo/src" "$allrepo/node_modules/pkg"
 cd "$allrepo"
 run_dew init
 assert_success
 echo "SECRET=1" >.env.local
 echo "hello" >src/main.txt
+echo "wip" >notes.md
 echo "noise" >node_modules/pkg/x.js
-echo "[core]" >.git/config
+git -C "$allrepo" init -q
+git -C "$allrepo" add src/main.txt
+git -C "$allrepo" -c user.email=t@t -c user.name=t commit -qm seed
 
 run_dew pack --all --dry-run
 assert_success
-assert_contains "src/main.txt"
 assert_contains ".env.local"
+assert_contains "notes.md"
+case "$LAST_OUTPUT" in
+*src/main.txt*) fail "pack --all must not sweep tracked files: $LAST_OUTPUT" ;;
+esac
 case "$LAST_OUTPUT" in
 *node_modules* | *.git/config* | *.dew/manifest*) fail "pack --all dry-run swept in noise or structural dirs: $LAST_OUTPUT" ;;
 esac
 
 run_dew pack --all
 assert_success
-assert_contains "entire repo"
+assert_contains "local file"
 assert_file_exists "$HOME/.dew/images/all-repo.dew.age"
+
+# Outside a git repo, --all refuses with guidance.
+plaindir="$SANDBOX/plain-dir"
+mkdir -p "$plaindir"
+cd "$plaindir"
+run_dew init
+assert_success
+echo "x" >file.txt
+run_dew pack --all
+assert_failure
+assert_contains "not a git repository"
+cd "$allrepo"
 
 # The allow-list stayed empty: a normal pack still refuses.
 run_dew pack
@@ -119,8 +137,9 @@ mkdir -p "$fresh"
 cd "$fresh"
 run_dew restore --image "$carried"
 assert_success
-assert_file_exists "$fresh/src/main.txt"
+assert_file_exists "$fresh/notes.md"
 [ "$(cat "$fresh/.env.local")" = "SECRET=1" ] || fail "restore --image did not carry .env.local content"
+[ ! -e "$fresh/src/main.txt" ] || fail "tracked src/main.txt leaked into the --all image"
 run_dew restore --image "$SANDBOX/no-such.dew.age"
 assert_failure
 assert_contains "--image"

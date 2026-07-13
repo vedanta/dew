@@ -195,22 +195,24 @@ untouched without `--force`).
 > place instead — `mv ~/my-app.dew.age ~/.dew/images/` — and plain
 > `dew restore`, `dew pack`, and `dew sync` all work against it from then on.
 
-### Variant — carry the *whole* working copy
+### Variant — carry the repo's *entire* local half
 
-`dew pack --all` sweeps **every** file in the repo (tracked by Git or not) into
-the image for that one run — the allow-list and manifest are untouched, the
-deny-list still drops generated noise (`node_modules/`, `.next/`, `coverage/`,
-…), and `.git/` is never included:
+`dew pack --all` sweeps every **local** file — everything Git doesn't carry,
+ignored and not-yet-committed alike — into the image for that one run. The
+allow-list and manifest are untouched, the deny-list still drops generated
+noise (`node_modules/`, `.next/`, `coverage/`, …), and `.git/` is never
+included. Git moves the shared half via `clone`; `--all` moves everything
+else (it asks `git ls-files`, so it needs a git repo):
 
 ```bash
-dew pack --all --dry-run              # preview the full file list first
+dew pack --all --dry-run              # preview the local file list first
 dew pack --all
 # …copy the image and restore on B exactly as above
 ```
 
 Because a project has one image, `pack --all` overwrites the curated image
-until your next plain `dew pack` — use it for relocating, not as the daily
-flow.
+until your next plain `dew pack` — use it when moving machines, not as the
+daily flow.
 
 ---
 
@@ -223,7 +225,7 @@ flow.
 | See / choose local files to track | `dew scan` · `dew add <path>` · `dew add .` |
 | Review what's tracked / why | `dew list` · `dew rules` |
 | Build the encrypted image | `dew pack` (`--dry-run` to preview) |
-| Pack the whole repo, one-shot | `dew pack --all` (deny-list still applies) |
+| Pack the repo's whole local half, one-shot | `dew pack --all` (everything Git doesn't carry; deny-filtered) |
 | Set / check the sync destination | `dew remote set <dest>` · `dew remote test` |
 | Push / fetch the image | `dew sync` · `dew sync pull` |
 | Restore your local files | `dew restore` (alias `dew hydrate`; `--dry-run` to preview) |

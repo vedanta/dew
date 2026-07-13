@@ -227,12 +227,12 @@ dew clean --manifest-only  <span class="comment"># stop managing the repo; keep 
       <pre class="pipeline">dew pack
 dew pack --dry-run                  <span class="comment"># preview what would be included; write nothing</span>
 dew pack --force                    <span class="comment"># overwrite an image created by a different repo</span>
-dew pack --all --dry-run            <span class="comment"># preview a whole-repo image, then: dew pack --all</span></pre>
+dew pack --all --dry-run            <span class="comment"># preview the local-half image, then: dew pack --all</span></pre>
       <table>
         <tr><th>Flag</th><th>Description</th></tr>
         <tr><td><code>--dry-run</code></td><td>List what would be packed (files + sizes); write nothing. Needs no identity.</td></tr>
         <tr><td><code>--force</code></td><td>Overwrite an image created by a different repo.</td></tr>
-        <tr><td><code>--all</code> <span class="ver">v0.6.0</span></td><td>One-shot: pack <strong>every</strong> file in the repo — tracked by Git or not — ignoring the allow-list for this run. The manifest is untouched, the deny-list still applies, and <code>.git/</code>/<code>.dew/</code> are never included. For carrying a complete working copy.</td></tr>
+        <tr><td><code>--all</code> <span class="ver">changed in v0.7.0</span></td><td>One-shot: pack every <strong>local</strong> file — everything Git doesn't carry, ignored <em>and</em> not-yet-committed (asks <code>git ls-files</code>, so it needs a git repo). The allow-list is ignored for this run, the manifest untouched, the deny-list still filters noise, and <code>.git/</code>/<code>.dew/</code> are never included. Git moves the shared half; <code>--all</code> moves everything else.</td></tr>
       </table>
       <div class="callout">Each image is bound to the repo that created it; <code>pack</code> refuses to overwrite a different repo's image without <code>--force</code>.</div>
     </div>

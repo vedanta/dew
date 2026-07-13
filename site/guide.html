@@ -169,13 +169,13 @@ scp ~/.dew/images/my-app.dew.age you@machineB:~/   <span class="comment"># 3. mo
 dew restore --image ~/my-app.dew.age --dry-run     <span class="comment"># 2. preview what lands where</span>
 dew restore --image ~/my-app.dew.age               <span class="comment"># 3. hydrate from the carried file</span></pre>
     <p class="prose"><code>--image</code> needs no manifest and no sync destination — the file defines what it holds, and the usual safety rules apply (staged writes, conflicts left untouched without <code>--force</code>). If B becomes a daily driver for this repo, move the file into place instead — <code>mv ~/my-app.dew.age ~/.dew/images/</code> — and plain <code>restore</code>/<code>pack</code>/<code>sync</code> work from then on.</p>
-    <h3>Variant — carry the <em>whole</em> working copy</h3>
-    <p class="prose"><code>dew pack --all</code> sweeps <strong>every</strong> file in the repo (tracked by Git or not) into the image for that one run — the allow-list and manifest are untouched, the deny-list still drops generated noise (<code>node_modules/</code>, <code>.next/</code>, <code>coverage/</code>, …), and <code>.git/</code> is never included:</p>
-    <pre class="pipeline">dew pack --all --dry-run          <span class="comment"># preview the full file list first</span>
+    <h3>Variant — carry the repo's <em>entire</em> local half</h3>
+    <p class="prose"><code>dew pack --all</code> sweeps every <strong>local</strong> file — everything Git doesn't carry, ignored and not-yet-committed alike — into the image for that one run. The allow-list and manifest are untouched, the deny-list still drops generated noise (<code>node_modules/</code>, <code>.next/</code>, <code>coverage/</code>, …), and <code>.git/</code> is never included. Git moves the shared half via <code>clone</code>; <code>--all</code> moves everything else (it asks <code>git ls-files</code>, so it needs a git repo):</p>
+    <pre class="pipeline">dew pack --all --dry-run          <span class="comment"># preview the local file list first</span>
 dew pack --all                    <span class="comment"># then copy + restore on B exactly as above</span></pre>
     <div class="callout">
       Because a project has one image, <code>pack --all</code> overwrites the curated image
-      until your next plain <code>dew pack</code> — use it for relocating, not as the daily flow.
+      until your next plain <code>dew pack</code> — use it when moving machines, not as the daily flow.
     </div>
   </section>
 
@@ -189,7 +189,7 @@ dew pack --all                    <span class="comment"># then copy + restore on
       <tr><td>See / choose local files to track</td><td><code>dew scan</code> · <code>dew add &lt;path&gt;</code> · <code>dew add .</code></td></tr>
       <tr><td>Review what's tracked / why</td><td><code>dew list</code> · <code>dew rules</code></td></tr>
       <tr><td>Build the encrypted image</td><td><code>dew pack</code> <span class="muted">(<code>--dry-run</code> to preview)</span></td></tr>
-      <tr><td>Pack the whole repo, one-shot</td><td><code>dew pack --all</code> <span class="muted">(deny-list still applies)</span></td></tr>
+      <tr><td>Pack the repo's whole local half, one-shot</td><td><code>dew pack --all</code> <span class="muted">(everything Git doesn't carry; deny-filtered)</span></td></tr>
       <tr><td>Set / check the sync destination</td><td><code>dew remote set &lt;dest&gt;</code> · <code>dew remote test</code></td></tr>
       <tr><td>Push / fetch the image</td><td><code>dew sync</code> · <code>dew sync pull</code></td></tr>
       <tr><td>Restore your local files</td><td><code>dew restore</code> <span class="muted">(alias <code>dew hydrate</code>)</span></td></tr>

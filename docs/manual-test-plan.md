@@ -227,18 +227,20 @@ cat .env.local        # → API_KEY=dev-123   (now overwritten)
 
 ## 7b. Whole-repo pack & explicit-image restore (v0.6.0)
 
-**`pack --all` sweeps everything except deny/structural dirs, without touching the manifest:**
+**`pack --all` sweeps the local half (what Git doesn't carry), without touching the manifest:**
 
 ```bash
 mkdir -p node_modules/pkg && echo noise > node_modules/pkg/x.js
-echo hello > tracked-src.txt                # a file Git would track — not allow-listed
+echo hello > committed.txt && git add committed.txt && git commit -m seed
+echo wip > uncommitted.txt                  # local: Git doesn't carry it yet
 dew pack --all --dry-run
 ```
-✅ **Check:** the listing includes `tracked-src.txt` and `.env.local`, but nothing
-under `node_modules/`, `.git/`, or `.dew/`.
+✅ **Check:** the listing includes `uncommitted.txt` and `.env.local`, but NOT
+`committed.txt` (Git carries it), and nothing under `node_modules/`, `.git/`,
+or `.dew/`. In a non-git directory, `pack --all` refuses with guidance.
 
 ```bash
-dew pack --all        # → "Packed entire repo, N file(s) → …"
+dew pack --all        # → "Packed N local file(s) — everything Git doesn't carry → …"
 dew list              # allow-list unchanged (--all is one-shot)
 ```
 

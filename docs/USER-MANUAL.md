@@ -252,11 +252,12 @@ dew pack --dry-run    # preview the file list + sizes; write nothing
 > setup, so you can skip the explicit `add` on the first run.)
 
 **`pack --all` is the one-shot exception** to allow-list-authoritative packing:
-it sweeps *every* file in the repo — tracked by Git or not — into the image,
-ignoring the allow-list for that run. The manifest is untouched (your declared
-set stays as-is), the deny-list still keeps generated noise out, and `.git/`
-and `.dew/` are never included. Use it to carry a complete working copy to
-another machine:
+it sweeps every **local** file — everything Git doesn't carry, ignored and
+not-yet-committed alike — into the image, ignoring the allow-list for that
+run. It asks `git ls-files` where the boundary is, so it needs Git and a git
+repo. The manifest is untouched (your declared set stays as-is), the deny-list
+still keeps generated noise out, and `.git/` and `.dew/` are never included.
+Git carries the shared half of the repo; `--all` carries everything else:
 
 ```bash
 dew pack --all --dry-run   # preview the full file list first
