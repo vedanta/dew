@@ -15,6 +15,7 @@ import (
 	"github.com/vedanta/dew/internal/compress"
 	"github.com/vedanta/dew/internal/crypto"
 	"github.com/vedanta/dew/internal/deny"
+	"github.com/vedanta/dew/internal/gittrack"
 	"github.com/vedanta/dew/internal/identity"
 	"github.com/vedanta/dew/internal/manifest"
 )
@@ -42,14 +43,15 @@ The deny-list keeps noise out even from allow-listed directories — though a fi
 you added by name is always packed; explicit intent wins. pack won't overwrite
 an image created by a different repo unless you pass --force.
 
---all is the one-shot exception: it packs every file in the repo — tracked by
-Git or not — ignoring the allow-list for this run (the manifest is untouched).
-The deny-list still applies, and .git/ and .dew/ are never included. Use it to
-carry a complete working copy to another machine; preview with --dry-run first.`,
+--all is the one-shot exception: instead of the allow-list, it packs every LOCAL
+file — everything Git doesn't carry, ignored and not-yet-committed alike (it
+asks 'git ls-files', so it needs Git and a git repo). The manifest is untouched,
+the deny-list still filters generated noise, and .git/ and .dew/ are never
+included. Use it to carry a repo's complete local half; preview with --dry-run.`,
 	Example: `  dew pack              # encrypt the tracked files into the image
   dew pack --dry-run    # preview what would be included; write nothing
   dew pack --force      # overwrite an image created by a different repo
-  dew pack --all        # one-shot: pack the whole repo (deny-list still applies)`,
+  dew pack --all        # one-shot: pack every local file Git doesn't carry`,
 	Args: cobra.NoArgs,
 	RunE: runPack,
 }
@@ -82,8 +84,20 @@ func doPack(root string, p identity.Paths, force, dryRun, all bool, out io.Write
 	// Files named exactly in the allow-list beat the deny-list: naming a file
 	// is stronger intent than any pattern. Directory entries stay deny-filtered.
 	allowFiles := make(map[string]bool)
+	// With --all, Git's index is the boundary: dew packs only the local half
+	// (untracked + ignored files) — tracked content is Git's to carry.
+	var tracked map[string]bool
 	if all {
 		roots = []string{"."}
+		var trackErr error
+		tracked, trackErr = gittrack.Tracked(root)
+		if errors.Is(trackErr, gittrack.ErrNotARepo) {
+			return errors.New("pack --all: not a git repository — --all packs what Git doesn't carry, so it needs Git\n" +
+				"  (in a non-git directory, track files explicitly with 'dew add' instead)")
+		}
+		if trackErr != nil {
+			return fmt.Errorf("pack: %w", trackErr)
+		}
 	} else {
 		if len(m.Allow) == 0 {
 			return errors.New("pack: nothing to pack — add files with 'dew add <path>' (or pack the whole repo with --all)")
@@ -108,8 +122,13 @@ func doPack(root string, p identity.Paths, force, dryRun, all bool, out io.Write
 			case ".git", ".dew":
 				return true
 			}
-		} else if allowFiles[rel] {
-			return false
+		} else {
+			if tracked[rel] {
+				return true
+			}
+			if allowFiles[rel] {
+				return false
+			}
 		}
 		return denied.Match(rel, isDir)
 	}
@@ -142,6 +161,10 @@ func doPack(root string, p identity.Paths, force, dryRun, all bool, out io.Write
 	if err != nil {
 		return err
 	}
+	// Never replace the curated image with an empty one.
+	if all && len(entries) == 0 {
+		return errors.New("pack --all: no local files found — Git already carries everything here; nothing to pack")
+	}
 	var total int64
 	for _, e := range entries {
 		total += e.Size
@@ -155,7 +178,7 @@ func doPack(root string, p identity.Paths, force, dryRun, all bool, out io.Write
 	}
 
 	if all {
-		_, err = fmt.Fprintf(out, "Packed entire repo, %d file(s) → %s\n", len(entries), imagePath)
+		_, err = fmt.Fprintf(out, "Packed %d local file(s) — everything Git doesn't carry → %s\n", len(entries), imagePath)
 	} else {
 		_, err = fmt.Fprintf(out, "Packed %d tracked path(s) → %s\n", len(m.Allow), imagePath)
 	}
@@ -276,6 +299,6 @@ func writeImage(imagePath, imagesDir, name, root string, allow []string, recipie
 func init() {
 	packCmd.Flags().BoolVar(&packForce, "force", false, "overwrite an image created by a different repo")
 	packCmd.Flags().BoolVar(&packDryRun, "dry-run", false, "preview what would be packed; write nothing")
-	packCmd.Flags().BoolVar(&packAll, "all", false, "one-shot: pack every repo file (deny-list still applies); allow-list ignored, manifest untouched")
+	packCmd.Flags().BoolVar(&packAll, "all", false, "one-shot: pack every local file Git doesn't carry (deny-filtered); allow-list ignored, manifest untouched")
 	rootCmd.AddCommand(packCmd)
 }
