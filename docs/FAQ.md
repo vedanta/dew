@@ -255,11 +255,36 @@ dew uses multiple deny layers:
 2. global deny rules in `~/.dew/config.yaml`
 3. repo deny rules in `.dew/manifest.yaml`
 
-You can inspect the effective rules with:
+The built-in layer is deliberately minimal — only noise regenerated in
+essentially every project that has it. Anything project-specific goes in a
+repo deny (below). Inspect the effective rules with:
 
 ```bash
 dew rules
 ```
+
+## Why isn't my framework's generated directory (e.g. Expo's `ios/`/`android/`) in the built-in deny list?
+
+Because it isn't universal. dew's built-in deny list only covers paths that are
+regenerated in *essentially every* project that contains them — `node_modules/`,
+`Pods/`, `.gradle/`, and so on. A directory that's throwaway output in one
+project is hand-written source in another: an Expo app regenerates `ios/` and
+`android/` with `expo prebuild`, but a bare React Native app keeps real source
+there. dew can't tell them apart (Git shows both as untracked), and guessing
+wrong would silently drop someone's source.
+
+So exclude project-specific generated files with a **repo deny** in
+`.dew/manifest.yaml`:
+
+```yaml
+deny:
+  - "packages/mobile/ios/"
+  - "packages/mobile/android/"
+```
+
+This keeps the built-in list small and predictable and puts project knowledge in
+the repo. `dew pack --all --dry-run` shows exactly what an image would include,
+so you can see what to trim.
 
 ## Why not just commit `.env.example`?
 

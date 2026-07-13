@@ -196,7 +196,7 @@ dew add . --yes                     <span class="comment"># add all discovered c
 
     <div class="cmd">
       <h3 id="rules">dew rules</h3>
-      <p class="desc">Show the effective rules: the allow-list plus the three deny layers that keep noise out — built-in patterns, your global <code>~/.dew/config.yaml</code>, and the repo's manifest. Use it to understand why a path is included or skipped. <span class="ver">new in v0.6.1</span> deny lines support gitignore-style <code>!</code> negation, evaluated built-in → global → repo with the last match winning — a repo rule can override any broader layer.</p>
+      <p class="desc">Show the effective rules: the allow-list plus the three deny layers that keep noise out — built-in patterns, your global <code>~/.dew/config.yaml</code>, and the repo's manifest. Use it to understand why a path is included or skipped. The built-in layer is deliberately minimal (universal noise only); exclude project-specific generated dirs — an Expo app's <code>ios/</code>/<code>android/</code>, say — with a repo deny in <code>.dew/manifest.yaml</code>. <span class="ver">new in v0.6.1</span> deny lines support gitignore-style <code>!</code> negation, evaluated built-in → global → repo with the last match winning — a repo rule can override any broader layer.</p>
       <pre class="pipeline">dew rules</pre>
     </div>
 

@@ -209,6 +209,28 @@ There are three layers, all visible via **`dew rules`**:
      - "fixtures-huge/"
    ```
 
+**What belongs in each layer.** The built-in list is deliberately kept minimal
+and universal — only paths that are regenerated in *essentially every* project
+that contains them (`node_modules/`, `Pods/`, `.gradle/`, …). It intentionally
+does **not** try to know every framework's generated directories, because a path
+that's throwaway output in one project is hand-written source in another. The
+clearest example: an [Expo](https://docs.expo.dev/workflow/continuous-native-generation/)
+app regenerates `ios/` and `android/` with `expo prebuild`, so they're local
+noise there — but in a bare React Native app those same directories *are* the
+source. dew can't tell the two apart (Git shows both as "not tracked"), so the
+call is yours: exclude them per-repo when they're regenerable —
+
+```yaml
+# .dew/manifest.yaml — this repo generates its native dirs
+deny:
+  - "packages/mobile/ios/"
+  - "packages/mobile/android/"
+```
+
+This keeps the built-in list small and predictable, and puts project knowledge
+where it lives: in the repo. Use `dew rules` to see the effective result, and
+`dew pack --all --dry-run` to check what an image would contain before packing.
+
 **Overriding a rule (`!` negation).** Deny lines use gitignore syntax, including
 negation — and layers are evaluated in order **built-in → global → repo**, with
 the last matching rule winning. So a repo manifest can rescue anything a
