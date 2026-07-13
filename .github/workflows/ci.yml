@@ -43,6 +43,9 @@ jobs:
         with:
           version: latest
 
+      - name: Command reference is current
+        run: make docs-check
+
   # Validate the release config so a bad .goreleaser.yaml is caught on PRs,
   # not at tag time.
   goreleaser:
