@@ -1,4 +1,4 @@
-.PHONY: build test lint fmt vet acceptance e2e check
+.PHONY: build test lint fmt vet acceptance e2e check docs docs-check
 
 BIN := dew
 
@@ -25,5 +25,14 @@ acceptance: build
 e2e:
 	./test/e2e.sh
 
+# Regenerate the command-reference site page from the CLI definitions.
+docs:
+	go run ./tools/gendocs
+
+# Fail if the committed reference page is stale (run in CI).
+docs-check: docs
+	@git diff --exit-code -- site/reference.html \
+	  || { echo "site/reference.html is stale — run 'make docs' and commit"; exit 1; }
+
 # Mirror the CI gate locally.
-check: fmt vet lint test
+check: fmt vet lint test docs-check

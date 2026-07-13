@@ -71,6 +71,11 @@ func init() {
 	)
 }
 
+// Root returns the fully-assembled root command. Exposed so the docs generator
+// (tools/gendocs) can walk the real command tree — the reference site is built
+// from these definitions, so it can never drift from 'dew --help'.
+func Root() *cobra.Command { return rootCmd }
+
 // Execute runs the root command and exits non-zero on error.
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {

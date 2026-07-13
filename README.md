@@ -191,7 +191,7 @@ you're moving machines, not just the files you've declared.
 - **[Step-by-step guide](https://vedanta.github.io/dew/guide.html)** ([source](docs/GUIDE.md)) — scenario-based walkthroughs: one machine, two machines, more machines.
 - **[User manual](docs/USER-MANUAL.md)** — concepts, getting started, workflows, security, troubleshooting.
 - **[FAQ](docs/FAQ.md)** — short answers on what dew is (and isn't), how it compares to other tools, and the security model.
-- **[Command reference](https://vedanta.github.io/dew/commands.html)** ([source](docs/COMMANDS.md)) — every command, grouped by purpose, with flags and caveats.
+- **[Command reference](https://vedanta.github.io/dew/reference.html)** — every command with synopsis, parameters, exit status, and cross-links, generated from the CLI itself. Markdown source: [docs/COMMANDS.md](docs/COMMANDS.md).
 - **[Design spec](docs/design.md)** — the MVP design and rationale.
 - **[Build plan](docs/build-plan.md)** & **[build log](docs/BUILDLOG.md)** — how it was planned and built.
 - **[Development](docs/DEVELOPMENT.md)** — the dev process (issues → batches → releases), release history, versioning, and current state.

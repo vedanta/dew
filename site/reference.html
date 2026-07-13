@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>dew — command reference</title>
+<meta name="description" content="The complete dew command reference — synopsis, parameters, exit status, since-version, and cross-links for every command. Generated from the CLI itself.">
+<meta property="og:title" content="dew — command reference">
+<meta property="og:description" content="Every dew command: synopsis, parameters, exit status, and cross-links. Generated from the CLI.">
+<meta property="og:image" content="assets/comic.png">
+<meta property="og:type" content="website">
+<link rel="icon" href="assets/dew.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="nav">
+  <a class="brand" href="index.html">
+    <img src="assets/dew.png" alt="dew" width="28" height="28">
+    <span>dew</span>
+  </a>
+  <nav class="nav-links">
+    <a href="index.html#how">How it works</a>
+    <a href="index.html#features">Features</a>
+    <a href="guide.html">Guide</a>
+    <a href="reference.html">Reference</a>
+    <a href="faq.html">FAQ</a>
+    <a href="index.html#install">Install</a>
+    <a class="ghost" href="https://github.com/vedanta/dew">GitHub ↗</a>
+  </nav>
+</header>
+
+<div class="ref-layout">
+  <aside class="ref-nav" aria-label="Command index">
+    <div class="ref-nav-group"><h4>Identity</h4><ul>
+      <li><a href="#key"><code>dew key</code></a></li><li><a href="#key-devices"><code>dew key devices</code></a></li><li><a href="#key-pull"><code>dew key pull</code></a></li><li><a href="#key-push"><code>dew key push</code></a></li><li><a href="#key-status"><code>dew key status</code></a></li><li><a href="#keygen"><code>dew keygen</code></a></li>
+    </ul></div><div class="ref-nav-group"><h4>Repository</h4><ul>
+      <li><a href="#add"><code>dew add</code></a></li><li><a href="#clean"><code>dew clean</code></a></li><li><a href="#init"><code>dew init</code></a></li><li><a href="#list"><code>dew list</code></a></li><li><a href="#remove"><code>dew remove</code></a></li><li><a href="#rules"><code>dew rules</code></a></li><li><a href="#scan"><code>dew scan</code></a></li>
+    </ul></div><div class="ref-nav-group"><h4>Image</h4><ul>
+      <li><a href="#hydrate"><code>dew hydrate</code></a></li><li><a href="#pack"><code>dew pack</code></a></li><li><a href="#restore"><code>dew restore</code></a></li>
+    </ul></div><div class="ref-nav-group"><h4>Sync</h4><ul>
+      <li><a href="#remote"><code>dew remote</code></a></li><li><a href="#remote-images"><code>dew remote images</code></a></li><li><a href="#remote-set"><code>dew remote set</code></a></li><li><a href="#remote-test"><code>dew remote test</code></a></li><li><a href="#remote-unset"><code>dew remote unset</code></a></li><li><a href="#sync"><code>dew sync</code></a></li><li><a href="#sync-pull"><code>dew sync pull</code></a></li>
+    </ul></div><div class="ref-nav-group"><h4>Health &amp; inventory</h4><ul>
+      <li><a href="#doctor"><code>dew doctor</code></a></li><li><a href="#images"><code>dew images</code></a></li><li><a href="#images-rm"><code>dew images rm</code></a></li><li><a href="#status"><code>dew status</code></a></li>
+    </ul></div><div class="ref-nav-group"><h4>Global</h4><ul>
+      <li><a href="#upgrade"><code>dew upgrade</code></a></li><li><a href="#version"><code>dew version</code></a></li>
+    </ul></div>
+  </aside>
+
+  <main class="ref-main">
+    <section class="ref-intro">
+      <h1>Command reference</h1>
+      <p class="lede">Every command, with its synopsis, parameters, exit status, and the release it first shipped in — generated directly from the dew CLI, so it always matches <code>dew --help</code>.</p>
+    </section>
+
+    
+    <section class="ref-group">
+      <h2>Identity</h2>
+      
+      <article class="ref-cmd" id="key">
+        <h3><code>dew key</code> <span class="ver">since v0.1.0</span></h3>
+        <p class="ref-short">Inspect or provision your dew identity</p>
+        <div class="ref-field"><span class="ref-label">Synopsis</span><pre class="ref-syn">dew key</pre></div>
+        
+        <div class="ref-desc"><p>Manage your dew identity: inspect it (&#39;dew key status&#39;) or provision it onto another machine (&#39;dew key push&#39;).</p></div>
+        
+        
+        <div class="ref-field"><span class="ref-label">Exit</span><span class="ref-val"><code>0</code> success · non-zero on error (<code>dew: error: …</code>)</span></div>
+        
+      </article>
+      
+      <article class="ref-cmd" id="key-devices">
+        <h3><code>dew key devices</code> <span class="ver">since v0.4.0</span></h3>
+        <p class="ref-short">List where this machine&#39;s identity has been sent or received</p>
+        <div class="ref-field"><span class="ref-label">Synopsis</span><pre class="ref-syn">dew key devices</pre></div>
+        
+        <div class="ref-desc"><p>Show ~/.dew/devices.yaml — a local log of &#39;dew key push&#39;/&#39;pull&#39; transfers (peer, direction, public-key fingerprint, when, optional label).</p><p>This is a best-effort audit log, NOT a registry or revocation tool: manual key copies aren&#39;t recorded, and there&#39;s no key rotation — so a machine listed here can&#39;t be de-provisioned by removing it. Use it to recall where you&#39;ve distributed your identity.</p></div>
+        
+        <div class="ref-field"><span class="ref-label">Examples</span><pre class="ref-ex">dew key devices
+</pre></div>
+        <div class="ref-field"><span class="ref-label">Exit</span><span class="ref-val"><code>0</code> success · non-zero on error (<code>dew: error: …</code>)</span></div>
+        
+      </article>
+      
+      <article class="ref-cmd" id="key-pull">
+        <h3><code>dew key pull</code> <span class="ver">since v0.4.0</span></h3>
+        <p class="ref-short">Fetch your dew identity from another machine over SSH</p>
+        <div class="ref-field"><span class="ref-label">Synopsis</span><pre class="ref-syn">dew key pull &lt;user@host&gt; [--force] [--yes]</pre></div>
+        
+        <div class="ref-desc"><p>Copy the dew identity FROM &lt;user@host&gt; onto this machine, so it can decrypt your images — the bootstrap when a new machine reaches back to one that already has the identity. It verifies the source&#39;s host key the normal way (an unknown host aborts), downloads to a temp file and checks it matches the source&#39;s public key before installing it 0600 under ~/.dew, and won&#39;t replace a different local identity without --force.</p><p>The mirror of &#39;dew key push&#39;. &#39;dew sync&#39; still never moves the key; this is an explicit, opt-in transfer you initiate.</p></div>
+        <div class="ref-field"><span class="ref-label">Parameters</span>
+          <table class="ref-params"><thead><tr><th>Flag</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody>
+          <tr>
+            <td><code>--force</code></td>
+            <td><code>bool</code></td>
+            <td>—</td>
+            <td>replace a different identity already on this machine</td>
+          </tr><tr>
+            <td><code>-y, --yes</code></td>
+            <td><code>bool</code></td>
+            <td>—</td>
+            <td>skip the confirmation prompt</td>
+          </tr>
+          </tbody></table></div>
+        <div class="ref-field"><span class="ref-label">Examples</span><pre class="ref-ex">dew key pull vbarooah@nvk2
+  dew key pull vbarooah@nvk2 --yes
+</pre></div>
+        <div class="ref-field"><span class="ref-label">Exit</span><span class="ref-val"><code>0</code> success · non-zero on error (<code>dew: error: …</code>)</span></div>
+        <div class="ref-field"><span class="ref-label">See also</span><span class="ref-val"><a href="#key-push"><code>key push</code></a> · <a href="#key-devices"><code>key devices</code></a></span></div>
+      </article>
+      
+      <article class="ref-cmd" id="key-push">
+        <h3><code>dew key push</code> <span class="ver">since v0.4.0</span></h3>
+        <p class="ref-short">Provision your dew identity onto another machine over SSH</p>
+        <div class="ref-field"><span class="ref-label">Synopsis</span><pre class="ref-syn">dew key push &lt;user@host&gt; [--force] [--yes]</pre></div>
+        
+        <div class="ref-desc"><p>Copy this machine&#39;s dew identity to &lt;user@host&gt; so it can decrypt your images — the one-time bootstrap for a second machine. It uses your existing SSH access (the host key is verified the normal way; an unknown host aborts), writes the key 0600 under ~/.dew there, and won&#39;t overwrite a different identity without --force.</p><p>This is the one command that moves your private key — and only when you run it, to a machine you control. &#39;dew sync&#39; still never transmits the key. Prefer this over copying the key by hand, and don&#39;t run &#39;dew keygen&#39; on the new machine.</p></div>
+        <div class="ref-field"><span class="ref-label">Parameters</span>
+          <table class="ref-params"><thead><tr><th>Flag</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody>
+          <tr>
+            <td><code>--force</code></td>
+            <td><code>bool</code></td>
+            <td>—</td>
+            <td>overwrite a different identity already on the target</td>
+          </tr><tr>
+            <td><code>-y, --yes</code></td>
+            <td><code>bool</code></td>
+            <td>—</td>
+            <td>skip the confirmation prompt</td>
+          </tr>
+          </tbody></table></div>
+        <div class="ref-field"><span class="ref-label">Examples</span><pre class="ref-ex">dew key push vbarooah@nvk2
+  dew key push vbarooah@nvk2 --yes     # skip the confirmation prompt
+</pre></div>
+        <div class="ref-field"><span class="ref-label">Exit</span><span class="ref-val"><code>0</code> success · non-zero on error (<code>dew: error: …</code>)</span></div>
+        <div class="ref-field"><span class="ref-label">See also</span><span class="ref-val"><a href="#key-pull"><code>key pull</code></a> · <a href="#key-devices"><code>key devices</code></a></span></div>
+      </article>
+      
+      <article class="ref-cmd" id="key-status">
+        <h3><code>dew key status</code> <span class="ver">since v0.1.0</span></h3>
+        <p class="ref-short">Show whether an identity exists and its public key</p>
+        <div class="ref-field"><span class="ref-label">Synopsis</span><pre class="ref-syn">dew key status</pre></div>
+        
+        <div class="ref-desc"><p>Report whether this machine has a dew identity and print its public key. Use it to confirm a machine is set up before you restore.</p></div>
+        
+        <div class="ref-field"><span class="ref-label">Examples</span><pre class="ref-ex">dew key status
+</pre></div>
+        <div class="ref-field"><span class="ref-label">Exit</span><span class="ref-val"><code>0</code> success · non-zero on error (<code>dew: error: …</code>)</span></div>
+        
+      </article>
+      
+      <article class="ref-cmd" id="keygen">
+        <h3><code>dew keygen</code> <span class="ver">since v0.1.0</span></h3>
+        <p class="ref-short">Create your dew identity (the key that encrypts images)</p>
+        <div class="ref-field"><span class="ref-label">Synopsis</span><pre class="ref-syn">dew keygen</pre></div>
+        
+        <div class="ref-desc"><p>Generate the one age keypair dew uses to encrypt and decrypt your images, stored in ~/.dew/. Run this once per machine, before you pack anything.</p><p>dew never commits or syncs the private key. To set up another machine, run &#39;dew key push &lt;user@host&gt;&#39; (an explicit, opt-in copy over your SSH access) — don&#39;t run &#39;dew keygen&#39; there, which would create a different identity that can&#39;t decrypt your images. Guard the key like any private key: without it, images can&#39;t be decrypted. keygen won&#39;t overwrite an existing identity. Next: &#39;dew init&#39; inside a repo.</p></div>
+        
+        <div class="ref-field"><span class="ref-label">Examples</span><pre class="ref-ex">dew keygen
+</pre></div>
+        <div class="ref-field"><span class="ref-label">Exit</span><span class="ref-val"><code>0</code> success · non-zero on error (<code>dew: error: …</code>)</span></div>
+        <div class="ref-field"><span class="ref-label">See also</span><span class="ref-val"><a href="#key-push"><code>key push</code></a> · <a href="#key-pull"><code>key pull</code></a></span></div>
+      </article>
+      
+    </section>
+    
+    <section class="ref-group">
+      <h2>Repository</h2>
+      
+      <article class="ref-cmd" id="add">
+        <h3><code>dew add</code> <span class="ver">since v0.1.0</span></h3>
+        <p class="ref-short">Track a local file or directory with dew</p>
+        <div class="ref-field"><span class="ref-label">Synopsis</span><pre class="ref-syn">dew add &lt;path&gt;... [--yes]</pre></div>
+        
+        <div class="ref-desc"><p>Add files to this repo&#39;s allow-list — the local context you want dew to manage (.env.local, certs, overrides). Adding is a one-time declaration recorded in the committed manifest; &#39;dew pack&#39; then always uses the files&#39; current contents, so you never re-add after editing.</p><p>Adding a directory includes its files (minus deny-listed noise); a file you add by name is always packed, even if the deny-list matches it — explicit intent wins. Paths outside the repo are rejected. &#39;dew add .&#39; is special — it adds the candidates &#39;dew scan&#39; found, prompting Y/n each, not every file in the repo. Next: &#39;dew pack&#39;.</p></div>
+        <div class="ref-field"><span class="ref-label">Parameters</span>
+          <table class="ref-params"><thead><tr><th>Flag</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody>
+          <tr>
+            <td><code>-y, --yes</code></td>
+            <td><code>bool</code></td>
+            <td>—</td>
+            <td>with &#39;add .&#39;, accept all discovered candidates without prompting</td>
+          </tr>
+          </tbody></table></div>
+        <div class="ref-field"><span class="ref-label">Examples</span><pre class="ref-ex">dew add .env.local certs/dev.pem   # track specific paths
+  dew add .                          # interactively add discovered candidates
+  dew add . --yes                    # add all discovered candidates
+</pre></div>
+        <div class="ref-field"><span class="ref-label">Exit</span><span class="ref-val"><code>0</code> success · non-zero on error (<code>dew: error: …</code>)</span></div>
+        <div class="ref-field"><span class="ref-label">See also</span><span class="ref-val"><a href="#scan"><code>scan</code></a> · <a href="#remove"><code>remove</code></a> · <a href="#list"><code>list</code></a> · <a href="#rules"><code>rules</code></a></span></div>
+      </article>
+      
+      <article class="ref-cmd" id="clean">
+        <h3><code>dew clean</code> <span class="ver">since v0.5.0</span></h3>
+        <p class="ref-short">Remove dew&#39;s footprint for this repo (manifest &#43; packed image)</p>
+        <div class="ref-field"><span class="ref-label">Synopsis</span><pre class="ref-syn">dew clean [--force] [--image-only] [--manifest-only] [--yes]</pre></div>
+        
+        <div class="ref-desc"><p>Tear down what dew keeps for this repo: the committed .dew/ manifest and this repo&#39;s encrypted image in ~/.dew/images. It is the inverse of &#39;dew init&#39; plus &#39;dew pack&#39; — run it when you&#39;re done using dew here, or to start over clean.</p><p>This is local-only and never touches your identity key (it&#39;s shared by every repo) or any copy you&#39;ve synced to a remote or another machine. dew has no version history, so removal is permanent — but the image is just a repack of files still on disk, and the manifest is normally committed to Git, so the common case is recoverable. You are asked to confirm unless you pass --force.</p><p>Scope it with --image-only (drop the image, keep tracking config so the next &#39;dew pack&#39; rebuilds it) or --manifest-only (stop managing the repo but keep the image around). To delete an image whose repo is already gone, use &#39;dew images rm &lt;project&gt;&#39; instead.</p></div>
+        <div class="ref-field"><span class="ref-label">Parameters</span>
+          <table class="ref-params"><thead><tr><th>Flag</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody>
+          <tr>
+            <td><code>--force</code></td>
+            <td><code>bool</code></td>
+            <td>—</td>
+            <td>remove without confirming, and override the image-owner guard</td>
+          </tr><tr>
+            <td><code>--image-only</code></td>
+            <td><code>bool</code></td>
+            <td>—</td>
+            <td>remove only the packed image; keep the manifest</td>
+          </tr><tr>
+            <td><code>--manifest-only</code></td>
+            <td><code>bool</code></td>
+            <td>—</td>
+            <td>remove only the manifest; keep the packed image</td>
+          </tr><tr>
+            <td><code>-y, --yes</code></td>
+            <td><code>bool</code></td>
+            <td>—</td>
+            <td>skip the confirmation prompt (still respects the owner guard)</td>
+          </tr>
+          </tbody></table></div>
+        <div class="ref-field"><span class="ref-label">Examples</span><pre class="ref-ex">dew clean                  # remove the manifest and this repo&#39;s image (asks first)
+  dew clean --force          # remove both without confirming
+  dew clean --image-only     # drop the image; keep the manifest for a clean re-pack
+  dew clean --manifest-only  # stop managing this repo; keep the packed image
+</pre></div>
+        <div class="ref-field"><span class="ref-label">Exit</span><span class="ref-val"><code>0</code> success · non-zero on error (<code>dew: error: …</code>)</span></div>
+        <div class="ref-field"><span class="ref-label">See also</span><span class="ref-val"><a href="#images"><code>images</code></a> · <a href="#pack"><code>pack</code></a></span></div>
+      </article>
+      
+      <article class="ref-cmd" id="init">
+        <h3><code>dew init</code> <span class="ver">since v0.1.0</span></h3>
+        <p class="ref-short">Set up dew in this repo (creates .dew/manifest.yaml)</p>
+        <div class="ref-field"><span class="ref-label">Synopsis</span><pre class="ref-syn">dew init [--from-gitignore] [--project &lt;string&gt;]</pre></div>
+        
+        <div class="ref-desc"><p>Start managing this repo&#39;s local context with dew. Creates .dew/manifest.yaml — the list of which local files dew should manage — plus a short .dew/README.md that explains the directory to anyone browsing the repo. The manifest holds no secrets or file contents, only paths, so it&#39;s safe to commit; committing it means teammates and other machines know what to hydrate.</p><p>The project name defaults to the directory name (override with --project); it becomes the image name. With --from-gitignore, dew seeds the allow-list with candidates discovered from your .gitignore so you can go straight to pack. Next: &#39;dew add &lt;path&gt;&#39; (or &#39;dew scan&#39;) to choose what to manage, then &#39;dew pack&#39;.</p></div>
+        <div class="ref-field"><span class="ref-label">Parameters</span>
+          <table class="ref-params"><thead><tr><th>Flag</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody>
+          <tr>
+            <td><code>--from-gitignore</code></td>
+            <td><code>bool</code></td>
+            <td>—</td>
+            <td>seed the allow-list with candidates found in .gitignore</td>
+          </tr><tr>
+            <td><code>-p, --project</code></td>
+            <td><code>string</code></td>
+            <td>—</td>
+            <td>name this project (defaults to the directory name)</td>
+          </tr>
+          </tbody></table></div>
+        <div class="ref-field"><span class="ref-label">Examples</span><pre class="ref-ex">dew init                        # create the manifest (project = folder name)
+  dew init --project billing-svc  # name the project independently of the folder
+  dew init --from-gitignore       # seed the allow-list from .gitignore
+</pre></div>
+        <div class="ref-field"><span class="ref-label">Exit</span><span class="ref-val"><code>0</code> success · non-zero on error (<code>dew: error: …</code>)</span></div>
+        
+      </article>
+      
+      <article class="ref-cmd" id="list">
+        <h3><code>dew list</code> <span class="ver">since v0.1.0</span></h3>
+        <p class="ref-short">List the files dew tracks for this repo (alias: ls)</p>
+        <div class="ref-field"><span class="ref-label">Synopsis</span><pre class="ref-syn">dew list</pre></div>
+        <div class="ref-field"><span class="ref-label">Alias</span><span class="ref-val"><code>ls</code></span></div>
+        <div class="ref-desc"><p>Show this repo&#39;s allow-list — the local files dew manages — and the project name. These are the paths &#39;dew pack&#39; will include. To see the deny rules by layer as well, use &#39;dew rules&#39;.</p></div>
+        
+        <div class="ref-field"><span class="ref-label">Examples</span><pre class="ref-ex">dew list
+</pre></div>
+        <div class="ref-field"><span class="ref-label">Exit</span><span class="ref-val"><code>0</code> success · non-zero on error (<code>dew: error: …</code>)</span></div>
+        <div class="ref-field"><span class="ref-label">See also</span><span class="ref-val"><a href="#add"><code>add</code></a> · <a href="#rules"><code>rules</code></a></span></div>
+      </article>
+      
+      <article class="ref-cmd" id="remove">
+        <h3><code>dew remove</code> <span class="ver">since v0.1.0</span></h3>
+        <p class="ref-short">Stop tracking a path (alias: rm)</p>
+        <div class="ref-field"><span class="ref-label">Synopsis</span><pre class="ref-syn">dew remove &lt;path&gt;...</pre></div>
+        <div class="ref-field"><span class="ref-label">Alias</span><span class="ref-val"><code>rm</code></span></div>
+        <div class="ref-desc"><p>Remove one or more paths from this repo&#39;s allow-list so dew no longer manages them. Removing a path that isn&#39;t tracked is a harmless no-op. The next &#39;dew pack&#39; reflects the change; existing images are untouched until you re-pack.</p></div>
+        
+        <div class="ref-field"><span class="ref-label">Examples</span><pre class="ref-ex">dew remove .env.local
+</pre></div>
+        <div class="ref-field"><span class="ref-label">Exit</span><span class="ref-val"><code>0</code> success · non-zero on error (<code>dew: error: …</code>)</span></div>
+        <div class="ref-field"><span class="ref-label">See also</span><span class="ref-val"><a href="#add"><code>add</code></a> · <a href="#list"><code>list</code></a></span></div>
+      </article>
+      
+      <article class="ref-cmd" id="rules">
+        <h3><code>dew rules</code> <span class="ver">since v0.1.0</span></h3>
+        <p class="ref-short">Show which files are allowed and which are denied</p>
+        <div class="ref-field"><span class="ref-label">Synopsis</span><pre class="ref-syn">dew rules</pre></div>
+        
+        <div class="ref-desc"><p>Show the effective rules for this repo: the allow-list (what dew manages) and the three deny layers that keep noise out — built-in patterns, your global ~/.dew/config.yaml, and the repo&#39;s .dew/manifest.yaml. Use it to understand why a path is included or skipped.</p><p>The built-in layer is deliberately minimal: only noise that&#39;s regenerated in essentially every project that has it (node_modules/, Pods/, .gradle/, …). Exclude project-specific generated files — an Expo app&#39;s ios/ and android/, say, which are hand-written source in other projects — with a deny: entry in .dew/manifest.yaml. Deny lines are gitignore syntax and support ! to un-deny.</p></div>
+        
+        <div class="ref-field"><span class="ref-label">Examples</span><pre class="ref-ex">dew rules
+</pre></div>
+        <div class="ref-field"><span class="ref-label">Exit</span><span class="ref-val"><code>0</code> success · non-zero on error (<code>dew: error: …</code>)</span></div>
+        <div class="ref-field"><span class="ref-label">See also</span><span class="ref-val"><a href="#add"><code>add</code></a> · <a href="#pack"><code>pack</code></a></span></div>
+      </article>
+      
+      <article class="ref-cmd" id="scan">
+        <h3><code>dew scan</code> <span class="ver">since v0.1.0</span></h3>
+        <p class="ref-short">Suggest local files worth tracking (doesn&#39;t change anything)</p>
+        <div class="ref-field"><span class="ref-label">Synopsis</span><pre class="ref-syn">dew scan</pre></div>
+        
+        <div class="ref-desc"><p>Look through this repo&#39;s .gitignore and working tree and suggest local files dew could manage — the per-developer context Git leaves out — while filtering out noise like build output and logs.</p><p>scan only suggests; nothing is added until you opt in. Use it to discover what&#39;s worth tracking. Next: &#39;dew add &lt;path&gt;&#39; for specific files, &#39;dew add .&#39; to take the suggestions, or &#39;dew init --from-gitignore&#39; to seed them at setup.</p></div>
+        
+        <div class="ref-field"><span class="ref-label">Examples</span><pre class="ref-ex">dew scan
+</pre></div>
+        <div class="ref-field"><span class="ref-label">Exit</span><span class="ref-val"><code>0</code> success · non-zero on error (<code>dew: error: …</code>)</span></div>
+        <div class="ref-field"><span class="ref-label">See also</span><span class="ref-val"><a href="#add"><code>add</code></a> · <a href="#rules"><code>rules</code></a></span></div>
+      </article>
+      
+    </section>
+    
+    <section class="ref-group">
+      <h2>Image</h2>
+      
+      <article class="ref-cmd" id="hydrate">
+        <h3><code>dew hydrate</code> <span class="ver">since v0.2.0</span></h3>
+        <p class="ref-short">Bring your local files back from the image (same as restore)</p>
+        <div class="ref-field"><span class="ref-label">Synopsis</span><pre class="ref-syn">dew hydrate [--dry-run] [--force] [--image &lt;string&gt;]</pre></div>
+        
+        <div class="ref-desc"><p>Hydrate the working tree from this repo&#39;s encrypted image — identical to &#39;dew restore&#39;, with the same --force, --dry-run, and --image flags. dew&#39;s signature verb; use whichever name you reach for first.</p></div>
+        <div class="ref-field"><span class="ref-label">Parameters</span>
+          <table class="ref-params"><thead><tr><th>Flag</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody>
+          <tr>
+            <td><code>--dry-run</code></td>
+            <td><code>bool</code></td>
+            <td>—</td>
+            <td>preview what would change; touch nothing</td>
+          </tr><tr>
+            <td><code>--force</code></td>
+            <td><code>bool</code></td>
+            <td>—</td>
+            <td>overwrite local files that differ from the image</td>
+          </tr><tr>
+            <td><code>--image</code> <span class="ver">v0.6.0</span></td>
+            <td><code>string</code></td>
+            <td>—</td>
+            <td>restore from this .dew.age file instead of the default under ~/.dew/images</td>
+          </tr>
+          </tbody></table></div>
+        <div class="ref-field"><span class="ref-label">Examples</span><pre class="ref-ex">dew hydrate
+  dew hydrate --dry-run
+</pre></div>
+        <div class="ref-field"><span class="ref-label">Exit</span><span class="ref-val"><code>0</code> success · non-zero on error (<code>dew: error: …</code>)</span></div>
+        <div class="ref-field"><span class="ref-label">See also</span><span class="ref-val"><a href="#restore"><code>restore</code></a> · <a href="#pack"><code>pack</code></a></span></div>
+      </article>
+      
+      <article class="ref-cmd" id="pack">
+        <h3><code>dew pack</code> <span class="ver">since v0.1.0</span></h3>
+        <p class="ref-short">Encrypt your tracked local files into a single image</p>
+        <div class="ref-field"><span class="ref-label">Synopsis</span><pre class="ref-syn">dew pack [--all] [--dry-run] [--force]</pre></div>
+        
+        <div class="ref-desc"><p>Bundle the local files dew tracks for this repo — the context Git ignores (.env.local, dev certs, docker-compose.override.yml, local config) — into one encrypted image at ~/.dew/images/&lt;project&gt;.dew.age.</p><p>Run it after you add or change a tracked file: pack always uses the current contents of the allow-list, so you declare files once with &#39;dew add&#39; and never re-add. The image is what &#39;dew sync&#39; ships and &#39;dew restore&#39; restores — packing is how your local state becomes portable. Next: &#39;dew sync&#39; to push it.</p><p>The deny-list keeps noise out even from allow-listed directories — though a file you added by name is always packed; explicit intent wins. pack won&#39;t overwrite an image created by a different repo unless you pass --force.</p><p>--all is the one-shot exception: instead of the allow-list, it packs every LOCAL file — everything Git doesn&#39;t carry, ignored and not-yet-committed alike (it asks &#39;git ls-files&#39;, so it needs Git and a git repo). The manifest is untouched, the deny-list still filters generated noise, and .git/ and .dew/ are never included. Use it to carry a repo&#39;s complete local half; preview with --dry-run. If --dry-run shows project-specific generated files (e.g. an Expo app&#39;s ios/ and android/), exclude them with a deny: entry in .dew/manifest.yaml — see &#39;dew rules&#39;.</p></div>
+        <div class="ref-field"><span class="ref-label">Parameters</span>
+          <table class="ref-params"><thead><tr><th>Flag</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody>
+          <tr>
+            <td><code>--all</code> <span class="ver">v0.6.0</span></td>
+            <td><code>bool</code></td>
+            <td>—</td>
+            <td>one-shot: pack every local file Git doesn&#39;t carry (deny-filtered); allow-list ignored, manifest untouched</td>
+          </tr><tr>
+            <td><code>--dry-run</code></td>
+            <td><code>bool</code></td>
+            <td>—</td>
+            <td>preview what would be packed; write nothing</td>
+          </tr><tr>
+            <td><code>--force</code></td>
+            <td><code>bool</code></td>
+            <td>—</td>
+            <td>overwrite an image created by a different repo</td>
+          </tr>
+          </tbody></table></div>
+        <div class="ref-field"><span class="ref-label">Examples</span><pre class="ref-ex">dew pack              # encrypt the tracked files into the image
+  dew pack --dry-run    # preview what would be included; write nothing
+  dew pack --force      # overwrite an image created by a different repo
+  dew pack --all        # one-shot: pack every local file Git doesn&#39;t carry
+</pre></div>
+        <div class="ref-field"><span class="ref-label">Exit</span><span class="ref-val"><code>0</code> success · non-zero on error (<code>dew: error: …</code>)</span></div>
+        <div class="ref-field"><span class="ref-label">See also</span><span class="ref-val"><a href="#restore"><code>restore</code></a> · <a href="#sync"><code>sync</code></a> · <a href="#rules"><code>rules</code></a></span></div>
+      </article>
+      
+      <article class="ref-cmd" id="restore">
+        <h3><code>dew restore</code> <span class="ver">since v0.1.0</span></h3>
+        <p class="ref-short">Bring your local files back from the image</p>
+        <div class="ref-field"><span class="ref-label">Synopsis</span><pre class="ref-syn">dew restore [--dry-run] [--force] [--image &lt;string&gt;]</pre></div>
+        
+        <div class="ref-desc"><p>Hydrate the working tree from this repo&#39;s encrypted image: decrypt, decompress, and write the tracked files back into place. This is what makes a fresh clone runnable — pair it with &#39;dew sync pull&#39; on a new machine.</p><p>Safe by default: files are staged first, and any local file that differs from the image is reported as a conflict and left untouched, so you won&#39;t lose local edits unless you pass --force. --dry-run shows exactly what would change, touching nothing. (&#39;dew hydrate&#39; is the same command.)</p><p>By default the image comes from ~/.dew/images; --image restores from an explicit .dew.age file instead — one copied over by hand or pulled from a backup. The same safety rules apply, and no manifest is needed: the image defines what it holds.</p></div>
+        <div class="ref-field"><span class="ref-label">Parameters</span>
+          <table class="ref-params"><thead><tr><th>Flag</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody>
+          <tr>
+            <td><code>--dry-run</code></td>
+            <td><code>bool</code></td>
+            <td>—</td>
+            <td>preview what would change; touch nothing</td>
+          </tr><tr>
+            <td><code>--force</code></td>
+            <td><code>bool</code></td>
+            <td>—</td>
+            <td>overwrite local files that differ from the image</td>
+          </tr><tr>
+            <td><code>--image</code> <span class="ver">v0.6.0</span></td>
+            <td><code>string</code></td>
+            <td>—</td>
+            <td>restore from this .dew.age file instead of the default under ~/.dew/images</td>
+          </tr>
+          </tbody></table></div>
+        <div class="ref-field"><span class="ref-label">Examples</span><pre class="ref-ex">dew restore             # write the tracked files back into the repo
+  dew restore --dry-run   # preview new / unchanged / conflicts; change nothing
+  dew restore --force     # overwrite local files that differ from the image
+  dew restore --image ~/backups/my-app.dew.age   # restore from an explicit file
+</pre></div>
+        <div class="ref-field"><span class="ref-label">Exit</span><span class="ref-val"><code>0</code> success · non-zero on error (<code>dew: error: …</code>)</span></div>
+        <div class="ref-field"><span class="ref-label">See also</span><span class="ref-val"><a href="#pack"><code>pack</code></a> · <a href="#hydrate"><code>hydrate</code></a> · <a href="#sync"><code>sync</code></a></span></div>
+      </article>
+      
+    </section>
+    
+    <section class="ref-group">
+      <h2>Sync</h2>
+      
+      <article class="ref-cmd" id="remote">
+        <h3><code>dew remote</code> <span class="ver">since v0.3.0</span></h3>
+        <p class="ref-short">Show or change where dew syncs images</p>
+        <div class="ref-field"><span class="ref-label">Synopsis</span><pre class="ref-syn">dew remote</pre></div>
+        
+        <div class="ref-desc"><p>Manage the destination dew pushes images to and pulls them from — a local/mounted path (e.g. /Volumes/nas/dew) or an scp-style remote (e.g. nas:/volume1/dew). With no subcommand, &#39;dew remote&#39; prints the current destination.</p><p>The destination is stored in ~/.dew/config.yaml and shared across all repos. Once set, &#39;dew sync&#39; pushes to it and &#39;dew sync pull&#39; fetches from it.</p></div>
+        
+        <div class="ref-field"><span class="ref-label">Examples</span><pre class="ref-ex">dew remote                     # show the current destination
+  dew remote set nas:/vol1/dew   # set it (local path or host:path)
+  dew remote unset               # clear it
+</pre></div>
+        <div class="ref-field"><span class="ref-label">Exit</span><span class="ref-val"><code>0</code> success · non-zero on error (<code>dew: error: …</code>)</span></div>
+        <div class="ref-field"><span class="ref-label">See also</span><span class="ref-val"><a href="#sync"><code>sync</code></a></span></div>
+      </article>
+      
+      <article class="ref-cmd" id="remote-images">
+        <h3><code>dew remote images</code> <span class="ver">since v0.3.0</span></h3>
+        <p class="ref-short">List the images stored at the sync destination</p>
+        <div class="ref-field"><span class="ref-label">Synopsis</span><pre class="ref-syn">dew remote images</pre></div>
+        
+        <div class="ref-desc"><p>Show the dew images present at the configured destination — the mirror of &#39;dew images&#39;, which lists what&#39;s on this machine. Useful to confirm a push landed, or to see what a new machine can pull. A local/mounted path is read directly; a remote &#39;host:path&#39; is listed over ssh.</p></div>
+        
+        <div class="ref-field"><span class="ref-label">Examples</span><pre class="ref-ex">dew remote images
+</pre></div>
+        <div class="ref-field"><span class="ref-label">Exit</span><span class="ref-val"><code>0</code> success · non-zero on error (<code>dew: error: …</code>)</span></div>
+        
+      </article>
+      
+      <article class="ref-cmd" id="remote-set">
+        <h3><code>dew remote set</code> <span class="ver">since v0.3.0</span></h3>
+        <p class="ref-short">Set the sync destination (local path or host:path)</p>
+        <div class="ref-field"><span class="ref-label">Synopsis</span><pre class="ref-syn">dew remote set &lt;dest&gt;</pre></div>
+        
+        <div class="ref-desc"><p>Record where dew syncs this machine&#39;s images — a local/mounted path, or an scp-style &#39;host:path&#39; remote that uses your existing SSH config. Saved to ~/.dew/config.yaml and shared across all repos; run &#39;dew sync&#39; afterward to push. Replaces any existing destination.</p></div>
+        
+        <div class="ref-field"><span class="ref-label">Examples</span><pre class="ref-ex">dew remote set /Volumes/nas/dew   # a local or mounted folder
+  dew remote set nas:/volume1/dew   # an scp-style remote
+</pre></div>
+        <div class="ref-field"><span class="ref-label">Exit</span><span class="ref-val"><code>0</code> success · non-zero on error (<code>dew: error: …</code>)</span></div>
+        
+      </article>
+      
+      <article class="ref-cmd" id="remote-test">
+        <h3><code>dew remote test</code> <span class="ver">since v0.3.0</span></h3>
+        <p class="ref-short">Check the destination is reachable, trusted, and writable</p>
+        <div class="ref-field"><span class="ref-label">Synopsis</span><pre class="ref-syn">dew remote test</pre></div>
+        
+        <div class="ref-desc"><p>Verify the configured destination is actually usable before you rely on &#39;dew sync&#39;. A local/mounted path is checked in place (is the volume mounted? is it writable?). A remote &#39;host:path&#39; is checked over ssh — reachable, host key trusted, and the path writable — reporting OpenSSH&#39;s own verdict (it never prompts, so an untrusted host key fails cleanly). Exits non-zero if unusable.</p></div>
+        
+        <div class="ref-field"><span class="ref-label">Examples</span><pre class="ref-ex">dew remote test
+</pre></div>
+        <div class="ref-field"><span class="ref-label">Exit</span><span class="ref-val"><code>0</code> success · non-zero on error (<code>dew: error: …</code>)</span></div>
+        
+      </article>
+      
+      <article class="ref-cmd" id="remote-unset">
+        <h3><code>dew remote unset</code> <span class="ver">since v0.3.0</span></h3>
+        <p class="ref-short">Clear the sync destination</p>
+        <div class="ref-field"><span class="ref-label">Synopsis</span><pre class="ref-syn">dew remote unset</pre></div>
+        
+        <div class="ref-desc"><p>Remove the configured sync destination from ~/.dew/config.yaml. &#39;dew sync&#39; then has nowhere to push until you set one again with &#39;dew remote set&#39;. A no-op if no destination is configured.</p></div>
+        
+        <div class="ref-field"><span class="ref-label">Examples</span><pre class="ref-ex">dew remote unset
+</pre></div>
+        <div class="ref-field"><span class="ref-label">Exit</span><span class="ref-val"><code>0</code> success · non-zero on error (<code>dew: error: …</code>)</span></div>
+        
+      </article>
+      
+      <article class="ref-cmd" id="sync">
+        <h3><code>dew sync</code> <span class="ver">since v0.1.0</span></h3>
+        <p class="ref-short">Push this repo&#39;s image to your sync destination</p>
+        <div class="ref-field"><span class="ref-label">Synopsis</span><pre class="ref-syn">dew sync</pre></div>
+        
+        <div class="ref-desc"><p>Copy this repo&#39;s encrypted image to the destination you configured with &#39;dew remote set&#39; so another machine can fetch it. Local or mounted paths are copied directly; a remote host:path goes over scp using your existing SSH config. Only the encrypted image moves — never your private key.</p><p>Run it after &#39;dew pack&#39; (and &#39;dew remote test&#39; if you want to check the destination first). On the other machine, &#39;dew sync pull&#39; fetches it.</p></div>
+        
+        <div class="ref-field"><span class="ref-label">Examples</span><pre class="ref-ex">dew sync         # push this repo&#39;s image to the destination
+  dew sync pull    # fetch it on another machine, then &#39;dew restore&#39;
+</pre></div>
+        <div class="ref-field"><span class="ref-label">Exit</span><span class="ref-val"><code>0</code> success · non-zero on error (<code>dew: error: …</code>)</span></div>
+        <div class="ref-field"><span class="ref-label">See also</span><span class="ref-val"><a href="#remote"><code>remote</code></a> · <a href="#pack"><code>pack</code></a> · <a href="#restore"><code>restore</code></a></span></div>
+      </article>
+      
+      <article class="ref-cmd" id="sync-pull">
+        <h3><code>dew sync pull</code> <span class="ver">since v0.1.0</span></h3>
+        <p class="ref-short">Fetch this repo&#39;s image from your sync destination</p>
+        <div class="ref-field"><span class="ref-label">Synopsis</span><pre class="ref-syn">dew sync pull</pre></div>
+        
+        <div class="ref-desc"><p>Download this repo&#39;s encrypted image from the configured destination into ~/.dew/images, so you can restore it. Run this on a fresh clone, then &#39;dew restore&#39; (or &#39;dew hydrate&#39;). Your identity must already be on this machine to decrypt.</p></div>
+        
+        <div class="ref-field"><span class="ref-label">Examples</span><pre class="ref-ex">dew sync pull
+</pre></div>
+        <div class="ref-field"><span class="ref-label">Exit</span><span class="ref-val"><code>0</code> success · non-zero on error (<code>dew: error: …</code>)</span></div>
+        
+      </article>
+      
+    </section>
+    
+    <section class="ref-group">
+      <h2>Health &amp; inventory</h2>
+      
+      <article class="ref-cmd" id="doctor">
+        <h3><code>dew doctor</code> <span class="ver">since v0.1.0</span></h3>
+        <p class="ref-short">Diagnose what&#39;s wrong and tell you the next command</p>
+        <div class="ref-field"><span class="ref-label">Synopsis</span><pre class="ref-syn">dew doctor</pre></div>
+        
+        <div class="ref-desc"><p>Check this repo end to end and report the one thing to fix next — a missing identity, no manifest, an unpacked or undecryptable image, or files still waiting to be restored — or confirm the repo is fully hydrated. Unlike &#39;dew status&#39;, it verifies the image actually decrypts, and every problem comes with the exact command to run.</p><p>Start here whenever a clone isn&#39;t working as expected.</p></div>
+        
+        <div class="ref-field"><span class="ref-label">Examples</span><pre class="ref-ex">dew doctor
+</pre></div>
+        <div class="ref-field"><span class="ref-label">Exit</span><span class="ref-val"><code>0</code> success · non-zero on error (<code>dew: error: …</code>)</span></div>
+        <div class="ref-field"><span class="ref-label">See also</span><span class="ref-val"><a href="#status"><code>status</code></a></span></div>
+      </article>
+      
+      <article class="ref-cmd" id="images">
+        <h3><code>dew images</code> <span class="ver">since v0.1.0</span></h3>
+        <p class="ref-short">List every image dew manages, across all repos</p>
+        <div class="ref-field"><span class="ref-label">Synopsis</span><pre class="ref-syn">dew images</pre></div>
+        
+        <div class="ref-desc"><p>Show a global inventory of the encrypted images in ~/.dew/images — each one&#39;s project, size, when it was last packed, and which repo owns it. Where &#39;dew status&#39; and &#39;dew list&#39; describe the current repo, images spans every repo and runs from anywhere.</p></div>
+        
+        <div class="ref-field"><span class="ref-label">Examples</span><pre class="ref-ex">dew images
+</pre></div>
+        <div class="ref-field"><span class="ref-label">Exit</span><span class="ref-val"><code>0</code> success · non-zero on error (<code>dew: error: …</code>)</span></div>
+        <div class="ref-field"><span class="ref-label">See also</span><span class="ref-val"><a href="#clean"><code>clean</code></a> · <a href="#status"><code>status</code></a></span></div>
+      </article>
+      
+      <article class="ref-cmd" id="images-rm">
+        <h3><code>dew images rm</code> <span class="ver">since v0.5.0</span></h3>
+        <p class="ref-short">Delete packed image(s) from ~/.dew/images by project name</p>
+        <div class="ref-field"><span class="ref-label">Synopsis</span><pre class="ref-syn">dew images rm &lt;project&gt;... [--yes]</pre></div>
+        <div class="ref-field"><span class="ref-label">Alias</span><span class="ref-val"><code>remove</code></span></div>
+        <div class="ref-desc"><p>Delete one or more encrypted images from ~/.dew/images, named by project (the PROJECT column &#39;dew images&#39; prints; the trailing .dew.age is optional). Use it to garbage-collect images whose repo is gone, or any image you no longer want — its .id owner marker is removed alongside it.</p><p>This only deletes the local image file; it never touches your identity key or any copy synced elsewhere, and it leaves repo manifests alone (to tear down the current repo&#39;s manifest and image together, use &#39;dew clean&#39;). You are asked to confirm unless you pass --yes. Naming a project with no image is a harmless no-op.</p></div>
+        <div class="ref-field"><span class="ref-label">Parameters</span>
+          <table class="ref-params"><thead><tr><th>Flag</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody>
+          <tr>
+            <td><code>-y, --yes</code></td>
+            <td><code>bool</code></td>
+            <td>—</td>
+            <td>skip the confirmation prompt</td>
+          </tr>
+          </tbody></table></div>
+        <div class="ref-field"><span class="ref-label">Examples</span><pre class="ref-ex">dew images rm oldproject
+  dew images rm a b c --yes
+</pre></div>
+        <div class="ref-field"><span class="ref-label">Exit</span><span class="ref-val"><code>0</code> success · non-zero on error (<code>dew: error: …</code>)</span></div>
+        
+      </article>
+      
+      <article class="ref-cmd" id="status">
+        <h3><code>dew status</code> <span class="ver">since v0.1.0</span></h3>
+        <p class="ref-short">Show this repo&#39;s dew health at a glance</p>
+        <div class="ref-field"><span class="ref-label">Synopsis</span><pre class="ref-syn">dew status</pre></div>
+        
+        <div class="ref-desc"><p>Summarize dew&#39;s state for this repo: whether your identity and manifest are present, whether an image exists, how many files are tracked, and whether the working tree is fully hydrated. A quick check after cloning or before packing. For a diagnosis with the exact fix to run, use &#39;dew doctor&#39;.</p></div>
+        
+        <div class="ref-field"><span class="ref-label">Examples</span><pre class="ref-ex">dew status
+</pre></div>
+        <div class="ref-field"><span class="ref-label">Exit</span><span class="ref-val"><code>0</code> success · non-zero on error (<code>dew: error: …</code>)</span></div>
+        <div class="ref-field"><span class="ref-label">See also</span><span class="ref-val"><a href="#doctor"><code>doctor</code></a> · <a href="#images"><code>images</code></a></span></div>
+      </article>
+      
+    </section>
+    
+    <section class="ref-group">
+      <h2>Global</h2>
+      
+      <article class="ref-cmd" id="upgrade">
+        <h3><code>dew upgrade</code> <span class="ver">since v0.6.1</span></h3>
+        <p class="ref-short">Update dew itself to the latest release (or a chosen version)</p>
+        <div class="ref-field"><span class="ref-label">Synopsis</span><pre class="ref-syn">dew upgrade [--check] [--force] [--version &lt;string&gt;]</pre></div>
+        
+        <div class="ref-desc"><p>Replace this dew binary with a newer release from GitHub: resolve the latest version (or the exact tag you name with --version), download the build for this platform, verify it against the release&#39;s checksums, and swap it in atomically. --check only reports what&#39;s available and changes nothing.</p><p>If dew was installed with Homebrew, upgrade refuses and points you at &#39;brew upgrade --cask dew&#39; instead — replacing a brew-managed binary corrupts brew&#39;s own bookkeeping (--force overrides if you know what you&#39;re doing). After an upgrade, &#39;dew version&#39; confirms what&#39;s running.</p></div>
+        <div class="ref-field"><span class="ref-label">Parameters</span>
+          <table class="ref-params"><thead><tr><th>Flag</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody>
+          <tr>
+            <td><code>--check</code></td>
+            <td><code>bool</code></td>
+            <td>—</td>
+            <td>report the current and latest versions; change nothing</td>
+          </tr><tr>
+            <td><code>--force</code></td>
+            <td><code>bool</code></td>
+            <td>—</td>
+            <td>reinstall even if current, or replace a brew-managed binary</td>
+          </tr><tr>
+            <td><code>--version</code></td>
+            <td><code>string</code></td>
+            <td>—</td>
+            <td>install this exact release tag (e.g. v0.6.0) instead of the latest</td>
+          </tr>
+          </tbody></table></div>
+        <div class="ref-field"><span class="ref-label">Examples</span><pre class="ref-ex">dew upgrade                    # → the latest release
+  dew upgrade --check            # what would happen; changes nothing
+  dew upgrade --version v0.6.0   # → that exact release
+</pre></div>
+        <div class="ref-field"><span class="ref-label">Exit</span><span class="ref-val"><code>0</code> success · non-zero on error (<code>dew: error: …</code>)</span></div>
+        <div class="ref-field"><span class="ref-label">See also</span><span class="ref-val"><a href="#version"><code>version</code></a></span></div>
+      </article>
+      
+      <article class="ref-cmd" id="version">
+        <h3><code>dew version</code> <span class="ver">since v0.1.0</span></h3>
+        <p class="ref-short">Print version, commit, and build information</p>
+        <div class="ref-field"><span class="ref-label">Synopsis</span><pre class="ref-syn">dew version</pre></div>
+        
+        <div class="ref-desc"><p>Print dew&#39;s version along with the build commit, date, and Go toolchain — handy when reporting a bug. (See also the --version flag.)</p></div>
+        
+        <div class="ref-field"><span class="ref-label">Examples</span><pre class="ref-ex">dew version
+</pre></div>
+        <div class="ref-field"><span class="ref-label">Exit</span><span class="ref-val"><code>0</code> success · non-zero on error (<code>dew: error: …</code>)</span></div>
+        
+      </article>
+      
+    </section>
+    
+  </main>
+</div>
+
+<footer class="footer">
+  <img src="assets/dew.png" alt="" width="22" height="22">
+  <span>dew — the local half of your repo, restored after every clone.</span>
+  <span class="dot">·</span>
+  <a href="index.html">Home</a>
+  <span class="dot">·</span>
+  <a href="guide.html">Guide</a>
+  <span class="dot">·</span>
+  <a href="https://github.com/vedanta/dew">GitHub</a>
+</footer>
+
+</body>
+</html>
