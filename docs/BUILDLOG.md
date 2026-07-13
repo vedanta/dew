@@ -220,6 +220,19 @@ Release history:
   deny-tuning plus tooling hygiene — a deliberate bend of the
   "minor = new command surface" convention recorded in `DEVELOPMENT.md`.
 
+- **v0.7.0** — **`pack --all` redefined: the local half only** (#173, PR #174).
+  The v0.6.0 semantics ("every file, tracked or not") diluted the product: on a
+  real monorepo, 45.5 of 46.8 MiB in the image was content Git already carries
+  — redundancy over the clone, and a stale-`--force`-clobbers-newer-git
+  footgun. "All" now scopes over dew's domain: `--all` asks `git ls-files`
+  (new `internal/gittrack` — dew's first git invocation, same optional-tool
+  pattern as `scp`) and packs everything *outside* the index — ignored and
+  not-yet-committed alike, deny-filtered as always. Requires git + a git repo;
+  refuses to write an empty image. Measured effect on the motivating repo:
+  46.8 MiB → ~1.3 MiB. Breaking change to a v0.6.0 flag → **minor** bump per
+  convention. Known caveat: submodule contents read as local (absent from the
+  parent index) — documented, not solved.
+
 Remaining backlog is tracked in GitHub issues (e.g. `dew images` repo-locations,
 discover+pack convenience, and the ops/identity batch #136–#145). Lane B
 (multiple recipients / per-device keys) from #122 is parked.
